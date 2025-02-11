@@ -1,11 +1,29 @@
 {
-  "name": "backend",
+  "name": "smartclassroom",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
   },
   "author": "",
   "license": "ISC",
-  "description": ""
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KrishnaM256/Kaizen-Edu.git"
+  },
+  "bugs": {
+    "url": "https://github.com/KrishnaM256/Kaizen-Edu/issues"
+  },
+  "homepage": "https://github.com/KrishnaM256/Kaizen-Edu#readme",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "moongose": "^1.0.0"
+  }
 }
