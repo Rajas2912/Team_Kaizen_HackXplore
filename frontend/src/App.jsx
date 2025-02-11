@@ -1,8 +1,10 @@
 import './App.css'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import Navbar from './common/Navbar'
-import Sidebar from './common/Sidebar'
-import Home from './pagesKM/Home/Home'
+import Navbar from './common/Navbar.jsx';
+import Sidebar from './common/Sidebar.jsx';
+import Home from './pagesKM/Home/Home.jsx';
+import Login from './pagesPP/login.jsx';
+import RegisterForm from './pagesPP/Register.jsx';
 
 function App() {
   return (
@@ -10,7 +12,9 @@ function App() {
       <Navbar />
       <Sidebar />
       <Routes>
-        <Route path="/" element={<Home />}></Route>
+        <Route path="/home" element={<Home />}></Route>
+        <Route path="/" element={<Login />}></Route>
+        <Route path="/register" element={<RegisterForm />}></Route>
       </Routes>
     </BrowserRouter>
   )
