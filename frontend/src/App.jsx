@@ -17,6 +17,7 @@ function App() {
         <Route path="" element={<PrivateRoute />}>
           <Route path="/main" element={<Main />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/viva-create" element={<Home />} />
         </Route>
       </Routes>
     </BrowserRouter>
