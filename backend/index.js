@@ -5,8 +5,11 @@ import mongoose from 'mongoose'
 import cors from 'cors'
 import CookieParser from 'cookie-parser'
 import registerRoute from './route/user.route.js'
+import connectDB from './config/connectDB.js'
 const Frontend_URL = process.env.Frontend_URL
 // import {server,app} from './socket/index.js'
+
+connectDB()
 
 const app = express()
 app.use(
@@ -19,15 +22,6 @@ app.use(express.json())
 app.use(CookieParser())
 
 const PORT = process.env.PORT || 4000
-const URI = process.env.URI
-
-// connect to database
-try {
-  mongoose.connect(URI)
-  console.log('connect to mongodb database')
-} catch (error) {
-  console.log('Error:', error)
-}
 
 app.use('/user', registerRoute)
 

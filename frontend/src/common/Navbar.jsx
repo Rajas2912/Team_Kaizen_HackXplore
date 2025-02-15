@@ -13,9 +13,18 @@ const Navbar = ({ onToggleSidebar }) => {
         p={1.5}
         sx={{ borderBottom: '1px' }}
       >
+        <button
+          class="MuiButtonBase-root MuiIconButton-root MuiIconButton-sizeMedium css-10r8nrq-MuiButtonBase-root-MuiIconButton-root"
+          tabindex="0"
+          type="button"
+          id=":r4:"
+          aria-label="Collapse navigation menu"
+        >
+          <MenuIcon />
+        </button>
         {/* Center: App Title */}
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-          My App
+          Kaizen.Edu
         </Typography>
 
         {/* Right side: Profile and Settings */}
