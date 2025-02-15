@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React, { useState } from 'react'
 import { extendTheme, styled } from '@mui/material/styles'
 import { Avatar, Typography, Box, IconButton } from '@mui/material'
 import DashboardIcon from '@mui/icons-material/Dashboard'
@@ -23,8 +23,8 @@ import { AppProvider } from '@toolpad/core/AppProvider'
 import { DashboardLayout } from '@toolpad/core/DashboardLayout'
 import { PageContainer } from '@toolpad/core/PageContainer'
 import Grid from '@mui/material/Grid2'
-
 import './Sidebar.css'
+import Navbar from './Navbar'
 
 const NAVIGATION = [
   {
@@ -160,52 +160,6 @@ const NAVIGATION = [
   },
 ]
 
-// const NAVIGATION = [
-//   {
-//     kind: 'header',
-//     title: 'Main items',
-//   },
-//   {
-//     segment: 'dashboard',
-//     title: 'Dashboard',
-//     icon: <DashboardIcon />,
-//   },
-//   {
-//     segment: 'home',
-//     title: 'Home',
-//     icon: <ShoppingCartIcon />,
-//   },
-//   {
-//     kind: 'divider',
-//   },
-//   {
-//     kind: 'header',
-//     title: 'Analytics',
-//   },
-//   {
-//     segment: 'reports',
-//     title: 'Reports',
-//     icon: <BarChartIcon />,
-//     children: [
-//       {
-//         segment: 'sales',
-//         title: 'Sales',
-//         icon: <DescriptionIcon />,
-//       },
-//       {
-//         segment: 'traffic',
-//         title: 'Traffic',
-//         icon: <DescriptionIcon />,
-//       },
-//     ],
-//   },
-//   {
-//     segment: 'integrations',
-//     title: 'Integrations',
-//     icon: <LayersIcon />,
-//   },
-// ]
-
 const demoTheme = extendTheme({
   colorSchemes: { light: true },
   colorSchemeSelector: 'class',
@@ -244,41 +198,19 @@ const Skeleton = styled('div')(({ theme, height }) => ({
 export default function Sidebar(props) {
   const { window } = props
   const router = useDemoRouter('/dashboard')
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
+  const toggleSidebar = () => {
+    setIsCollapsed((prevState) => !prevState)
+  }
   // Remove this const when copying and pasting into your project.
   //   const demoWindow = window ? window() : undefined
-
   return (
-    <AppProvider
-      navigation={NAVIGATION}
-      router={router}
-      theme={demoTheme}
-      //   window={demoWindow}
-    >
-      <DashboardLayout>
-        <PageContainer>
+    <>
+      <Navbar onToggleSidebar={toggleSidebar} />
+      <AppProvider navigation={NAVIGATION} router={router} theme={demoTheme}>
+        <DashboardLayout>
           <Grid container spacing={1}>
-            <Grid xs={12}>
-              <Box display="flex" alignItems="center" p={2}>
-                <Avatar
-                  alt="User Name"
-                  src="/path-to-profile-image.jpg"
-                  sx={{ mr: 2 }}
-                />
-                <Typography variant="h6">User Name</Typography>
-              </Box>
-            </Grid>
-
-            {/* Add Settings or Profile Button */}
-            <Grid xs={12}>
-              <Box display="flex" justifyContent="flex-end" p={2}>
-                <IconButton>
-                  <SettingsIcon />
-                </IconButton>
-              </Box>
-            </Grid>
-
-            <Grid xs={5} />
             <Grid xs={12}>
               <Skeleton height={14} />
             </Grid>
@@ -312,8 +244,8 @@ export default function Sidebar(props) {
               <Skeleton height={100} />
             </Grid>
           </Grid>
-        </PageContainer>
-      </DashboardLayout>
-    </AppProvider>
+        </DashboardLayout>
+      </AppProvider>
+    </>
   )
 }

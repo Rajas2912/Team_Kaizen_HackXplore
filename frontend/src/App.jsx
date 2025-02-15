@@ -7,7 +7,7 @@ import Home from './pagesKM/Home/Home'
 function App() {
   return (
     <BrowserRouter>
-      <Navbar />
+      {/* <Navbar /> */}
       <Sidebar />
       <Routes>
         <Route path="/" element={<Home />}></Route>

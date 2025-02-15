@@ -1,3 +1,15 @@
 .MuiBox-root > header {
   display: none;
 }
+.MuiDrawer-root {
+  z-index: 99;
+}
+.navbar {
+  position: fixed;
+  width: 100%;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: white;
+}
