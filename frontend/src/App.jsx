@@ -6,6 +6,7 @@ import Home from './pagesKM/Home/Home.jsx'
 import Login from './pagesPP/login.jsx'
 import RegisterForm from './pagesPP/Register.jsx'
 import PrivateRoute from './PrivateRoutes.jsx'
+import ClassPage from './pagesKM/Pages/ClassPage.jsx'
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="" element={<PrivateRoute />}>
           <Route path="/main" element={<Main />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/class/:id" element={<ClassPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

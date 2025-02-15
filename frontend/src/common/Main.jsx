@@ -32,140 +32,11 @@ const API = import.meta.env.VITE_BACKEND_URL
 import Dashboard from '@mui/icons-material/Dashboard'
 import AllTeaching from '../pagesKM/Pages/AllTeaching'
 import AssignMents from '../pagesKM/Pages/AssignMents'
+import DashboardPage from '../pagesKM/Pages/DashboardPage'
 import logo from './../assets/logo.png'
-
-const NAVIGATION = [
-  {
-    kind: 'header',
-    title: 'Main',
-  },
-  {
-    segment: 'dashboard',
-    title: 'Dashboard',
-    icon: <DashboardIcon />,
-  },
-  {
-    segment: 'home',
-    title: 'Home',
-    icon: <HomeIcon />,
-  },
-  {
-    kind: 'divider',
-  },
-  {
-    kind: 'header',
-    title: 'Teaching & Assessments',
-  },
-  {
-    segment: 'study-materials',
-    title: 'Teaching',
-    icon: <LibraryBooksIcon />,
-    children: [
-      {
-        segment: 'maths',
-        title: 'Maths',
-      },
-      {
-        segment: 'physics',
-        title: 'Physics',
-      },
-    ],
-  },
-  {
-    segment: 'assignments',
-    title: 'Assignments',
-    icon: <DescriptionIcon />,
-  },
-  {
-    segment: 'quizzes',
-    title: 'Quizzes',
-    icon: <BarChartIcon />,
-  },
-  {
-    segment: 'viva',
-    title: 'Viva Assessment',
-    icon: <MicIcon />,
-  },
-
-  {
-    kind: 'divider',
-  },
-  {
-    kind: 'header',
-    title: 'Attendance & Scheduling',
-  },
-  {
-    segment: 'attendance',
-    title: 'Attendance',
-    icon: <CheckCircleIcon />,
-  },
-  {
-    segment: 'timetable',
-    title: 'Timetable Generator',
-    icon: <CalendarMonthIcon />,
-  },
-  {
-    segment: 'progress-tracking',
-    title: 'Progress Tracking',
-    icon: <TrendingUpIcon />,
-  },
-  {
-    kind: 'divider',
-  },
-  {
-    kind: 'header',
-    title: 'AI Monitoring & Reports',
-  },
-  {
-    segment: 'proctoring-reports',
-    title: 'Proctoring Reports',
-    icon: <VisibilityIcon />,
-  },
-  {
-    segment: 'performance-analytics',
-    title: 'Performance Analytics',
-    icon: <InsightsIcon />,
-  },
-  {
-    kind: 'divider',
-  },
-  {
-    kind: 'header',
-    title: 'User Management',
-  },
-  {
-    segment: 'teachers',
-    title: 'Teachers',
-    icon: <PersonIcon />,
-  },
-  {
-    segment: 'students',
-    title: 'Students',
-    icon: <SchoolIcon />,
-  },
-  {
-    kind: 'divider',
-  },
-  {
-    kind: 'header',
-    title: 'Settings',
-  },
-  {
-    segment: 'settings',
-    title: 'Settings',
-    icon: <SettingsIcon />,
-  },
-  {
-    segment: 'security',
-    title: 'Security & Privacy',
-    icon: <LockIcon />,
-  },
-  {
-    segment: 'theme',
-    title: 'Theme & UI',
-    icon: <PaletteIcon />,
-  },
-]
+import CreateClass from '../pagesKM/Pages/CreateClass'
+import { useGetAllClassesQuery } from '../redux/api/classApiSlice'
+import ClassPage from '../pagesKM/Pages/ClassPage'
 
 const demoTheme = extendTheme({
   colorSchemes: { light: true },
@@ -238,11 +109,142 @@ function CustomAppTitle() {
 }
 
 export default function Main(props) {
+  const { data, isLoading, error } = useGetAllClassesQuery()
+
+  const NAVIGATION = [
+    {
+      kind: 'header',
+      title: 'Main',
+    },
+    {
+      segment: 'dashboard',
+      title: 'Dashboard',
+      icon: <DashboardIcon />,
+    },
+    {
+      segment: 'home',
+      title: 'Home',
+      icon: <HomeIcon />,
+    },
+    {
+      kind: 'divider',
+    },
+    {
+      kind: 'header',
+      title: 'Teaching & Assessments',
+    },
+    {
+      segment: 'class',
+      title: 'Teaching',
+      icon: <LibraryBooksIcon />,
+      children:
+        !isLoading && Array.isArray(data?.classes) // Ensure data.classes is an array
+          ? data.classes.map((classItem) => ({
+              segment: classItem._id,
+              title: classItem.name,
+            }))
+          : [], // Default to an empty array if invalid
+    },
+    {
+      segment: 'assignments',
+      title: 'Assignments',
+      icon: <DescriptionIcon />,
+    },
+    {
+      segment: 'quizzes',
+      title: 'Quizzes',
+      icon: <BarChartIcon />,
+    },
+    {
+      segment: 'viva',
+      title: 'Viva Assessment',
+      icon: <MicIcon />,
+    },
+    {
+      kind: 'divider',
+    },
+    {
+      kind: 'header',
+      title: 'Attendance & Scheduling',
+    },
+    {
+      segment: 'attendance',
+      title: 'Attendance',
+      icon: <CheckCircleIcon />,
+    },
+    {
+      segment: 'timetable',
+      title: 'Timetable Generator',
+      icon: <CalendarMonthIcon />,
+    },
+    {
+      segment: 'progress-tracking',
+      title: 'Progress Tracking',
+      icon: <TrendingUpIcon />,
+    },
+    {
+      kind: 'divider',
+    },
+    {
+      kind: 'header',
+      title: 'AI Monitoring & Reports',
+    },
+    {
+      segment: 'proctoring-reports',
+      title: 'Proctoring Reports',
+      icon: <VisibilityIcon />,
+    },
+    {
+      segment: 'performance-analytics',
+      title: 'Performance Analytics',
+      icon: <InsightsIcon />,
+    },
+    {
+      kind: 'divider',
+    },
+    {
+      kind: 'header',
+      title: 'User Management',
+    },
+    {
+      segment: 'teachers',
+      title: 'Teachers',
+      icon: <PersonIcon />,
+    },
+    {
+      segment: 'students',
+      title: 'Students',
+      icon: <SchoolIcon />,
+    },
+    {
+      kind: 'divider',
+    },
+    {
+      kind: 'header',
+      title: 'Settings',
+    },
+    {
+      segment: 'settings',
+      title: 'Settings',
+      icon: <SettingsIcon />,
+    },
+    {
+      segment: 'security',
+      title: 'Security & Privacy',
+      icon: <LockIcon />,
+    },
+    {
+      segment: 'theme',
+      title: 'Theme & UI',
+      icon: <PaletteIcon />,
+    },
+  ]
+
   const { window } = props
   const { userInfo } = useSelector((state) => state.user)
   const router = useDemoRouter('/dashboard')
   const demoWindow = window !== undefined ? window() : undefined
-
+  console.log({ router: router })
   const dispatch = useDispatch()
 
   const [session, setSession] = useState({
@@ -289,14 +291,19 @@ export default function Main(props) {
             appTitle: CustomAppTitle,
           }}
         >
-          {router.pathname == '/dashboard' && <Dashboard />}
-          {router.pathname == '/home' && <AllTeaching />}
-          {router.pathname == '/assignments' && <AllTeaching />}
+          {router.pathname == '/dashboard' && <DashboardPage />}
+          {router.pathname == '/home' && (
+            <AllTeaching useDemoRouter={useDemoRouter} />
+          )}
+          {router.pathname == '/createClass' && <CreateClass />}
           {router.pathname == '/quizzes' && <AllTeaching />}
           {router.pathname == '/viva' && <AllTeaching />}
           {router.pathname == '/attendance' && <AllTeaching />}
           {router.pathname == '/timetable' && <AllTeaching />}
           {router.pathname == '/progress-tracking' && <AllTeaching />}
+          {router.pathname?.startsWith('/class/') && (
+            <ClassPage classId={router.pathname.split('/')[2]} />
+          )}
         </DashboardLayout>
       </AppProvider>
     </>

@@ -3,22 +3,32 @@ import User from '../model/user.model.js'
 
 export const createClass = async (req, res) => {
   try {
-    const { name } = req.body
-    const teacherId = req.user.id // Assuming teacher is authenticated
+    const { name, description, subject, userId } = req.body
+    console.log({ body: req.body })
 
-    // Check if the user is a teacher
-    const teacher = await User.findById(teacherId)
+    const teacher = await User.findById(userId)
     if (!teacher || teacher.role !== 'teacher') {
       return res
         .status(403)
         .json({ message: 'Only teachers can create classes' })
     }
 
-    const newClass = await Class.create({ name, teacher: teacherId })
+    // Generate a unique class code (e.g., random 6-character alphanumeric string)
+    const classCode = Math.random().toString(36).substring(2, 8).toUpperCase()
+
+    const newClass = await Class.create({
+      name,
+      description,
+      subject,
+      teacher: userId,
+      classCode, // 🔥 Add this line
+    })
+
     res
       .status(201)
       .json({ message: 'Class created successfully', classData: newClass })
   } catch (error) {
+    console.log(error)
     res.status(500).json({ message: 'Server Error', error })
   }
 }
@@ -132,6 +142,29 @@ export const leaveClass = async (req, res) => {
 
     res.status(200).json({ message: 'Left the class successfully' })
   } catch (error) {
+    res.status(500).json({ message: 'Server Error', error })
+  }
+}
+
+export const getAllClasses = async (req, res) => {
+  try {
+    const { userId } = req.body
+    console.log(userId)
+
+    let query = {}
+    if (userId) {
+      query = {
+        $or: [{ teacher: userId }, { students: { $in: [userId] } }],
+      }
+    }
+
+    const classes = await Class.find(query)
+      .populate('teacher', 'name email')
+      .populate('students', 'name email')
+
+    res.status(200).json({ classes })
+  } catch (error) {
+    console.log(error)
     res.status(500).json({ message: 'Server Error', error })
   }
 }

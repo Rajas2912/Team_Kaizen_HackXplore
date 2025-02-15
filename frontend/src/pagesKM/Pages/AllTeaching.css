@@ -4,3 +4,93 @@
   justify-content: flex-end;
   padding: 10px;
 }
+.classList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+a {
+  text-decoration: none;
+}
+
+.classCard {
+  position: relative;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+}
+
+.classCard:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.classHeader {
+  background: linear-gradient(135deg, #1565c0, #4b7dd3);
+  color: white;
+  padding: 14px;
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  letter-spacing: 1px;
+  border-radius: 16px 16px 0 0;
+}
+
+.classContent {
+  padding: 20px;
+  color: #333;
+  font-family: 'Poppins', sans-serif;
+}
+
+.classCode {
+  background: rgba(0, 0, 0, 0.1);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.teacherInfo {
+  font-size: 16px;
+  font-weight: 500;
+  margin-top: 6px;
+  color: #444;
+}
+
+.studentCount {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1565c0;
+  margin-top: 8px;
+}
+
+.joinButton {
+  width: 100%;
+  background: #1565c0;
+  color: white;
+  padding: 10px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.joinButton:hover {
+  background: #1a5bd3;
+}
+.classCardWrapper {
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.classCardWrapper:hover {
+  transform: translateY(-5px);
+}
