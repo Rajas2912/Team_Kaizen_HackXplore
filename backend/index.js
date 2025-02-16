@@ -7,6 +7,7 @@ import CookieParser from 'cookie-parser'
 import registerRoute from './route/user.route.js'
 import classRoute from './route/class.route.js'
 import connectDB from './config/connectDB.js'
+import lectureRoute from './route/lecture.route.js'
 const Frontend_URL = process.env.Frontend_URL
 // import {server,app} from './socket/index.js'
 
@@ -26,6 +27,7 @@ const PORT = process.env.PORT || 4000
 
 app.use('/user', registerRoute)
 app.use('/class', classRoute)
+app.use('/lecture', lectureRoute)
 
 app.get('/', (req, res) => {
   res.send('hello world')
