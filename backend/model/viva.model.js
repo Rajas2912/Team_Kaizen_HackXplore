@@ -15,6 +15,10 @@ const vivaSchema =mongoose.Schema({
         type:Date,
         required:[true,"provide date"]
     },
+    status: {
+        type: Boolean,
+        default: true, 
+    },
     questionAnswerSet:[
     {
         questionText: { type: String, required: true },

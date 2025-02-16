@@ -6,15 +6,13 @@ export const getVivaResultByVivaId = async (req, res) => {
         const { vivaid } = req.params;  // Extract vivaId from URL
         console.log("Received Viva ID:", vivaid);
 
-        // Validate ObjectId format
-        if (!mongoose.Types.ObjectId.isValid(vivaid)) {
-            return res.status(400).json({ 
-                message: "Invalid Viva ID format", 
-                success: false 
-            });
-        }
+        // If vivaId is stored as an ObjectId, convert it
+        const query = mongoose.Types.ObjectId.isValid(vivaid) 
+            ? { vivaId: new mongoose.Types.ObjectId(vivaid) } 
+            : { vivaId: vivaid };
 
-        const vivaResults = await VivaResult.findById(vivaid);
+        const vivaResults = await VivaResult.findOne(query);
+        console.log(vivaResults);
 
         if (!vivaResults) {
             return res.status(404).json({ 

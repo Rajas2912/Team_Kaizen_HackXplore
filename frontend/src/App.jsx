@@ -7,7 +7,6 @@ import Login from './pagesPP/login.jsx'
 import RegisterForm from './pagesPP/Register.jsx'
 import PrivateRoute from './PrivateRoutes.jsx'
 import ClassPage from './pagesKM/Pages/ClassPage.jsx'
-import ShowViva from './pagesPP/Viva/ShowViva.jsx'
 
 function App() {
   return (
@@ -19,7 +18,6 @@ function App() {
         <Route path="" element={<PrivateRoute />}>
           <Route path="/main" element={<Main />} />
           <Route path="/home" element={<Home />} />
-          <Route path="/viva-create" element={<ShowViva />} />
           <Route path="/class/:id" element={<ClassPage />} />
         </Route>
       </Routes>

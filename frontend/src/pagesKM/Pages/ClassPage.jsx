@@ -23,6 +23,8 @@ import PeopleAltIcon from '@mui/icons-material/PeopleAlt'
 import AssignmentIcon from '@mui/icons-material/Assignment'
 import MenuIcon from '@mui/icons-material/Menu'
 import { useNavigate } from 'react-router-dom'
+import CreateViva from '../../pagesPP/Viva/CreateViva'
+import ShowAllViva from '../../pagesPP/Viva/AllVivaById'
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props
 
@@ -148,7 +150,7 @@ const ClassPage = ({ classId }) => {
           Quizzes
         </CustomTabPanel>
         <CustomTabPanel value={value} index={3}>
-          Viva Assignment
+        <ShowAllViva classId={classId} />
         </CustomTabPanel>
       </Box>
     </>
