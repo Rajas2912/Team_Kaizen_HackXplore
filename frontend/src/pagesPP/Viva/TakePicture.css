@@ -1,0 +1,164 @@
+/* General styles for the container */
+.take-picture-container {
+    min-height: 75vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    color: white;
+    padding: 1rem;
+}
+
+/* Styles for the main content box */
+.content-box {
+    background-color: #f3f4f6; /* Light gray background */
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    width: 100%;
+    max-width: 32rem; /* Adjust as needed */
+}
+
+/* Styles for the heading */
+.heading {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 0;
+    margin-top: 0;
+    text-align: center;
+    color: black;
+}
+
+/* Styles for the subheading */
+.subheading {
+    font-size: 1rem;
+    color: black;
+    text-align: center;
+    padding-bottom: 0.5rem;
+}
+
+/* Styles for the video container */
+.video-container {
+    position: relative;
+    width: 100%;
+    height: 16rem; /* Adjust as needed */
+    background-color: black;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+/* Styles for the video element */
+.video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Styles for the button container */
+.button-container {
+    margin-top: 1rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+/* General button styles */
+.button {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+/* Start Camera button */
+.start-camera-button {
+    background-color: #2563eb; /* Blue */
+    color: white;
+}
+
+.start-camera-button:hover {
+    background-color: #1d4ed8; /* Darker blue */
+}
+
+/* Capture Image button */
+.capture-image-button {
+    background-color: #16a34a; /* Green */
+    color: white;
+}
+
+.capture-image-button:hover {
+    background-color: #15803d; /* Darker green */
+}
+
+/* Process Image button */
+.process-image-button {
+    background-color: #16a34a; /* Green */
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.process-image-button:hover {
+    background-color: #15803d; /* Darker green */
+}
+
+/* Captured image styles */
+.captured-image-container {
+    margin-top: 0.5rem;
+}
+
+.captured-image-heading {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: black;
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.captured-image {
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 0 auto;
+    display: block;
+}
+
+/* Hidden canvas */
+.hidden-canvas {
+    display: none;
+}
+
+/* Backdrop for loading spinner */
+.backdrop {
+    background-color: rgba(255, 255, 255, 0.8);
+    z-index: 1000;
+}
+
+/* Loading spinner */
+.loading-spinner {
+    color: #2563eb; /* Blue */
+}
+
+/* Back Button Styles */
+.back-button {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: #2563eb; /* Blue */
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+  }
+  
+  .back-button:hover {
+    background-color: #1d4ed8; /* Darker blue */
+  }

@@ -32,6 +32,9 @@ import { useSelector } from 'react-redux'
 import AssignmentPage from './AssignmentPage'
 import CommunityPage from './communityPage'
 
+import CreateViva from '../../pagesPP/Viva/CreateViva'
+import ShowAllViva from '../../pagesPP/Viva/AllVivaById'
+import TakePicture from '../../pagesPP/Viva/TakePicture'
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props
 
@@ -66,13 +69,14 @@ const ClassPage = ({ classId }) => {
   const navigate = useNavigate()
   const [value, setValue] = useState(0)
   const [openModal, setOpenModal] = useState(false)
-  const { userInfo } = useSelector((state) => state.user)
+  const { userInfo  } = useSelector((state) => state.user)
   const [lectureData, setLectureData] = useState({
     title: '',
     description: '',
     youtubeLink: '',
     video: null,
   })
+  console.log(userInfo.role);
   const [uploadLecture] = useUploadLectureMutation()
   const { data: lectures, refetch } = useGetLecturesByClassQuery(classId)
   const [deleteLecture] = useDeleteLectureMutation()
@@ -172,8 +176,10 @@ const ClassPage = ({ classId }) => {
   if (isLoading) return <div className="loading">Loading class details...</div>
   if (error) return <div className="error">Error loading class details</div>
 
+  
   return (
     <>
+   
       <Box sx={{ width: '100%' }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs
@@ -299,7 +305,7 @@ const ClassPage = ({ classId }) => {
 
         {/* Viva Assignment Tab */}
         <CustomTabPanel value={value} index={3}>
-          <Typography>Viva Assignments will be listed here.</Typography>
+         <ShowAllViva classId={classId}/>
         </CustomTabPanel>
 
         {/* community Tab */}
