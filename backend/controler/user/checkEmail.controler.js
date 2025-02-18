@@ -1,5 +1,5 @@
 // if login then verify user exist or ot 
-import User from "../model/user.model.js";
+import User from "../../model/user.model.js";
 export const checkEmail=async(req,res)=>{
  try {
     const {email}=req.body;

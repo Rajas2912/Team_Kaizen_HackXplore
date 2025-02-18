@@ -1,4 +1,4 @@
-import { getUserDetailsFromToken } from "../helper/getUserDetailsFromToken.js";
+import { getUserDetailsFromToken } from "../../helper/getUserDetailsFromToken.js";
 //  get deatils of user from token in cookie 
 export const UserDetails=async(req,res)=>{
     try {

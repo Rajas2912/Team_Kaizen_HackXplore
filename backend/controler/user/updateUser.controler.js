@@ -1,5 +1,5 @@
-import { getUserDetailsFromToken } from "../helper/getUserDetailsFromToken.js";
-import User from "../model/user.model.js";
+import { getUserDetailsFromToken } from "../../helper/getUserDetailsFromToken.js";
+import User from "../../model/user.model.js";
 
 export const updateUser = async (req, res) => {
   try {

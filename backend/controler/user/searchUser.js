@@ -1,4 +1,4 @@
-import User from "../model/user.model.js";
+import User from "../../model/user.model.js";
 export const searchUser=async(req,res)=>{
     try {
         const {search}=req.body

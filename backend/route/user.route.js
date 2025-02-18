@@ -1,12 +1,12 @@
 import express from "express";
 const router=express.Router();
-import { register } from "../controler/user.registration.js";
-import { checkEmail } from "../controler/checkEmail.controler.js";
-import {login} from "../controler/login.controler.js";
-import {UserDetails} from "../controler/userDetails.controler.js"
-import { logout } from "../controler/logout.controler.js";
-import { updateUser } from "../controler/updateUser.controler.js";
-import { searchUser } from "../controler/searchUser.js";
+import { register } from "../controler/user/user.registration.js";
+import { checkEmail } from "../controler/user/checkEmail.controler.js";
+import {login} from "../controler/user/login.controler.js";
+import {UserDetails} from "../controler/user/userDetails.controler.js"
+import { logout } from "../controler/user/logout.controler.js";
+import { updateUser } from "../controler/user/updateUser.controler.js";
+import { searchUser } from "../controler/user/searchUser.js";
 // for registration 
 router.post("/register", register);
 
