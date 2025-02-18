@@ -32,10 +32,12 @@ const classApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Class'],
     }),
+
     deleteClass: builder.mutation({
-      query: (classId) => ({
+      query: ({ classId, teacherId }) => ({
         url: `${CLASS_URL}/delete/${classId}`,
         method: 'DELETE',
+        body: { teacherId }, // Pass teacherId in the body
         credentials: 'include',
       }),
       invalidatesTags: ['Class'],

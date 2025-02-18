@@ -3,7 +3,7 @@ import { useCreateClassMutation } from '../../redux/api/classApiSlice'
 import './CreateClass.css' // Import the CSS file
 import { useSelector } from 'react-redux'
 
-const CreateClass = ({ onClose }) => {
+const CreateClass = ({ onClose, refetch }) => {
   const { userInfo } = useSelector((state) => state.user)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -21,6 +21,7 @@ const CreateClass = ({ onClose }) => {
     } catch (err) {
       console.error('Failed to create class:', err)
     }
+    refetch()
   }
 
   return (

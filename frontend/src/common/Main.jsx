@@ -122,7 +122,7 @@ export default function Main(props) {
       icon: <DashboardIcon />,
     },
     {
-      segment: 'home',
+      segment: 'class',
       title: 'Home',
       icon: <HomeIcon />,
     },
@@ -292,7 +292,7 @@ export default function Main(props) {
           }}
         >
           {router.pathname == '/dashboard' && <DashboardPage />}
-          {router.pathname == '/home' && (
+          {router.pathname == '/class' && (
             <AllTeaching useDemoRouter={useDemoRouter} />
           )}
           {router.pathname == '/createClass' && <CreateClass />}

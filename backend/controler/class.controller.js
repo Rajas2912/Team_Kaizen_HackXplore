@@ -89,8 +89,8 @@ export const updateClass = async (req, res) => {
 export const deleteClass = async (req, res) => {
   try {
     const { classId } = req.params
-    const teacherId = req.user.id
-
+    const teacherId = req.body.teacherId
+    // console.log(classId)
     const classData = await Class.findById(classId)
     if (!classData) return res.status(404).json({ message: 'Class not found' })
 

@@ -1,6 +1,11 @@
 import React, { useState } from 'react'
 import './ClassPage.css'
-import { useGetClassDetailsQuery } from '../../redux/api/classApiSlice'
+import {
+  useGetClassDetailsQuery,
+  useUpdateClassMutation,
+  useDeleteClassMutation,
+  useLeaveClassMutation,
+} from '../../redux/api/classApiSlice'
 import {
   Box,
   Typography,
@@ -12,18 +17,24 @@ import {
   Card,
   CardContent,
   CardActions,
+  Snackbar,
+  Alert,
 } from '@mui/material'
 import PropTypes from 'prop-types'
 import { useNavigate } from 'react-router-dom'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
 import {
+  useDeleteLectureMutation,
   useGetLecturesByClassQuery,
   useUploadLectureMutation,
 } from '../../redux/api/lectureApiSlice'
 import { useSelector } from 'react-redux'
+import AssignmentPage from './AssignmentPage'
+import CommunityPage from './communityPage'
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props
+
   return (
     <div
       role="tabpanel"
@@ -63,14 +74,18 @@ const ClassPage = ({ classId }) => {
     video: null,
   })
   const [uploadLecture] = useUploadLectureMutation()
-  const { data: lectures } = useGetLecturesByClassQuery(classId)
+  const { data: lectures, refetch } = useGetLecturesByClassQuery(classId)
+  const [deleteLecture] = useDeleteLectureMutation()
+  const [updateClass] = useUpdateClassMutation()
+  const [deleteClass] = useDeleteClassMutation()
+  const [leaveClass] = useLeaveClassMutation()
+  const [snackbarOpen, setSnackbarOpen] = useState(false)
+  const [snackbarMessage, setSnackbarMessage] = useState('')
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success')
 
   const handleChange = (event, newValue) => {
     setValue(newValue)
   }
-
-  if (isLoading) return <div className="loading">Loading class details...</div>
-  if (error) return <div className="error">Error loading class details</div>
 
   const handleUploadLecture = () => {
     setOpenModal(true)
@@ -94,12 +109,69 @@ const ClassPage = ({ classId }) => {
     formData.append('teacherId', userInfo._id)
     try {
       await uploadLecture(formData).unwrap()
-      console.log('Lecture uploaded successfully')
+      setSnackbarMessage('Lecture uploaded successfully')
+      setSnackbarSeverity('success')
+      setSnackbarOpen(true)
       setOpenModal(false)
+      refetch() // Refetch lectures after upload
     } catch (error) {
-      console.error('Error uploading lecture:', error)
+      setSnackbarMessage('Error uploading lecture')
+      setSnackbarSeverity('error')
+      setSnackbarOpen(true)
+    }
+    setLectureData({ title: '', description: '', youtubeLink: '', video: null })
+  }
+
+  const handleDeleteLecture = async (lectureId) => {
+    try {
+      await deleteLecture(lectureId).unwrap()
+      setSnackbarMessage('Lecture deleted successfully')
+      setSnackbarSeverity('success')
+      setSnackbarOpen(true)
+      refetch() // Refetch lectures after deletion
+    } catch (error) {
+      setSnackbarMessage('Error deleting lecture')
+      setSnackbarSeverity('error')
+      setSnackbarOpen(true)
     }
   }
+
+  const handleDeleteClass = async () => {
+    try {
+      const teacherId = userInfo._id // Get the teacherId from the logged-in user
+      await deleteClass({ classId, teacherId }).unwrap() // Pass both classId and teacherId
+      setSnackbarMessage('Class deleted successfully')
+      setSnackbarSeverity('success')
+      setSnackbarOpen(true)
+      navigate('/main') // Navigate to home after deletion
+    } catch (error) {
+      setSnackbarMessage('Error deleting class')
+      setSnackbarSeverity('error')
+      setSnackbarOpen(true)
+    }
+  }
+
+  const handleLeaveClass = async () => {
+    try {
+      await leaveClass(classId).unwrap()
+      setSnackbarMessage('Left class successfully')
+      setSnackbarSeverity('success')
+      setSnackbarOpen(true)
+      navigate('/') // Navigate to home after leaving
+    } catch (error) {
+      setSnackbarMessage('Error leaving class')
+      setSnackbarSeverity('error')
+      setSnackbarOpen(true)
+    }
+  }
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false)
+  }
+
+  if (isLoading) return <div className="loading">Loading class details...</div>
+  if (error) return <div className="error">Error loading class details</div>
+
   return (
     <>
       <Box sx={{ width: '100%' }}>
@@ -113,10 +185,10 @@ const ClassPage = ({ classId }) => {
             <Tab label="Assignments" {...a11yProps(1)} />
             <Tab label="Quizzes" {...a11yProps(2)} />
             <Tab label="Viva Assignment" {...a11yProps(3)} />
+            <Tab label="Community" {...a11yProps(4)} />
           </Tabs>
         </Box>
 
-        {/* Lectures Tab */}
         <CustomTabPanel value={value} index={0}>
           <div className="class-container">
             <section className="class-header">
@@ -128,31 +200,54 @@ const ClassPage = ({ classId }) => {
                 Teacher: {classData?.classData?.teacher?.name}
               </p>
             </section>
-
-            <div className="action-buttons">
-              <Button
-                variant="contained"
-                startIcon={<UploadFileIcon />}
-                onClick={handleUploadLecture}
-              >
-                Upload Lecture
-              </Button>
-            </div>
+            {userInfo?.role === 'teacher' && (
+              <div className="action-buttons">
+                <Button
+                  variant="contained"
+                  startIcon={<UploadFileIcon />}
+                  onClick={handleUploadLecture}
+                >
+                  Upload Lecture
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() =>
+                    confirm('Are you sure you want to delete class?') &&
+                    handleDeleteClass()
+                  }
+                >
+                  Delete Class
+                </Button>
+              </div>
+            )}
+            {userInfo?.role === 'student' && (
+              <div className="action-buttons">
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={handleLeaveClass}
+                >
+                  Leave Class
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="allLectures">
-            {lectures.lectures?.map((lecture) => (
+            {lectures?.lectures?.map((lecture) => (
               <Card key={lecture._id} className="lecture-card">
                 <CardContent>
-                  <Typography variant="h6">{lecture.title}</Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    {lecture.description}
+                  <Typography variant="h6">
+                    {lecture.title.length > 50
+                      ? `${lecture.title.substring(0, 50)}...`
+                      : lecture.title}
                   </Typography>
                   {lecture.youtubeLink && (
                     <div className="youtube-container">
                       <iframe
                         width="100%"
-                        height="200"
+                        height="260"
                         src={lecture.youtubeLink
                           .replace('watch?v=', 'embed/')
                           .replace('youtu.be/', 'www.youtube.com/embed/')}
@@ -163,23 +258,41 @@ const ClassPage = ({ classId }) => {
                       ></iframe>
                     </div>
                   )}
+                  <Typography variant="body2" color="textSecondary">
+                    {lecture.description.length > 200
+                      ? `${lecture.description.substring(0, 100)}...`
+                      : lecture.description}
+                  </Typography>
                 </CardContent>
                 <CardActions>
-                  <Button size="small" color="primary">
-                    View Details
+                  <Button
+                    size="small"
+                    color="primary"
+                    onClick={() => navigate(`/lecture/${lecture._id}`)}
+                  >
+                    Attend Lecture
                   </Button>
+                  {userInfo.role === 'teacher' && (
+                    <Button
+                      size="small"
+                      color="error"
+                      onClick={() => handleDeleteLecture(lecture._id)}
+                    >
+                      Delete Lecture
+                    </Button>
+                  )}
                 </CardActions>
               </Card>
             ))}
           </div>
         </CustomTabPanel>
 
-        {/* Assignments Tab */}
         <CustomTabPanel value={value} index={1}>
-          <Typography>Assignments will be listed here.</Typography>
+          <Typography>
+            <AssignmentPage classId={classId} />
+          </Typography>
         </CustomTabPanel>
 
-        {/* Quizzes Tab */}
         <CustomTabPanel value={value} index={2}>
           <Typography>Quizzes will be listed here.</Typography>
         </CustomTabPanel>
@@ -187,6 +300,13 @@ const ClassPage = ({ classId }) => {
         {/* Viva Assignment Tab */}
         <CustomTabPanel value={value} index={3}>
           <Typography>Viva Assignments will be listed here.</Typography>
+        </CustomTabPanel>
+
+        {/* community Tab */}
+        <CustomTabPanel value={value} index={4}>
+          <Typography>
+            <CommunityPage classId={classId} />
+          </Typography>
         </CustomTabPanel>
       </Box>
 
@@ -234,6 +354,21 @@ const ClassPage = ({ classId }) => {
           </div>
         </Box>
       </Modal>
+
+      {/* Snackbar for Notifications */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </>
   )
 }

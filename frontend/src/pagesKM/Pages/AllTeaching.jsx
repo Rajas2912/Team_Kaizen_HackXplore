@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom'
 
 const AllTeaching = ({ navigate }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const { data, isLoading, error } = useGetAllClassesQuery()
+  const { data, isLoading, error, refetch } = useGetAllClassesQuery()
 
   if (isLoading) return <p>Loading classes...</p>
   if (error) return <p>Error fetching classes</p>
@@ -31,7 +31,7 @@ const AllTeaching = ({ navigate }) => {
         fullWidth
         maxWidth="sm"
       >
-        <CreateClass onClose={() => setIsModalOpen(false)} />
+        <CreateClass refetch={refetch} onClose={() => setIsModalOpen(false)} />
       </Dialog>
 
       <div className="classList">
