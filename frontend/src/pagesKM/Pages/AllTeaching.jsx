@@ -47,6 +47,7 @@ const AllTeaching = ({ navigate }) => {
     } catch (error) {
       alert(error.data?.message || 'Failed to join class.') // Show error message
     }
+    setClassCode('')
   }
 
   if (isLoading) return <p>Loading classes...</p>
@@ -95,11 +96,12 @@ const AllTeaching = ({ navigate }) => {
         <DialogTitle>Join Class</DialogTitle>
         <DialogContent>
           <TextField
-            fullWidth
+            name="classCode"
             label="Enter Class Code"
+            fullWidth
+            margin="dense"
             value={classCode}
             onChange={(e) => setClassCode(e.target.value)}
-            sx={{ mt: 2 }}
           />
         </DialogContent>
         <DialogActions>

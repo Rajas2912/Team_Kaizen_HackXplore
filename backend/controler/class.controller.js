@@ -125,11 +125,10 @@ export const getClassDetails = async (req, res) => {
     res.status(500).json({ message: 'Server Error', error })
   }
 }
-
 export const leaveClass = async (req, res) => {
   try {
     const { classId } = req.params
-    const studentId = req.user.id
+    const { studentId } = req.body // Extract from body, not params
 
     const classData = await Class.findById(classId)
     if (!classData) return res.status(404).json({ message: 'Class not found' })
@@ -142,10 +141,10 @@ export const leaveClass = async (req, res) => {
 
     res.status(200).json({ message: 'Left the class successfully' })
   } catch (error) {
+    console.log(error)
     res.status(500).json({ message: 'Server Error', error })
   }
 }
-
 export const getAllClasses = async (req, res) => {
   try {
     const { userId } = req.body
@@ -166,5 +165,37 @@ export const getAllClasses = async (req, res) => {
   } catch (error) {
     console.log(error)
     res.status(500).json({ message: 'Server Error', error })
+  }
+}
+
+export const getAllStudentsWithClassInfo = async (req, res) => {
+  try {
+    // Find all classes and populate the 'students' field with user details
+    const classes = await Class.find({})
+      .populate({
+        path: 'students',
+        select: 'name email', // Only select name and email fields from the User model
+      })
+      .select('name students') // Only select class name and students array
+
+    // Format the response to include student details and class name
+    const result = classes.flatMap((cls) =>
+      cls.students.map((student) => ({
+        studentName: student.name,
+        studentEmail: student.email,
+        className: cls.name,
+      }))
+    )
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    })
+  } catch (error) {
+    console.error('Error fetching students with class info:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch students with class info',
+    })
   }
 }

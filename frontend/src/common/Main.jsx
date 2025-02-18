@@ -37,6 +37,7 @@ import logo from './../assets/logo.png'
 import CreateClass from '../pagesKM/Pages/CreateClass'
 import { useGetAllClassesQuery } from '../redux/api/classApiSlice'
 import ClassPage from '../pagesKM/Pages/ClassPage'
+import UsersPage from '../pagesKM/Pages/UsersPage'
 
 const demoTheme = extendTheme({
   colorSchemes: { light: true },
@@ -109,7 +110,8 @@ function CustomAppTitle() {
 }
 
 export default function Main(props) {
-  const { data, isLoading, error } = useGetAllClassesQuery()
+  const { userInfo } = useSelector((state) => state.user)
+  const { data, isLoading, error } = useGetAllClassesQuery(userInfo._id)
 
   const NAVIGATION = [
     {
@@ -131,7 +133,7 @@ export default function Main(props) {
     },
     {
       kind: 'header',
-      title: 'Teaching & Assessments',
+      title: 'Teaching, Attendance & Scheduling',
     },
     {
       segment: 'class',
@@ -144,28 +146,6 @@ export default function Main(props) {
               title: classItem.name,
             }))
           : [], // Default to an empty array if invalid
-    },
-    {
-      segment: 'assignments',
-      title: 'Assignments',
-      icon: <DescriptionIcon />,
-    },
-    {
-      segment: 'quizzes',
-      title: 'Quizzes',
-      icon: <BarChartIcon />,
-    },
-    {
-      segment: 'viva',
-      title: 'Viva Assessment',
-      icon: <MicIcon />,
-    },
-    {
-      kind: 'divider',
-    },
-    {
-      kind: 'header',
-      title: 'Attendance & Scheduling',
     },
     {
       segment: 'attendance',
@@ -241,7 +221,7 @@ export default function Main(props) {
   ]
 
   const { window } = props
-  const { userInfo } = useSelector((state) => state.user)
+
   const router = useDemoRouter('/dashboard')
   const demoWindow = window !== undefined ? window() : undefined
   console.log({ router: router })
@@ -301,6 +281,7 @@ export default function Main(props) {
           {router.pathname == '/attendance' && <AllTeaching />}
           {router.pathname == '/timetable' && <AllTeaching />}
           {router.pathname == '/progress-tracking' && <AllTeaching />}
+          {router.pathname == '/students' && <UsersPage />}
           {router.pathname?.startsWith('/class/') && (
             <ClassPage classId={router.pathname.split('/')[2]} />
           )}

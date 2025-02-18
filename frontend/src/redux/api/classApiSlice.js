@@ -32,7 +32,6 @@ const classApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Class'],
     }),
-
     deleteClass: builder.mutation({
       query: ({ classId, teacherId }) => ({
         url: `${CLASS_URL}/delete/${classId}`,
@@ -57,14 +56,23 @@ const classApiSlice = apiSlice.injectEndpoints({
       }),
       providesTags: ['Class'], // Optional: For caching and invalidation
     }),
-
     leaveClass: builder.mutation({
-      query: (classId) => ({
+      query: ({ classId, studentId }) => ({
         url: `${CLASS_URL}/leave/${classId}`,
         method: 'PUT',
+        body: { studentId },
         credentials: 'include',
       }),
       invalidatesTags: ['Class'],
+    }),
+
+    // New endpoint to get all students with their names, emails, and class names
+    getAllStudentsWithClassInfo: builder.query({
+      query: () => ({
+        url: `${CLASS_URL}/students`,
+        credentials: 'include',
+      }),
+      providesTags: ['Class'], // Optional: For caching and invalidation
     }),
   }),
 })
@@ -77,4 +85,5 @@ export const {
   useGetClassDetailsQuery,
   useLeaveClassMutation,
   useGetAllClassesQuery,
+  useGetAllStudentsWithClassInfoQuery,
 } = classApiSlice

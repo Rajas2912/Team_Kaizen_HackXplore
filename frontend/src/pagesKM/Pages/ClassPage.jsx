@@ -69,14 +69,14 @@ const ClassPage = ({ classId }) => {
   const navigate = useNavigate()
   const [value, setValue] = useState(0)
   const [openModal, setOpenModal] = useState(false)
-  const { userInfo  } = useSelector((state) => state.user)
+  const { userInfo } = useSelector((state) => state.user)
   const [lectureData, setLectureData] = useState({
     title: '',
     description: '',
     youtubeLink: '',
     video: null,
   })
-  console.log(userInfo.role);
+  console.log(userInfo.role)
   const [uploadLecture] = useUploadLectureMutation()
   const { data: lectures, refetch } = useGetLecturesByClassQuery(classId)
   const [deleteLecture] = useDeleteLectureMutation()
@@ -157,15 +157,15 @@ const ClassPage = ({ classId }) => {
 
   const handleLeaveClass = async () => {
     try {
-      await leaveClass(classId).unwrap()
+      await leaveClass({ classId, studentId: userInfo._id }).unwrap()
       setSnackbarMessage('Left class successfully')
       setSnackbarSeverity('success')
       setSnackbarOpen(true)
-      navigate('/') // Navigate to home after leaving
+      navigate('/main')
     } catch (error) {
       setSnackbarMessage('Error leaving class')
       setSnackbarSeverity('error')
-      setSnackbarOpen(true)
+      setSnackbarOpen(true) // Show error message
     }
   }
 
@@ -176,10 +176,8 @@ const ClassPage = ({ classId }) => {
   if (isLoading) return <div className="loading">Loading class details...</div>
   if (error) return <div className="error">Error loading class details</div>
 
-  
   return (
     <>
-   
       <Box sx={{ width: '100%' }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs
@@ -232,7 +230,10 @@ const ClassPage = ({ classId }) => {
                 <Button
                   variant="contained"
                   color="error"
-                  onClick={handleLeaveClass}
+                  onClick={() =>
+                    confirm('Are you sure you want to leave this class?') &&
+                    handleLeaveClass()
+                  }
                 >
                   Leave Class
                 </Button>
@@ -305,7 +306,7 @@ const ClassPage = ({ classId }) => {
 
         {/* Viva Assignment Tab */}
         <CustomTabPanel value={value} index={3}>
-         <ShowAllViva classId={classId}/>
+          <ShowAllViva classId={classId} />
         </CustomTabPanel>
 
         {/* community Tab */}

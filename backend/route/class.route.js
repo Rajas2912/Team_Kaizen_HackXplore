@@ -7,6 +7,7 @@ import {
   getClassDetails,
   leaveClass,
   getAllClasses,
+  getAllStudentsWithClassInfo,
 } from '../controler/class.controller.js'
 import { authenticate } from '../middlewares/authMiddleware.js' // Assuming authentication
 
@@ -14,6 +15,7 @@ const router = express.Router()
 
 router.post('/create', authenticate, createClass)
 router.post('/getAllClasses', authenticate, getAllClasses)
+router.get('/students', getAllStudentsWithClassInfo)
 router.post('/join', authenticate, joinClass)
 router.put('/update/:classId', authenticate, updateClass) // Update class (Teacher only)
 router.delete('/delete/:classId', authenticate, deleteClass) // Delete class (Teacher only)
