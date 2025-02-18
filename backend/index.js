@@ -9,6 +9,7 @@ import vivaRoute from "./route/viva.route.js"
 import VivaResult from './route/vivaresult.route.js'
 import classRoute from './route/class.route.js'
 import connectDB from './config/connectDB.js'
+import lectureRoute from './route/lecture.route.js'
 const Frontend_URL = process.env.Frontend_URL
 
 connectDB()
@@ -29,6 +30,7 @@ app.use('/user', registerRoute)
 app.use('/viva', vivaRoute);
 app.use('/vivaresult', VivaResult);
 app.use('/class', classRoute)
+app.use('/lecture', lectureRoute)
 
 app.get('/', (req, res) => {
   res.send('hello world')

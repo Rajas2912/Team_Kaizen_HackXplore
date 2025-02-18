@@ -7,6 +7,8 @@ import Login from './pagesPP/login.jsx'
 import RegisterForm from './pagesPP/Register.jsx'
 import PrivateRoute from './PrivateRoutes.jsx'
 import ClassPage from './pagesKM/Pages/ClassPage.jsx'
+import TakePicture from './pagesPP/Viva/TakePicture.jsx'
+import GiveViva from './pagesPP/Viva/GiveViva.jsx'
 
 function App() {
   return (
@@ -18,6 +20,8 @@ function App() {
         <Route path="" element={<PrivateRoute />}>
           <Route path="/main" element={<Main />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/takepicture/:vivaId" element={<TakePicture/>} />
+          <Route path="/give-viva/:vivaId" element={<GiveViva/>} />
           <Route path="/class/:id" element={<ClassPage />} />
         </Route>
       </Routes>

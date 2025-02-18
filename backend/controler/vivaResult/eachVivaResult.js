@@ -11,7 +11,7 @@ export const getVivaResultByVivaId = async (req, res) => {
             ? { vivaId: new mongoose.Types.ObjectId(vivaid) } 
             : { vivaId: vivaid };
 
-        const vivaResults = await VivaResult.findOne(query);
+        const vivaResults = await VivaResult.find(query);
         console.log(vivaResults);
 
         if (!vivaResults) {

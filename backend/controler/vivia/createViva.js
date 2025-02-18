@@ -1,10 +1,12 @@
 import Viva from "../../model/viva.model.js";
 export const  createViva=async(req,res)=>{
+    console.log(req.body);
     try {
-        const {classid,vivaname,timeofthinking,duedate,questionAnswerSet}=req.body;
+        const {classid,vivaname,timeofthinking,numberOfQuestionsToAsk,duedate,questionAnswerSet}=req.body;
         const newViva=await new Viva({
             classid,
             vivaname,
+            numberOfQuestionsToAsk,
             timeofthinking,
             duedate,
             questionAnswerSet

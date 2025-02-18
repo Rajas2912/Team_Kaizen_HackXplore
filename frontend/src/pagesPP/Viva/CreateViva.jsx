@@ -3,10 +3,10 @@ import * as XLSX from "xlsx";
 import axios from "axios";
 import { FaUpload, FaTimes } from "react-icons/fa";
 import "./CreateViva.css";
+
 const API = import.meta.env.VITE_BACKEND_URL;
 
-
-const CreateViva = ({ onClose,classId }) => {
+const CreateViva = ({ onClose, classId }) => {
   const [vivaName, setVivaName] = useState("");
   const [timeOfThinking, setTimeOfThinking] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -14,6 +14,8 @@ const CreateViva = ({ onClose,classId }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [numberOfQuestionsToAsk, setNumberOfQuestionsToAsk] = useState("");
+  const [totalQuestions, setTotalQuestions] = useState(0);
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -36,6 +38,7 @@ const CreateViva = ({ onClose,classId }) => {
         .filter((q) => q.questionText && q.answer);
 
       setQuestionAnswerSet(formattedData);
+      setTotalQuestions(formattedData.length); // Update total number of questions
     };
     reader.readAsBinaryString(file);
   };
@@ -43,6 +46,7 @@ const CreateViva = ({ onClose,classId }) => {
   const handleRemoveFile = () => {
     setSelectedFile(null);
     setQuestionAnswerSet([]);
+    setTotalQuestions(0); // Reset total questions
     document.getElementById("fileInput").value = ""; // Clear input field
   };
 
@@ -51,6 +55,15 @@ const CreateViva = ({ onClose,classId }) => {
     setIsLoading(true);
     setError(null);
 
+    // Validate number of questions to ask
+    if (numberOfQuestionsToAsk > totalQuestions) {
+      setError(
+        `Number of questions to ask (${numberOfQuestionsToAsk}) cannot be greater than total questions (${totalQuestions}).`
+      );
+      setIsLoading(false);
+      return;
+    }
+
     try {
       await axios.post(`${API}/viva/createViva`, {
         classid: classId,
@@ -58,12 +71,15 @@ const CreateViva = ({ onClose,classId }) => {
         timeofthinking: Number(timeOfThinking),
         duedate: dueDate,
         questionAnswerSet,
+        numberOfQuestionsToAsk: Number(numberOfQuestionsToAsk), // Add this field
       });
       setVivaName("");
       setTimeOfThinking("");
       setDueDate("");
       setQuestionAnswerSet([]);
       setSelectedFile(null);
+      setNumberOfQuestionsToAsk("");
+      setTotalQuestions(0);
       onClose();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create viva");
@@ -103,6 +119,20 @@ const CreateViva = ({ onClose,classId }) => {
             required
           />
         </div>
+        <div>
+          <label>Number of Questions to Ask:</label>
+          <input
+            type="number"
+            value={numberOfQuestionsToAsk}
+            onChange={(e) => setNumberOfQuestionsToAsk(e.target.value)}
+            required
+            min="1"
+            max={totalQuestions} // Ensure it doesn't exceed total questions
+          />
+          <small>
+            Total Questions in Uploaded File: {totalQuestions}
+          </small>
+        </div>
         {/* Upload File Button */}
         <div className="upload-container">
           <input
@@ -133,20 +163,6 @@ const CreateViva = ({ onClose,classId }) => {
             </div>
           )}
         </div>
-{/*         {/* Display Uploaded Questions
-        {questionAnswerSet.length > 0 && (
-          <div className="csv-preview">
-            <h4>Uploaded Questions:</h4>
-            <ul>
-              {questionAnswerSet.map((qa, index) => (
-                <li key={index}>
-                  <strong>Q:</strong> {qa.questionText} <br />
-                  <strong>A:</strong> {qa.answer}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )} */} 
         <button type="submit" disabled={isLoading}>
           {isLoading ? "Creating..." : "Create Viva"}
         </button>

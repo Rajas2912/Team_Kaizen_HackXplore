@@ -12,7 +12,7 @@ const QuestionAnswerSetSchema = new mongoose.Schema({
     questionText: { type: String, required: true },   // Question asked
     modelAnswer: { type: String, required: true },    // Expected answer
     studentAnswer: { type: String, required: true },  // Student's response
-    markOfQuestion: { type: Number, required: true }  // Marks assigned to this question
+    evalution: { type: String, required: true }  
 });
 
 const VivaResultSchema = new mongoose.Schema({

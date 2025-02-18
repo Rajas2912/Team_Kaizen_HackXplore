@@ -11,6 +11,10 @@ const vivaSchema =mongoose.Schema({
         type:Number,
         required:[true,"provide time"]
     },
+    numberOfQuestionsToAsk:{
+        type:Number,
+        required:[true,"provide no of question"]
+    },
     duedate:{
         type:Date,
         required:[true,"provide date"]
