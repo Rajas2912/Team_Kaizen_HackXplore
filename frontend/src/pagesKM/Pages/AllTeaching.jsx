@@ -3,26 +3,38 @@ import React, { useState } from 'react'
 import { FaPlus } from 'react-icons/fa'
 import CreateClass from './CreateClass'
 import './AllTeaching.css'
-import { useGetAllClassesQuery } from '../../redux/api/classApiSlice'
+import {
+  useGetAllClassesQuery,
+  useJoinClassMutation,
+} from '../../redux/api/classApiSlice'
 import { Link } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 
 const AllTeaching = ({ navigate }) => {
+  const { userInfo } = useSelector((state) => state.user)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { data, isLoading, error, refetch } = useGetAllClassesQuery()
-
+  const [joinClass] = useJoinClassMutation()
   if (isLoading) return <p>Loading classes...</p>
   if (error) return <p>Error fetching classes</p>
 
   return (
     <section>
       <div className="buttonContainer">
-        <Button
-          variant="contained"
-          endIcon={<FaPlus />}
-          onClick={() => setIsModalOpen(true)}
-        >
-          Create Class
-        </Button>
+        {userInfo.role == 'teacher' && (
+          <Button
+            variant="contained"
+            endIcon={<FaPlus />}
+            onClick={() => setIsModalOpen(true)}
+          >
+            Create Class
+          </Button>
+        )}
+        {userInfo.role == 'student' && (
+          <Button variant="contained" endIcon={<FaPlus />}>
+            Join Class
+          </Button>
+        )}
       </div>
 
       <Dialog
@@ -33,7 +45,6 @@ const AllTeaching = ({ navigate }) => {
       >
         <CreateClass refetch={refetch} onClose={() => setIsModalOpen(false)} />
       </Dialog>
-
       <div className="classList">
         {data?.classes?.length > 0 ? (
           data.classes.map((classItem) => (

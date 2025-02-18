@@ -212,141 +212,141 @@ const CommunityPage = ({ classId }) => {
         <CircularProgress />
       ) : (
         <Box>
-          {posts?.data?.map(
-            (
-              post // Use optional chaining and fallback to an array
-            ) => (
-              <motion.div
-                key={post._id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <StyledCard>
-                  <CardContent>
-                    {/* Post Header */}
+          {posts?.data?.map((post) => (
+            <motion.div
+              key={post._id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <StyledCard>
+                <CardContent>
+                  {/* Post Header */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      mb: 2,
+                    }}
+                  >
+                    <Avatar
+                      src={`${BASE_URL}/uploads/${post.user.profile_pic}`}
+                    />
+                    <Box>
+                      <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+                        {post.user.name}
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        {new Date(post.createdAt).toLocaleDateString()}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {/* Post Content */}
+                  <Typography variant="body1" sx={{ mb: 2 }}>
+                    {post.description}
+                  </Typography>
+
+                  {/* Post Image */}
+                  {post.image && (
                     <Box
+                      component="img"
+                      src={`${post.image}`}
+                      alt="Post"
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 2,
+                        width: '400px',
+                        maxHeight: '300px',
+                        objectFit: 'cover',
+                        borderRadius: 2,
                         mb: 2,
                       }}
-                    >
-                      <Avatar
-                        src={`${BASE_URL}/uploads/${post.user.profile_pic}`}
+                    />
+                  )}
+
+                  {/* Post Actions */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <IconButton onClick={() => handleLikePost(post._id)}>
+                      <FavoriteIcon
+                        sx={{
+                          color: post.likes.includes(userInfo._id)
+                            ? 'red'
+                            : 'inherit',
+                        }}
                       />
-                      <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                          {post.user.name}
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          {new Date(post.createdAt).toLocaleDateString()}
-                        </Typography>
-                      </Box>
-                    </Box>
+                      <Typography sx={{ ml: 1 }}>
+                        {post.likes.length}
+                      </Typography>
+                    </IconButton>
+                    <IconButton onClick={() => toggleComments(post._id)}>
+                      <CommentIcon />
+                      <Typography sx={{ ml: 1 }}>
+                        {post.comments.length}
+                      </Typography>
+                    </IconButton>
+                  </Box>
 
-                    {/* Post Content */}
-                    <Typography variant="body1" sx={{ mb: 2 }}>
-                      {post.description}
-                    </Typography>
-
-                    {/* Post Image */}
-                    {post.image && (
-                      <Box
-                        component="img"
-                        src={`${post.image}`}
-                        alt="Post"
-                        sx={{ width: '100%', borderRadius: 2, mb: 2 }}
-                      />
-                    )}
-
-                    {/* Post Actions */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <IconButton onClick={() => handleLikePost(post._id)}>
-                        <FavoriteIcon
-                          sx={{
-                            color: post.likes.includes(userInfo._id)
-                              ? 'red'
-                              : 'inherit',
-                          }}
-                        />
-                        <Typography sx={{ ml: 1 }}>
-                          {post.likes.length}
-                        </Typography>
-                      </IconButton>
-                      <IconButton onClick={() => toggleComments(post._id)}>
-                        <CommentIcon />
-                        <Typography sx={{ ml: 1 }}>
-                          {post.comments.length}
-                        </Typography>
-                      </IconButton>
-                    </Box>
-
-                    {/* Comments Section */}
-                    <Collapse in={openComments[post._id]}>
-                      <Box sx={{ mt: 2 }}>
-                        {post.comments.map((comment) => (
-                          <Box
-                            key={comment._id}
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 2,
-                              mb: 2,
-                            }}
-                          >
-                            <Avatar
-                              src={`${BASE_URL}/uploads/${comment.user.profile_pic}`}
-                              sx={{ width: 24, height: 24 }}
-                            />
-                            <Box>
-                              <Typography
-                                variant="body2"
-                                sx={{ fontWeight: 'bold' }}
-                              >
-                                {comment.user.name}
-                              </Typography>
-                              <Typography variant="body2">
-                                {comment.text}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        ))}
-
-                        {/* Add Comment */}
+                  {/* Comments Section */}
+                  <Collapse in={openComments[post._id]}>
+                    <Box sx={{ mt: 2 }}>
+                      {post.comments.map((comment) => (
                         <Box
+                          key={comment._id}
                           sx={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: 2,
-                            mt: 2,
+                            mb: 2,
                           }}
                         >
                           <Avatar
-                            src={`${BASE_URL}/uploads/${userInfo.profile_pic}`}
+                            src={`${BASE_URL}/uploads/${comment.user.profile_pic}`}
                             sx={{ width: 24, height: 24 }}
                           />
-                          <TextField
-                            fullWidth
-                            placeholder="Add a comment..."
-                            value={commentContent}
-                            onChange={(e) => setCommentContent(e.target.value)}
-                            size="small"
-                          />
-                          <IconButton
-                            onClick={() => handleAddComment(post._id)}
-                          >
-                            <SendIcon />
-                          </IconButton>
+                          <Box>
+                            <Typography
+                              variant="body2"
+                              sx={{ fontWeight: 'bold' }}
+                            >
+                              {comment.user.name}
+                            </Typography>
+                            <Typography variant="body2">
+                              {comment.text}
+                            </Typography>
+                          </Box>
                         </Box>
+                      ))}
+
+                      {/* Add Comment */}
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 2,
+                          mt: 2,
+                        }}
+                      >
+                        <Avatar
+                          src={`${BASE_URL}/uploads/${userInfo.profile_pic}`}
+                          sx={{ width: 24, height: 24 }}
+                        />
+                        <TextField
+                          fullWidth
+                          placeholder="Add a comment..."
+                          value={commentContent}
+                          onChange={(e) => setCommentContent(e.target.value)}
+                          size="small"
+                        />
+                        <IconButton onClick={() => handleAddComment(post._id)}>
+                          <SendIcon />
+                        </IconButton>
                       </Box>
-                    </Collapse>
-                  </CardContent>
-                </StyledCard>
-              </motion.div>
-            )
-          )}
+                    </Box>
+                  </Collapse>
+                </CardContent>
+              </StyledCard>
+            </motion.div>
+          ))}
         </Box>
       )}
 
