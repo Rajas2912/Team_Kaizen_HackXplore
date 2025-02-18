@@ -35,8 +35,7 @@ export const createClass = async (req, res) => {
 
 export const joinClass = async (req, res) => {
   try {
-    const { classCode } = req.body
-    const studentId = req.user.id
+    const { classCode, studentId } = req.body
 
     // Find class by classCode
     const classData = await Class.findOne({ classCode })
@@ -55,6 +54,7 @@ export const joinClass = async (req, res) => {
 
     res.status(200).json({ message: 'Joined class successfully', classData })
   } catch (error) {
+    console.log(error)
     res.status(500).json({ message: 'Server Error', error })
   }
 }

@@ -55,6 +55,7 @@ const classApiSlice = apiSlice.injectEndpoints({
         body: { userId },
         credentials: 'include',
       }),
+      providesTags: ['Class'], // Optional: For caching and invalidation
     }),
 
     leaveClass: builder.mutation({

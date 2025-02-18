@@ -1,4 +1,14 @@
-import { Button, Dialog, Card, CardContent, Typography } from '@mui/material'
+import {
+  Button,
+  Dialog,
+  Card,
+  CardContent,
+  Typography,
+  TextField,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material'
 import React, { useState } from 'react'
 import { FaPlus } from 'react-icons/fa'
 import CreateClass from './CreateClass'
@@ -13,15 +23,39 @@ import { useSelector } from 'react-redux'
 const AllTeaching = ({ navigate }) => {
   const { userInfo } = useSelector((state) => state.user)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const { data, isLoading, error, refetch } = useGetAllClassesQuery()
-  const [joinClass] = useJoinClassMutation()
+  const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
+  const [classCode, setClassCode] = useState('')
+  const { data, isLoading, error, refetch } = useGetAllClassesQuery(
+    userInfo._id
+  )
+  const [joinClass, { isLoading: isJoining }] = useJoinClassMutation()
+
+  const handleJoinClass = async () => {
+    if (!classCode) {
+      alert('Please enter a class code.')
+      return
+    }
+
+    try {
+      const response = await joinClass({
+        classCode,
+        studentId: userInfo._id,
+      }).unwrap()
+      alert(response.message) // Show success message
+      setIsJoinModalOpen(false) // Close the join modal
+      refetch() // Refresh the class list
+    } catch (error) {
+      alert(error.data?.message || 'Failed to join class.') // Show error message
+    }
+  }
+
   if (isLoading) return <p>Loading classes...</p>
   if (error) return <p>Error fetching classes</p>
 
   return (
     <section>
       <div className="buttonContainer">
-        {userInfo.role == 'teacher' && (
+        {userInfo.role === 'teacher' && (
           <Button
             variant="contained"
             endIcon={<FaPlus />}
@@ -30,13 +64,18 @@ const AllTeaching = ({ navigate }) => {
             Create Class
           </Button>
         )}
-        {userInfo.role == 'student' && (
-          <Button variant="contained" endIcon={<FaPlus />}>
+        {userInfo.role === 'student' && (
+          <Button
+            variant="contained"
+            endIcon={<FaPlus />}
+            onClick={() => setIsJoinModalOpen(true)}
+          >
             Join Class
           </Button>
         )}
       </div>
 
+      {/* Create Class Dialog */}
       <Dialog
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -45,6 +84,38 @@ const AllTeaching = ({ navigate }) => {
       >
         <CreateClass refetch={refetch} onClose={() => setIsModalOpen(false)} />
       </Dialog>
+
+      {/* Join Class Dialog */}
+      <Dialog
+        open={isJoinModalOpen}
+        onClose={() => setIsJoinModalOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Join Class</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="Enter Class Code"
+            value={classCode}
+            onChange={(e) => setClassCode(e.target.value)}
+            sx={{ mt: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsJoinModalOpen(false)}>Cancel</Button>
+          <Button
+            onClick={handleJoinClass}
+            disabled={isJoining}
+            variant="contained"
+            color="primary"
+          >
+            {isJoining ? 'Joining...' : 'Join'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Class List */}
       <div className="classList">
         {data?.classes?.length > 0 ? (
           data.classes.map((classItem) => (
@@ -66,7 +137,6 @@ const AllTeaching = ({ navigate }) => {
                   <Typography className="studentCount">
                     Students: {classItem.students.length}
                   </Typography>
-                  {/* <button className="joinButton">Join Class</button> */}
                 </CardContent>
               </Card>
             </div>
