@@ -44,7 +44,7 @@ import axios from 'axios'
 import { PYTHON_URL } from '../../redux/constants'
 
 // const API =
-//   'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImtpZCI6IjEifQ.eyJpc3MiOiJuYWRsZXMiLCJpYXQiOiIxNzM5OTA0MzAxIiwicHVycG9zZSI6ImFwaV9hdXRoZW50aWNhdGlvbiIsInN1YiI6IjM1YjM4MzY0MGJjOTRlYTk5NTVlN2ZhMDRkOTdiMmRmIn0.vb_sF-BrjLTiatDun5DjvWAssBleVeMAqTNQNc6E9iw'
+// 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImtpZCI6IjEifQ.eyJpc3MiOiJuYWRsZXMiLCJpYXQiOiIxNzM5OTA0MzAxIiwicHVycG9zZSI6ImFwaV9hdXRoZW50aWNhdGlvbiIsInN1YiI6IjM1YjM4MzY0MGJjOTRlYTk5NTVlN2ZhMDRkOTdiMmRmIn0.vb_sF-BrjLTiatDun5DjvWAssBleVeMAqTNQNc6E9iw'
 
 const LecturePage = () => {
   const { id } = useParams()
@@ -62,6 +62,8 @@ const LecturePage = () => {
   })
   const [transcript, setTranscript] = useState('')
   const [summary, setSummary] = useState('')
+  const [chats, setChats] = useState([])
+  const [message, setMessage] = useState('')
 
   // Lecture data
   const { data, isLoading: lectureLoading } = useGetLectureByIdQuery(id)
@@ -104,6 +106,7 @@ const LecturePage = () => {
             const url2 = `${PYTHON_URL}/ask_gemini?prompt=${encodeURIComponent(
               prompt
             )}&api_key=AIzaSyAa1cT3_l3mcJto_JE8Y673UXv1F5eq0w0`
+
             const response2 = await axios.get(url2)
             console.log(response2)
             setSummary(response2.data.response) // Assuming the response contains the summary
@@ -131,6 +134,26 @@ const LecturePage = () => {
       } catch (error) {
         console.error('Error creating comment:', error)
         showNotification('Failed to add comment', 'error')
+      }
+    }
+  }
+
+  const handleSendMessage = async () => {
+    if (message.trim()) {
+      try {
+        const prompt = `You are an AI assistant helping a student understand a lecture. The lecture transcript is: ${transcript}. The student has asked: "${message}". Provide a detailed and accurate response based on the transcript. If the question is unrelated to the lecture, politely guide the student to ask relevant questions.`
+        const url = `${PYTHON_URL}/ask_gemini?prompt=${encodeURIComponent(
+          prompt
+        )}&api_key=AIzaSyAa1cT3_l3mcJto_JE8Y673UXv1F5eq0w0`
+        const response = await axios.get(url)
+        setChats([
+          ...chats,
+          { question: message, reply: response.data.response },
+        ])
+        setMessage('')
+      } catch (error) {
+        console.error('Error sending message:', error)
+        showNotification('Failed to send message', 'error')
       }
     }
   }
@@ -374,17 +397,67 @@ const LecturePage = () => {
                   borderRadius: 2,
                 }}
               >
-                <Typography variant="body2" color="text.secondary">
-                  Chatbot messages will appear here.
-                </Typography>
+                {chats.length == 0 ? (
+                  <Typography variant="body2" color="text.secondary">
+                    Chatbot messages will appear here.
+                  </Typography>
+                ) : (
+                  chats.map((chat, index) => (
+                    <Box key={index} sx={{ mb: 2 }}>
+                      {/* User Message */}
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          mb: 1,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            p: 1.5,
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            borderRadius: '18px 18px 4px 18px',
+                            maxWidth: '70%',
+                          }}
+                        >
+                          <Typography variant="body2">
+                            {chat.question}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      {/* AI Reply */}
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'flex-start',
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            p: 1.5,
+                            bgcolor: 'grey.200',
+                            borderRadius: '18px 18px 18px 4px',
+                            maxWidth: '70%',
+                          }}
+                        >
+                          <Typography variant="body2">{chat.reply}</Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+                  ))
+                )}
               </Box>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
                   fullWidth
                   variant="outlined"
+                  value={message}
+                  name="message"
+                  onChange={(e) => setMessage(e.target.value)}
                   placeholder="Ask a question..."
                 />
-                <IconButton color="primary">
+                <IconButton color="primary" onClick={handleSendMessage}>
                   <ChatBubbleOutlineIcon />
                 </IconButton>
               </Box>
@@ -458,7 +531,6 @@ const LecturePage = () => {
             </Box>
           </Box>
         </Box>
-        {/* Sidebar (AI Chatbot, Summary, and Related Lectures) */}
       </Box>
     </Box>
   )

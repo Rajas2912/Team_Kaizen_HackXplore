@@ -38,6 +38,7 @@ import CreateClass from '../pagesKM/Pages/CreateClass'
 import { useGetAllClassesQuery } from '../redux/api/classApiSlice'
 import ClassPage from '../pagesKM/Pages/ClassPage'
 import UsersPage from '../pagesKM/Pages/UsersPage'
+import TimetableGeneratorPage from '../pagesKM/Pages/TimetableGeneratorPage'
 
 const demoTheme = extendTheme({
   colorSchemes: { light: true },
@@ -279,9 +280,9 @@ export default function Main(props) {
           {router.pathname == '/quizzes' && <AllTeaching />}
           {router.pathname == '/viva' && <AllTeaching />}
           {router.pathname == '/attendance' && <AllTeaching />}
-          {router.pathname == '/timetable' && <AllTeaching />}
           {router.pathname == '/progress-tracking' && <AllTeaching />}
           {router.pathname == '/students' && <UsersPage />}
+          {router.pathname == '/timetable' && <TimetableGeneratorPage />}
           {router.pathname?.startsWith('/class/') && (
             <ClassPage classId={router.pathname.split('/')[2]} />
           )}
