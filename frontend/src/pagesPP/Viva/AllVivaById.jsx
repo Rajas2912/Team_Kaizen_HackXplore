@@ -128,58 +128,104 @@ const AllVivaById = ({ classId }) => {
 
     return (
       <Modal open={open} onClose={onClose}>
-        <Box sx={modalStyle}>
-          <Typography variant="h6" gutterBottom>
-            Student Details: {student.studentName}
-          </Typography>
-          <Typography variant="body1" gutterBottom>
-            <strong>Total Questions:</strong> {student.totalQuestions}
-          </Typography>
-          <Typography variant="body1" gutterBottom>
-            <strong>Questions Attempted:</strong>{" "}
-            {student.questionAnswerSet.length}
-          </Typography>
-          <Typography variant="body1" gutterBottom>
-            <strong>Overall Score:</strong> {student.overallMark}
-          </Typography>
+      <Box sx={modalStyle}>
+        {/* Student Details Section */}
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: "bold" }}>
+          Student Details
+        </Typography>
+        <Typography variant="body1" gutterBottom>
+          <strong>Name:</strong> {student.studentName}
+        </Typography>
+        
+        <Typography variant="body1" gutterBottom>
+          <strong>Viva ID:</strong> {student.vivaId}
+        </Typography>
+        <Typography variant="body1" gutterBottom>
+          <strong>Date of Viva:</strong>{" "}
+          {new Date(student.dateOfViva).toLocaleString()}
+        </Typography>
+        <Typography variant="body1" gutterBottom>
+          <strong>Total Questions:</strong> {student.totalQuestions}
+        </Typography>
+        <Typography variant="body1" gutterBottom>
+          <strong>Questions Attempted:</strong>{" "}
+          {student.questionAnswerSet.length}
+        </Typography>
+        <Typography variant="body1" gutterBottom>
+          <strong>Total mark :</strong>{" "}
+          {student.overallMark}
+        </Typography>
 
-          {/* Table to display question details */}
-          <TableContainer component={Paper} sx={{ mt: 2 }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>
-                    <strong>Question</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Model Answer</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Student Answer</strong>
-                  </TableCell>
-                  <TableCell>
-                    <strong>Marks</strong>
-                  </TableCell>
+        {/* Proctored Feedback Section */}
+        <Typography variant="h6" gutterBottom sx={{ mt: 3, fontWeight: "bold" }}>
+          Proctored Feedback
+        </Typography>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="body1" gutterBottom>
+            <strong>Book Detected Count:</strong>{" "}
+            {student?.proctoredFeedback?.bookDetectedCount}
+          </Typography>
+          <Typography variant="body1" gutterBottom>
+            <strong>Laptop Detected Count:</strong>{" "}
+            {student?.proctoredFeedback?.laptopDetectedCount}
+          </Typography>
+          <Typography variant="body1" gutterBottom>
+            <strong>Multiple Users Detected Count:</strong>{" "}
+            {student?.proctoredFeedback?.multipleUsersDetectedCount}
+          </Typography>
+          <Typography variant="body1" gutterBottom>
+            <strong>Phone Detected Count:</strong>{" "}
+            {student?.proctoredFeedback?.phoneDetectedCount}
+          </Typography>
+          <Typography variant="body1" gutterBottom>
+            <strong>Tab Switching Detected Count:</strong>{" "}
+            {student?.proctoredFeedback?.tabSwitchingDetectedCount}
+          </Typography>
+        </Box>
+
+        {/* Question Details Table */}
+        <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
+          Question Details
+        </Typography>
+        <TableContainer component={Paper} sx={{ mb: 3 }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>
+                  <strong>Question</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Model Answer</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Student Answer</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Evaluation</strong>
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {student.questionAnswerSet.map((question, index) => (
+                <TableRow key={question._id}>
+                  <TableCell>{question.questionText}</TableCell>
+                  <TableCell>{question.modelAnswer}</TableCell>
+                  <TableCell>{question.studentAnswer}</TableCell>
+                  <TableCell>{question.evaluation}</TableCell>
                 </TableRow>
-              </TableHead>
-              <TableBody>
-                {student.questionAnswerSet.map((question, index) => (
-                  <TableRow key={question._id}>
-                    <TableCell>{question.questionText}</TableCell>
-                    <TableCell>{question.modelAnswer}</TableCell>
-                    <TableCell>{question.studentAnswer}</TableCell>
-                    <TableCell>{question.markOfQuestion}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-          <Button variant="contained" onClick={onClose} sx={{ mt: 2 }}>
+        {/* Close Button */}
+        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <Button variant="contained" onClick={onClose}>
             Close
           </Button>
         </Box>
-      </Modal>
+      </Box>
+    </Modal>
     );
   };
 
@@ -393,8 +439,8 @@ const AllVivaById = ({ classId }) => {
                                   <TableCell>Name</TableCell>
                                   <TableCell>Total Question</TableCell>
                                   <TableCell>Total question atempted</TableCell>
+                                  <TableCell>Date/time</TableCell>
                                   <TableCell>Score</TableCell>
-
                                   <TableCell>Details</TableCell>
                                 </TableRow>
                               </TableHead>
@@ -410,6 +456,9 @@ const AllVivaById = ({ classId }) => {
                                       </TableCell>
                                       <TableCell>
                                         {student.questionAnswerSet.length}
+                                      </TableCell>
+                                      <TableCell>
+                                      {new Date(student.dateOfViva).toLocaleString()}
                                       </TableCell>
                                       <TableCell>
                                         {student.overallMark}
@@ -465,17 +514,19 @@ const AllVivaById = ({ classId }) => {
   );
 };
 
+// Modal style
 const modalStyle = {
   position: "absolute",
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: "35%",
-  height: "600px",
-  bgcolor: "white",
+  width: "80%",
+  maxWidth: "800px",
+  bgcolor: "background.paper",
   boxShadow: 24,
   p: 4,
   borderRadius: 2,
+  maxHeight: "90vh",
   overflowY: "auto",
 };
 

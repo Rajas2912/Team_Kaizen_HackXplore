@@ -1,87 +1,78 @@
-import React from "react";
-
+import React, { useState, useEffect, useRef } from "react";
 import * as cocoSsd from "@tensorflow-models/coco-ssd";
 import "@tensorflow/tfjs"; // Ensure TensorFlow.js is loaded
+import swal from "sweetalert";
 
-export default class Detection extends React.Component {
-  // Create references for video and canvas
-  videoRef = React.createRef();
-  canvasRef = React.createRef();
+const VideoAnalysis = ({ endVideo, onAnalysisComplete, FaceNotVisible, ProhibitedObject, MultipleFacesVisible }) => {
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const [cellPhoneCount, setCellPhoneCount] = useState(0); // Count of cell phones
+  const [bookCount, setBookCount] = useState(0); // Count of books
+  const [laptopCount, setLaptopCount] = useState(0); // Count of laptops
+  const [personCount, setPersonCount] = useState(0); // Count of persons
+  const [count, setCount] = useState(0); // Frames without face
+  const [multiFaceAlertShown, setMultiFaceAlertShown] = useState(false); // Track multi-face detection
+  const [tabSwitchCount, setTabSwitchCount] = useState(0); // Track tab switches
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      count: 0, // Frames without face
-      multiFaceAlertShown: false, // Prevent duplicate multi-face alerts
-      detectedObjects: {}, // Store counts of detected objects
-      tabSwitchCount: 0, // Count of tab switches
-    };
-  }
-
-  componentDidMount() {
-    // Set up webcam input
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      const webCamPromise = navigator.mediaDevices
-        .getUserMedia({
-          audio: false,
-          video: { facingMode: "user", width: 800, height: 400 },
-        })
-        .then((stream) => {
-          window.stream = stream;
-          this.videoRef.current.srcObject = stream;
-          return new Promise((resolve) => {
-            this.videoRef.current.onloadedmetadata = resolve;
+  // Load COCO-SSD model and start video analysis
+  useEffect(() => {
+    const setupWebcam = async () => {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: { facingMode: "user", width: 800, height: 400 },
           });
-        });
+          videoRef.current.srcObject = stream;
+          await new Promise((resolve) => {
+            videoRef.current.onloadedmetadata = resolve;
+          });
 
-      // Load COCO-SSD model
-      const modelPromise = cocoSsd.load();
+          const cocoModel = await cocoSsd.load();
+          detectFrame(videoRef.current, cocoModel);
+        } catch (error) {
+          console.error("Error loading model or webcam:", error);
+        }
+      }
+    };
 
-      Promise.all([modelPromise, webCamPromise])
-        .then(([cocoModel]) => {
-          this.detectFrame(this.videoRef.current, cocoModel);
-        })
-        .catch((error) => console.error("Error loading model or webcam:", error));
-    }
-
-    // Add event listener for tab visibility changes
-    document.addEventListener("visibilitychange", this.handleTabSwitch);
-  }
-
-  componentWillUnmount() {
-    // Clean up event listener
-    document.removeEventListener("visibilitychange", this.handleTabSwitch);
-  }
+    setupWebcam();
+    // Cleanup
+    return () => {
+      stopVideo(); // Stop the video stream when the component unmounts
+    };
+  }, []);
 
   // Handle tab switch detection
-  handleTabSwitch = () => {
-    if (document.hidden) {
-      this.setState(
-        (prevState) => ({ tabSwitchCount: prevState.tabSwitchCount + 1 }),
-        () => {
-          console.log(`Tab switched! Total tab switches: ${this.state.tabSwitchCount}`);
-        }
-      );
-    }
-  };
+  useEffect(() => {
+    const handleTabSwitch = () => {
+      if (document.visibilityState === "hidden") {
+        setTabSwitchCount((prevCount) => prevCount + 1);
+      }
+    };
 
-  detectFrame = (video, cocoModel) => {
-    cocoModel.detect(video).then((predictions) => {
-      if (this.canvasRef.current) {
-        this.renderPredictions(predictions);
-        requestAnimationFrame(() => this.detectFrame(video, cocoModel));
+    document.addEventListener("visibilitychange", handleTabSwitch);
+    return () => document.removeEventListener("visibilitychange", handleTabSwitch);
+  }, []);
+
+  // Detect objects in the video frame
+  const detectFrame = (video, model) => {
+    model.detect(video).then((predictions) => {
+      if (canvasRef.current) {
+        renderPredictions(predictions);
+        requestAnimationFrame(() => detectFrame(video, model));
       }
     });
   };
 
-  renderPredictions = (predictions) => {
-    const ctx = this.canvasRef.current.getContext("2d");
+  // Render predictions on the canvas
+  const renderPredictions = (predictions) => {
+    const ctx = canvasRef.current.getContext("2d");
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     ctx.font = "16px sans-serif";
     ctx.textBaseline = "top";
 
     let faces = 0;
-    const objectCounts = {};
 
     predictions.forEach((prediction) => {
       const [x, y, width, height] = prediction.bbox;
@@ -100,73 +91,116 @@ export default class Detection extends React.Component {
       ctx.fillStyle = "#000000";
       ctx.fillText(prediction.class, x, y);
 
-      // Count objects
-      if (!objectCounts[prediction.class]) {
-        objectCounts[prediction.class] = 1;
-      } else {
-        objectCounts[prediction.class]++;
+      // React to specific objects
+      switch (prediction.class) {
+        case "cell phone":
+          swal("Cell Phone Detected", "Action has been Recorded", "error").then(() => {
+            setCellPhoneCount((prevCount) => prevCount + 1);
+            ProhibitedObject?.();
+          });
+          break;
+        case "book":
+          swal("Book Detected", "Action has been Recorded", "error").then(() => {
+            setBookCount((prevCount) => prevCount + 1);
+            ProhibitedObject?.();
+          });
+          break;
+        case "laptop":
+          swal("Laptop Detected", "Action has been Recorded", "error").then(() => {
+            setLaptopCount((prevCount) => prevCount + 1);
+            ProhibitedObject?.();
+          });
+          break;
+        case "person":
+          setPersonCount((prevCount) => prevCount + 1);
+          faces += 1;
+          break;
+        default:
+          break;
       }
-
-      // Increment face count
-      if (prediction.class === "person") faces += 1;
-    });
-
-    // Update detected objects state and log to console
-    this.setState({ detectedObjects: objectCounts }, () => {
-      console.log("Detected Objects:", this.state.detectedObjects);
     });
 
     // Handle face visibility
-    if (predictions.length === 0) {
-      this.setState((prevState) => {
-        const newCount = prevState.count + 1;
-        if (newCount >= 50) {
-          // toast.error("Face Not Visible - Action has been Recorded");
-          this.props.FaceNotVisible?.();
-          return { count: 0 };
-        }
-        return { count: newCount };
-      });
+    if (predictions.length === 0 && count < 50) {
+      setCount((prevCount) => prevCount + 1);
+    } else if (predictions.length === 0) {
+      setCount(0);
+      swal("Face Not Visible", "Action has been Recorded", "error");
+      FaceNotVisible?.();
     } else {
-      this.setState({ count: 0 });
+      setCount(0);
     }
 
-    // Handle prohibited objects
-    let isProhibitedAlertShown = false;
-    predictions.forEach((prediction) => {
-      if (!isProhibitedAlertShown && ["cell phone", "book", "laptop"].includes(prediction.class)) {
-        this.props.ProhibitedObject?.();
-        // toast.error("Prohibited Object Detected - Action has been Recorded");
-        isProhibitedAlertShown = true;
-      }
-    });
-
     // Handle multiple faces
-    if (faces > 1 && !this.state.multiFaceAlertShown) {
-      this.props.MultipleFacesVisible?.();
-      // toast.error(`${faces} people detected - Action has been recorded`);
-      this.setState({ multiFaceAlertShown: true });
-    } else if (faces <= 1 && this.state.multiFaceAlertShown) {
-      this.setState({ multiFaceAlertShown: false });
+    if (faces > 1 && !multiFaceAlertShown) {
+      setMultiFaceAlertShown(true);
+      swal(`${faces} people detected`, "Action has been recorded", "error");
+      MultipleFacesVisible?.();
+    } else if (faces <= 1 && multiFaceAlertShown) {
+      setMultiFaceAlertShown(false);
     }
   };
 
-  render() {
-    return (
-      <div className="grid grid-cols-2 lg:grid-cols-1 gap-6">
-        {/* Second Card */}
-        <div className="bg-white shadow-md border border-blue-400 rounded-md">
-          <figure className="w-full h-40 md:h-60 lg:h-80 border border-gray-200 rounded-md overflow-hidden flex items-center justify-center bg-gray-100">
-            <video
-              ref={this.videoRef}
-              autoPlay
-              muted
-              className={`w-full h-full object-cover`}
-            />
-            <canvas ref={this.canvasRef} className="absolute top-200 left-300" width="350" height="400" />
-          </figure>
-        </div>
+  // Stop the video stream
+  const stopVideo = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      console.log("Stopping video stream...");
+      videoRef.current.srcObject.getTracks().forEach((track) => {
+        console.log("Stopping track:", track.kind);
+        track.stop(); // Stop each track
+      });
+      videoRef.current.srcObject = null; // Clear the srcObject
+      console.log("Video stream stopped.");
+    } else {
+      console.log("Video stream is already stopped or not initialized.");
+    }
+  };
+
+  // Stop video and generate analysis report
+  useEffect(() => {
+    if (endVideo) {
+      console.log("End video prop received. Stopping video and generating report...");
+      stopVideo();
+      generateAnalysisReport();
+    }
+  }, [endVideo]);
+
+  // Generate the analysis report
+  const generateAnalysisReport = () => {
+
+
+    const allDetectedObjects = {
+      "phoneDetectedCount": cellPhoneCount,
+      "laptopDetectedCount": laptopCount,
+      "bookDetectedCount": bookCount,
+      "multipleUsersDetectedCount": multiFaceAlertShown ? 1:0,
+      "tabSwitchingDetectedCount":tabSwitchCount
+    };
+
+    const report = {
+      allDetectedObjects, // Include all detected objects in the report
+    };
+
+    console.log("Analysis Report Generated:", report);
+    onAnalysisComplete(report); // Send the report back to the parent component
+  };
+
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-1 gap-6">
+      {/* Second Card */}
+      <div className="bg-white shadow-md border border-blue-400 rounded-md">
+        <figure className="w-full h-40 md:h-60 lg:h-80 border border-gray-200 rounded-md overflow-hidden flex items-center justify-center bg-gray-100">
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            className={`w-full h-full object-cover`}
+          />
+          <canvas ref={canvasRef} className="absolute top-200 left-300" width="350" height="400" />
+        </figure>
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
+
+export default VideoAnalysis;
