@@ -7,6 +7,7 @@ from pdf2image import convert_from_bytes
 from PIL import Image
 import re
 import os
+from langchain.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -74,6 +75,32 @@ def process_questions(text):
                 questions_list[idx] = q[match.end():].strip()
     
     return questions_list
+
+def load_pdf(pdf_path):
+    """Loads and splits a PDF into pages."""
+    pdf_loader = PyPDFLoader(pdf_path)
+    pages = pdf_loader.load_and_split()
+    return pages
+
+def create_or_load_db(pages):
+    """Splits PDF text into smaller chunks and either creates or loads a persistent Chroma database."""
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=750, chunk_overlap=50)
+    context = "\n\n".join(str(p.page_content) for p in pages)
+    texts = text_splitter.split_text(context)
+
+    # Create embeddings
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=API_KEY)
+
+    # Check if ChromaDB already exists
+    if os.path.exists(DB_PATH):
+        print("Loading existing ChromaDB...")
+        vector_index = Chroma(persist_directory=DB_PATH, embedding_function=embeddings)
+    else:
+        print("Creating new ChromaDB...")
+        vector_index = Chroma.from_texts(texts, embeddings, persist_directory=DB_PATH)
+        vector_index.persist()  # Save to disk
+
+    return vector_index
 
 def create_chroma_db(text):
     text_splitter = RecursiveCharacterTextSplitter(
@@ -178,6 +205,34 @@ def evaluate_answers():
 
     except Exception as e:
         return jsonify({"error": f"System error: {str(e)}"}), 500
+    
+@app.route("/upload", methods=["POST"])
+def upload_pdf():
+    """API endpoint to upload a PDF and store its embeddings."""
+    if "file" not in request.files:
+        print("No file found in request")  # Debugging log
+        return jsonify({"error": "No file uploaded"}), 400
+
+    file = request.files["file"]
+    print(f"Received file: {file.filename}")  # Debugging log
+
+    # Ensure 'uploads' directory exists
+    os.makedirs("uploads", exist_ok=True)
+
+    pdf_path = os.path.join("uploads", file.filename)
+    file.save(pdf_path)
+
+    print(f"File saved at: {pdf_path}")  # Debugging log
+
+    # Load PDF and store embeddings
+    try:
+        pages = load_pdf(pdf_path)  # Ensure this function works correctly
+        create_or_load_db(pages)    # Ensure this function is correctly handling the DB
+    except Exception as e:
+        print(f"Error processing PDF: {e}")  # Debugging log
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({"message": "PDF uploaded and stored in ChromaDB"}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

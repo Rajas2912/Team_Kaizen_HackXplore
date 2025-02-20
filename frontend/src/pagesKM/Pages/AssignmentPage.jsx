@@ -142,6 +142,7 @@ const AssignmentPage = ({ classId }) => {
 
   // Handle assignment upload
   const handleUploadAssignment = async () => {
+    console.log(title,deadline,chapterPdf,assignmentPdf)
     if (!title || !deadline || !chapterPdf || !assignmentPdf) {
       setNotification({
         open: true,
@@ -183,11 +184,7 @@ const AssignmentPage = ({ classId }) => {
   };
   const [selectedFile, setSelectedFile] = useState(null);
 
-  const handleFileChange = (event) => {
-    if (event.target.files.length > 0) {
-      setSelectedFile(event.target.files[0]);
-    }
-  };
+
 
   // Handle assignment deletion
   const handleDeleteAssignment = async (assignmentId) => {
@@ -309,6 +306,48 @@ const AssignmentPage = ({ classId }) => {
       alert("Error uploading file: " + error.message);
     }
   };
+  const handleFileChange = (event) => {
+    if (event.target.files.length > 0) {
+      setSelectedFile(event.target.files[0]);
+    }
+  };
+  const handleChapterUpload = async (e) => {
+    const selectedChapterFile = e.target.files[0];
+setChapterPdf( e.target.files[0])
+    if (!selectedChapterFile) {
+      alert("Please select a chapter PDF before uploading.");
+      return;
+    }
+  
+    try {
+      // Create FormData and append the chapter PDF
+      const formData = new FormData();
+      formData.append("file", selectedChapterFile);
+  
+      // Debugging log: Check if file is being appended correctly
+      console.log("Uploading:", selectedChapterFile.name);
+  
+      // Send to Flask backend via "/upload"
+      const uploadResponse = await fetch("http://localhost:5000/upload", {
+        method: "POST",
+        body: formData,
+      });
+  
+      if (uploadResponse.ok) {
+        const result = await uploadResponse.json();
+        console.log("Upload successful:", result);
+        alert("Chapter PDF uploaded successfully!");
+      } else {
+        const errorText = await uploadResponse.text();
+        console.error("Upload failed:", errorText);
+        alert("Upload failed: " + errorText);
+      }
+    } catch (error) {
+      console.error("Error uploading chapter PDF:", error);
+      alert("Error uploading chapter PDF: " + error.message);
+    }
+  }; 
+
   // Close notification
   const handleCloseNotification = () => {
     setNotification({ ...notification, open: false });
@@ -574,7 +613,7 @@ const AssignmentPage = ({ classId }) => {
               <input
                 type="file"
                 hidden
-                onChange={handleChapterPdfChange}
+                onChange={(e) => handleChapterUpload(e)}
                 accept="application/pdf"
                 required
               />
