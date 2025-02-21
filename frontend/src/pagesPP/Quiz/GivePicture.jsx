@@ -4,11 +4,11 @@ import axios from 'axios';
 import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'; // Import the back icon
-import './TakePicture.css'; // Import the CSS file
+// import './TakePicture.css'; // Import the CSS file
 
 const URL = import.meta.env.VITE_PORT_URL;
 
-const TakePicture = () => {
+const GivePicture = () => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [image, setImage] = useState(null);
@@ -17,8 +17,8 @@ const TakePicture = () => {
   const [loading, setLoading] = useState(false); // Loading state
   const navigate = useNavigate();
 
-  const {vivaId}=useParams();
-
+  const {quizId}=useParams();
+  console.log(quizId);
   const handleBack = () => {
     navigate(-1); // Go back to the previous page
   };
@@ -70,7 +70,7 @@ const TakePicture = () => {
 
   // Process Image by sending as a File instead of Base64 URL
   const processImage = async () => {
-    navigate(`/give-viva/${vivaId}`)
+    navigate(`/give-quiz/${quizId}`)
     // if (imageFile) {
     //   setLoading(true); // Show loading spinner
     //   try {
@@ -165,4 +165,4 @@ const TakePicture = () => {
   );
 };
 
-export default TakePicture;
+export default GivePicture;

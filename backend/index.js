@@ -14,6 +14,7 @@ import commentRoute from './route/comment.route.js'
 import assignmentRoute from './route/assignment.route.js'
 import postRoute from './route/post.route.js'
 import quizRoute from "./route/quiz.route.js"
+import QuizResult from './route/quizresult.route.js'
 const Frontend_URL = process.env.Frontend_URL
 
 
@@ -41,6 +42,7 @@ app.use('/comment', commentRoute)
 app.use('/assignment', assignmentRoute)
 app.use('/post', postRoute)
 app.use('/quiz',quizRoute)
+app.use('/quizresult',QuizResult);
 
 app.listen(PORT, () => {
   console.log(`server run on port ${PORT}`)

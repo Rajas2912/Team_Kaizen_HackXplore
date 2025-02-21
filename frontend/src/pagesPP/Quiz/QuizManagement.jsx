@@ -30,6 +30,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import dayjs from "dayjs"; // Import dayjs
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import CreateQuiz from "./CreateQuiz";
@@ -71,8 +72,9 @@ const QuizManagement = ({ classId }) => {
 
   const fetchRegisteredStudents = async (quizId) => {
     try {
-      const response = await axios.get(`${API}/quizresult/getquizresult/${quizId}`);
+      const response = await axios.get(`${API}/quizresult/quizresultbyquizid/${quizId}`);
       setStudents((prev) => ({ ...prev, [quizId]: response?.data }));
+      console.log(response.data);
     } catch (error) {
       console.error("Error fetching students:", error);
     }
@@ -80,22 +82,20 @@ const QuizManagement = ({ classId }) => {
 
   const handleRowClick = (index, quizId) => {
     setOpenRows((prev) => ({ ...prev, [index]: !prev[index] }));
-    // if (!students[quizId]) fetchRegisteredStudents(quizId);
+    if (!students[quizId]) fetchRegisteredStudents(quizId);
   };
 
   const handleEdit = (quiz) => {
     setEditMode(quiz._id);
-    setEditedData({ ...quiz });
+    setEditedData({ ...quiz, duedate: dayjs(quiz.duedate), startTime: dayjs(quiz.startTime) });
   };
 
   const handleSave = async (quizId) => {
     try {
       const dataToSave = {
         ...editedData,
-        dueDate:editedData.dueDate,
-        startTime:editedData.startTime,
-       /*  dueDate: editedData.dueDate.toISOString(), // Convert to ISO string if needed
-        startTime: editedData.startTime.toISOString(), // Convert to ISO string if needed */
+        duedate: editedData.duedate.toISOString(),
+        startTime: editedData.startTime.toISOString(),
       };
       await axios.put(`${API}/quiz/updateQuiz/${quizId}`, dataToSave);
       setQuizzes((prev) =>
@@ -112,7 +112,7 @@ const QuizManagement = ({ classId }) => {
   };
 
   const handleStartQuiz = (quizId) => {
-    navigate(`/takequiz/${quizId}`);
+    navigate(`/givepicture/${quizId}`);
   };
 
   const handleQuestionModalOpen = (quiz) => {
@@ -347,44 +347,44 @@ const QuizManagement = ({ classId }) => {
                   </TableCell>
 
                   <TableCell>
-  {editMode === quiz._id ? (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <DateTimePicker
-        label="Due Date"
-        value={editedData.dueDate}
-        onChange={(newValue) =>
-          setEditedData({
-            ...editedData,
-            dueDate: newValue,
-          })
-        }
-        renderInput={(params) => <TextField {...params} size="small" />}
-      />
-    </LocalizationProvider>
-  ) : (
-    new Date(quiz.dueDate).toLocaleString()
-  )}
-</TableCell>
+                    {editMode === quiz._id ? (
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DateTimePicker
+                          label="Due Date"
+                          value={editedData.duedate}
+                          onChange={(newValue) =>
+                            setEditedData({
+                              ...editedData,
+                              duedate: newValue,
+                            })
+                          }
+                          slotProps={{ textField: { size: 'small' } }} // Updated prop
+                        />
+                      </LocalizationProvider>
+                    ) : (
+                      new Date(quiz.duedate).toLocaleString()
+                    )}
+                  </TableCell>
 
-<TableCell>
-  {editMode === quiz._id ? (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <DateTimePicker
-        label="Start Time"
-        value={editedData.startTime}
-        onChange={(newValue) =>
-          setEditedData({
-            ...editedData,
-            startTime: newValue,
-          })
-        }
-        renderInput={(params) => <TextField {...params} size="small" />}
-      />
-    </LocalizationProvider>
-  ) : (
-    new Date(quiz.startTime).toLocaleString()
-  )}
-</TableCell>
+                  <TableCell>
+                    {editMode === quiz._id ? (
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DateTimePicker
+                          label="Start Time"
+                          value={editedData.startTime}
+                          onChange={(newValue) =>
+                            setEditedData({
+                              ...editedData,
+                              startTime: newValue,
+                            })
+                          }
+                          slotProps={{ textField: { size: 'small' } }} // Updated prop
+                        />
+                      </LocalizationProvider>
+                    ) : (
+                      new Date(quiz.startTime).toLocaleString()
+                    )}
+                  </TableCell>
 
                   <TableCell>
                     {editMode === quiz._id ? (
@@ -404,7 +404,7 @@ const QuizManagement = ({ classId }) => {
                     )}
                   </TableCell>
 
-                  {role === "student" ? (
+                  {role !== "student" ? (
                     <TableCell>
                       <Button
                         variant="contained"
@@ -448,7 +448,7 @@ const QuizManagement = ({ classId }) => {
                           <Typography variant="h6" gutterBottom component="div">
                             Registered Students:{" "}
                             {students[quiz._id]
-                              ? students[quiz._id].data.length
+                              ? students[quiz._id].length
                               : 0}
                           </Typography>
 
@@ -465,37 +465,31 @@ const QuizManagement = ({ classId }) => {
                                 </TableRow>
                               </TableHead>
                               <TableBody>
-                                {Array.isArray(students[quiz._id]?.data) ? (
-                                  students[quiz._id].data.map((student) => (
-                                    <TableRow key={student._id}>
-                                      <TableCell>{student.studentName}</TableCell>
-                                      <TableCell>{student.totalQuestions}</TableCell>
-                                      <TableCell>
-                                        {student.questionAnswerSet.length}
-                                      </TableCell>
-                                      <TableCell>
-                                        {new Date(student.dateOfQuiz).toLocaleString()}
-                                      </TableCell>
-                                      <TableCell>{student.overallMark}</TableCell>
-                                      <TableCell>
-                                        <Button
-                                          variant="contained"
-                                          color="primary"
-                                          onClick={() => {
-                                            setSelectedStudent(student);
-                                            setIsStudentModalOpen(true);
-                                          }}
-                                        >
-                                          Details
-                                        </Button>
-                                      </TableCell>
-                                    </TableRow>
-                                  ))
-                                ) : (
-                                  <Typography>
-                                    No students registered yet.
-                                  </Typography>
-                                )}
+                                {students[quiz._id].map((student) => (
+                                  <TableRow key={student._id}>
+                                    <TableCell>{student.studentName}</TableCell>
+                                    <TableCell>{student.totalQuestions}</TableCell>
+                                    <TableCell>
+                                      {student.questionAnswerSet.length}
+                                    </TableCell>
+                                    <TableCell>
+                                      {new Date(student.dateofquiz).toLocaleString()}
+                                    </TableCell>
+                                    <TableCell>{student.overallMark}</TableCell>
+                                    <TableCell>
+                                      <Button
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={() => {
+                                          setSelectedStudent(student);
+                                          setIsStudentModalOpen(true);
+                                        }}
+                                      >
+                                        Details
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
                               </TableBody>
                             </Table>
                           ) : (
