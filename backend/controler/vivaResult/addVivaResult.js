@@ -33,7 +33,7 @@ export const addVivaResult = async (req, res) => {
             proctoredFeedback
         });
         const savedVivaResult = await newVivaResult.save();
-        console.log(savedVivaResult);
+        console.log("savedVivaResult",savedVivaResult);
         res.status(201).json({
             message: "Viva result saved successfully",
             data: savedVivaResult,
