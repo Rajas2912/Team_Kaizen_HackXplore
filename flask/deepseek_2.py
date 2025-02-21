@@ -3,6 +3,7 @@ from flask_cors import CORS
 import google.generativeai as genai
 import base64
 import io
+import fitz
 from pdf2image import convert_from_bytes
 from PIL import Image
 import re
@@ -152,6 +153,69 @@ def evaluate_answer(question, answer, context):
         print(f"Scoring Error: {str(e)}")
         return 0.0
 
+
+def extract_text_from_pdf(pdf_path):
+    text = ""
+    with fitz.open(pdf_path) as doc:
+        for page in doc:
+            text += page.get_text("text") + "\n"
+    return text.strip()
+
+@app.route("/schedule", methods=["POST"])
+def upload_file():
+    if "file" not in request.files or "start_date" not in request.form or "end_date" not in request.form:
+        return jsonify({"error": "Missing required inputs"}), 400
+
+    file = request.files["file"]
+    start_date = request.form["start_date"]
+    end_date = request.form["end_date"]
+
+    # Save file temporarily
+    file_path = os.path.join("temp.pdf")
+    file.save(file_path)
+
+    # Extract text from PDF
+    syllabus_text = extract_text_from_pdf(file_path)
+    os.remove(file_path)  # Clean up
+
+    # Create prompt for Gemini
+    prompt = f"""
+    I am providing a syllabus along with semester details. Your task is to generate a structured teaching schedule in tabular format.**Details:**
+    - Start Date: {start_date}
+    - End Date: {end_date}
+    - Syllabus:{syllabus_text}
+    **Requirements:**
+    - Generate a structured table where each lecture has a Date, Day, Topic and number of hours required according to which topic is hard or that topic is easy  in json format.
+    - Ensure topics are distributed evenly from start to end date.
+    - Format response in a JSON array with fields: "date", "day",  "topic" , "hours".
+    """
+
+    # Call Gemini API
+    model = genai.GenerativeModel("gemini-pro")
+    
+
+    # Convert response to structured JSON (assumes well-formatted output)
+    import json
+    
+    response = model.generate_content(prompt)
+
+    print("Gemini API Response:", response)
+        
+    # Ensure response has text
+    if not hasattr(response, "text") or not response.text:
+            return jsonify({"error": "No valid response from AI"}), 500
+        
+    ai_response = response.text.strip()
+    match = re.search(r"\{.*\}|\[.*\]", ai_response, re.DOTALL)
+    if not match:
+        return jsonify({"error": "Failed to extract JSON from AI response"}), 500
+
+    json_text = match.group(0)  # Extracted JSON
+    print(json_text)
+    schedule = json.loads(json_text)
+    return jsonify({"raw_schedule": schedule})
+
+
 # Routes
 @app.route('/get_student_score', methods=['POST'])
 def evaluate_answers():
@@ -270,7 +334,7 @@ def detect_ai():
         }
 
         response = requests.post(Plagchecker_API_URL, json=payload, headers=headers)
-        print(response)
+
         return jsonify(response.json()), response.status_code
     except Exception as e:
         return jsonify({"error":str(e)}),500
