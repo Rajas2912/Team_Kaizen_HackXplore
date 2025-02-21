@@ -2,7 +2,6 @@
 import Viva from "../../model/viva.model.js"; // Import your Viva model
 
 
-
 export const getallViva = async (req, res) => {
     try {
         const { classid } = req.params; // Get viva ID from request params

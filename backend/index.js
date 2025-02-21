@@ -13,6 +13,7 @@ import lectureRoute from './route/lecture.route.js'
 import commentRoute from './route/comment.route.js'
 import assignmentRoute from './route/assignment.route.js'
 import postRoute from './route/post.route.js'
+import quizRoute from "./route/quiz.route.js"
 const Frontend_URL = process.env.Frontend_URL
 
 
@@ -39,6 +40,7 @@ app.use('/lecture', lectureRoute)
 app.use('/comment', commentRoute)
 app.use('/assignment', assignmentRoute)
 app.use('/post', postRoute)
+app.use('/quiz',quizRoute)
 
 app.listen(PORT, () => {
   console.log(`server run on port ${PORT}`)

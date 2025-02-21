@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
-import * as XLSX from 'xlsx'
-import axios from 'axios'
+import React, { useState } from "react";
+import * as XLSX from "xlsx";
+import axios from "axios";
 import {
   Box,
   Typography,
@@ -9,66 +9,66 @@ import {
   IconButton,
   CircularProgress,
   Paper,
-} from '@mui/material'
-import { Upload as UploadIcon, Close as CloseIcon } from '@mui/icons-material'
+} from "@mui/material";
+import { Upload as UploadIcon, Close as CloseIcon } from "@mui/icons-material";
 
-const API = import.meta.env.VITE_BACKEND_URL
+const API = import.meta.env.VITE_BACKEND_URL;
 
 const CreateViva = ({ onClose, classId }) => {
-  const [vivaName, setVivaName] = useState('')
-  const [timeOfThinking, setTimeOfThinking] = useState('')
-  const [dueDate, setDueDate] = useState('')
-  const [questionAnswerSet, setQuestionAnswerSet] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [selectedFile, setSelectedFile] = useState(null)
-  const [numberOfQuestionsToAsk, setNumberOfQuestionsToAsk] = useState('')
-  const [totalQuestions, setTotalQuestions] = useState(0)
+  const [vivaName, setVivaName] = useState("");
+  const [timeOfThinking, setTimeOfThinking] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [questionAnswerSet, setQuestionAnswerSet] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [numberOfQuestionsToAsk, setNumberOfQuestionsToAsk] = useState("");
+  const [totalQuestions, setTotalQuestions] = useState(0);
 
   const handleFileUpload = (event) => {
-    const file = event.target.files[0]
-    if (!file) return
-    setSelectedFile(file.name)
+    const file = event.target.files[0];
+    if (!file) return;
+    setSelectedFile(file.name);
 
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onload = (e) => {
-      const binaryString = e.target.result
-      const workbook = XLSX.read(binaryString, { type: 'binary' })
-      const sheetName = workbook.SheetNames[0]
-      const sheet = workbook.Sheets[sheetName]
-      const parsedData = XLSX.utils.sheet_to_json(sheet)
+      const binaryString = e.target.result;
+      const workbook = XLSX.read(binaryString, { type: "binary" });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const parsedData = XLSX.utils.sheet_to_json(sheet);
 
       const formattedData = parsedData
         .map((row) => ({
-          questionText: row.Question || row['question'],
-          answer: row.Answer || row['answer'],
+          questionText: row.Question || row["question"],
+          answer: row.Answer || row["answer"],
         }))
-        .filter((q) => q.questionText && q.answer)
+        .filter((q) => q.questionText && q.answer);
 
-      setQuestionAnswerSet(formattedData)
-      setTotalQuestions(formattedData.length)
-    }
-    reader.readAsBinaryString(file)
-  }
+      setQuestionAnswerSet(formattedData);
+      setTotalQuestions(formattedData.length);
+    };
+    reader.readAsBinaryString(file);
+  };
 
   const handleRemoveFile = () => {
-    setSelectedFile(null)
-    setQuestionAnswerSet([])
-    setTotalQuestions(0)
-    document.getElementById('fileInput').value = ''
-  }
+    setSelectedFile(null);
+    setQuestionAnswerSet([]);
+    setTotalQuestions(0);
+    document.getElementById("fileInput").value = "";
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError(null)
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
 
     if (numberOfQuestionsToAsk > totalQuestions) {
       setError(
         `Number of questions to ask (${numberOfQuestionsToAsk}) cannot be greater than total questions (${totalQuestions}).`
-      )
-      setIsLoading(false)
-      return
+      );
+      setIsLoading(false);
+      return;
     }
 
     try {
@@ -79,31 +79,31 @@ const CreateViva = ({ onClose, classId }) => {
         duedate: dueDate,
         questionAnswerSet,
         numberOfQuestionsToAsk: Number(numberOfQuestionsToAsk),
-      })
-      setVivaName('')
-      setTimeOfThinking('')
-      setDueDate('')
-      setQuestionAnswerSet([])
-      setSelectedFile(null)
-      setNumberOfQuestionsToAsk('')
-      setTotalQuestions(0)
-      onClose()
+      });
+      setVivaName("");
+      setTimeOfThinking("");
+      setDueDate("");
+      setQuestionAnswerSet([]);
+      setSelectedFile(null);
+      setNumberOfQuestionsToAsk("");
+      setTotalQuestions(0);
+      onClose();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create viva')
+      setError(err.response?.data?.message || "Failed to create viva");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Paper
       sx={{
         maxWidth: 500,
-        margin: 'auto',
+        margin: "auto",
         padding: 3,
-        backgroundColor: '#f9f9f9',
+        backgroundColor: "#f9f9f9",
         borderRadius: 2,
-        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
+        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
       }}
     >
       <Typography variant="h5" align="center" gutterBottom>
@@ -152,14 +152,7 @@ const CreateViva = ({ onClose, classId }) => {
         </Typography>
 
         {/* File Upload Section */}
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            mb: 2,
-          }}
-        >
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: 2 }}>
           <input
             type="file"
             accept=".xlsx, .xls, .csv"
@@ -178,7 +171,7 @@ const CreateViva = ({ onClose, classId }) => {
             <input type="file" hidden onChange={handleFileUpload} />
           </Button>
           {selectedFile && (
-            <Box sx={{ mt: 1, display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ mt: 1, display: "flex", alignItems: "center" }}>
               <Typography variant="body2" sx={{ mr: 1 }}>
                 📁 {selectedFile}
               </Typography>
@@ -198,7 +191,7 @@ const CreateViva = ({ onClose, classId }) => {
           disabled={isLoading}
           sx={{ mt: 2 }}
         >
-          {isLoading ? <CircularProgress size={24} /> : 'Create Viva'}
+          {isLoading ? <CircularProgress size={24} /> : "Create Viva"}
         </Button>
 
         {/* Error Message */}
@@ -209,7 +202,7 @@ const CreateViva = ({ onClose, classId }) => {
         )}
       </Box>
     </Paper>
-  )
-}
+  );
+};
 
-export default CreateViva
+export default CreateViva;
