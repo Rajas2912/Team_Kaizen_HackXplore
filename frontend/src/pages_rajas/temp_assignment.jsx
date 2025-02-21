@@ -103,39 +103,6 @@ const AssignmentPage = ({ classId }) => {
   const [updateAssignment, { isLoading: isUpdating }] =
     useUpdateAssignmentMutation()
   const [submitAnswer, { isLoading: isAnswering }] = useSubmitAnswerMutation()
-  const [selectedFile, setSelectedFile] = useState(null);
-
-  const handleFileChange = (event) => {
-    if (event.target.files.length > 0) {
-      setSelectedFile(event.target.files[0]);
-    }
-  };
-  const handleUpload = async (assignmentPdf) => {
-    if (!selectedFile) {
-      alert("Please select a file before uploading.");
-      return;
-    }
-  
-    const formData = new FormData();
-    formData.append("userFile", selectedFile);
-    formData.append("assignmentPdf", assignmentPdf);
-  
-    try {
-      const response = await fetch("http://localhost:5000/upload_assignment", {
-        method: "POST",
-        body: formData,
-      });
-  
-      if (response.ok) {
-        const result = await response.json();
-        alert("Upload Successful! Response: " + JSON.stringify(result));
-      } else {
-        alert("Upload failed.");
-      }
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      alert("Error uploading file.");
-    }
 
   // Handle file input change for chapter PDF
   const handleChapterPdfChange = (e) => {
@@ -404,10 +371,12 @@ const AssignmentPage = ({ classId }) => {
                           Upload assignment
                           <VisuallyHiddenInput
                             type="file"
-                            onChange={handleFileChange}
+                            onChange={(event) =>
+                              console.log(event.target.files)
+                            }
+                            multiple
                           />
                         </Button>
-
                       )}
                       {/* Delete Button */}
                       {userInfo.role == 'teacher' && (

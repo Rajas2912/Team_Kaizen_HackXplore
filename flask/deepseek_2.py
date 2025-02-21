@@ -11,12 +11,13 @@ from langchain.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
-
+import requests
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
 # Configure APIs
+EDENAI_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZmZiMTk0Y2QtZTk4NC00Y2NkLTgwMmItNjA2NTVlNzliMTA1IiwidHlwZSI6ImFwaV90b2tlbiJ9.43-ZE4QXFrUTITO1byD-T7LBC8JjeFLfcWLgwdA9Wfs"
 API_KEY = "AIzaSyAa1cT3_l3mcJto_JE8Y673UXv1F5eq0w0"
 genai.configure(api_key=API_KEY)
 
@@ -233,6 +234,47 @@ def upload_pdf():
         return jsonify({"error": str(e)}), 500
 
     return jsonify({"message": "PDF uploaded and stored in ChromaDB"}), 200
+
+@app.route("/detect_ai", methods=["POST"])
+def detect_ai():
+    Plagchecker_API_URL = "https://api.edenai.run/v2/text/ai_detection"
+    try:
+        text = ""
+        if 'file' in request.files:
+            file = request.files['file']
+            if file.filename == '':
+                return jsonify({'error': 'No selected file'}), 400
+
+            poppler_path = 'C:/Program Files (x86)/poppler-24.08.0/Library/bin'  # Adjust if necessary
+            if file.filename.endswith('.pdf'):
+                images = convert_from_bytes(file.read(), poppler_path=poppler_path)
+                for image in images:
+                    text += extract_text_from_image(image)
+            else:
+                image = Image.open(file)
+                text = extract_text_from_image(image)
+        else:
+            data = request.json
+            text = data.get("text", "")
+
+        if not text:
+            return jsonify({'error': 'No text extracted or provided'}), 400
+
+        headers = {
+            "authorization": f"Bearer {EDENAI_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "providers": "winstonai",
+            "text": text
+        }
+
+        response = requests.post(Plagchecker_API_URL, json=payload, headers=headers)
+        print(response)
+        return jsonify(response.json()), response.status_code
+    except Exception as e:
+        return jsonify({"error":str(e)}),500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

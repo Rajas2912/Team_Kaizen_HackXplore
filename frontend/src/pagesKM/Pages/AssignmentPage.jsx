@@ -142,7 +142,7 @@ const AssignmentPage = ({ classId }) => {
 
   // Handle assignment upload
   const handleUploadAssignment = async () => {
-    console.log(title,deadline,chapterPdf,assignmentPdf)
+    console.log(title, deadline, chapterPdf, assignmentPdf);
     if (!title || !deadline || !chapterPdf || !assignmentPdf) {
       setNotification({
         open: true,
@@ -184,8 +184,6 @@ const AssignmentPage = ({ classId }) => {
   };
   const [selectedFile, setSelectedFile] = useState(null);
 
-
-
   // Handle assignment deletion
   const handleDeleteAssignment = async (assignmentId) => {
     try {
@@ -213,7 +211,8 @@ const AssignmentPage = ({ classId }) => {
     setDeadline(new Date(assignment.deadline).toISOString().split("T")[0]);
     setOpenEditDialog(true);
   };
-
+  const [plagiarismResults, setPlagiarismResults] = useState({});
+  const [isCheckingPlagiarism, setIsCheckingPlagiarism] = useState(false);
   // Handle assignment update
   const handleUpdateAssignment = async () => {
     if (!title || !deadline) {
@@ -306,33 +305,63 @@ const AssignmentPage = ({ classId }) => {
       alert("Error uploading file: " + error.message);
     }
   };
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
     if (event.target.files.length > 0) {
-      setSelectedFile(event.target.files[0]);
+      const file = event.target.files[0];
+      setSelectedFile(file);
+
+      try {
+        setIsCheckingPlagiarism(true);
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch("http://localhost:5000/detect_ai", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          const aiScore = (result.winstonai?.ai_score || 0)*100;
+          setPlagiarismResults((prev) => ({
+            ...prev,
+            [file.name]: aiScore,
+          }));
+        }
+      } catch (error) {
+        console.error("Plagiarism check failed:", error);
+        setNotification({
+          open: true,
+          message: "Plagiarism check failed. Please try again.",
+          severity: "error",
+        });
+      } finally {
+        setIsCheckingPlagiarism(false);
+      }
     }
   };
   const handleChapterUpload = async (e) => {
     const selectedChapterFile = e.target.files[0];
-setChapterPdf( e.target.files[0])
+    setChapterPdf(e.target.files[0]);
     if (!selectedChapterFile) {
       alert("Please select a chapter PDF before uploading.");
       return;
     }
-  
+
     try {
       // Create FormData and append the chapter PDF
       const formData = new FormData();
       formData.append("file", selectedChapterFile);
-  
+
       // Debugging log: Check if file is being appended correctly
       console.log("Uploading:", selectedChapterFile.name);
-  
+
       // Send to Flask backend via "/upload"
       const uploadResponse = await fetch("http://localhost:5000/upload", {
         method: "POST",
         body: formData,
       });
-  
+
       if (uploadResponse.ok) {
         const result = await uploadResponse.json();
         console.log("Upload successful:", result);
@@ -346,7 +375,7 @@ setChapterPdf( e.target.files[0])
       console.error("Error uploading chapter PDF:", error);
       alert("Error uploading chapter PDF: " + error.message);
     }
-  }; 
+  };
 
   // Close notification
   const handleCloseNotification = () => {
@@ -464,6 +493,7 @@ setChapterPdf( e.target.files[0])
                             variant="contained"
                             tabIndex={-1}
                             startIcon={<CloudUploadIcon />}
+                            disabled={isCheckingPlagiarism}
                           >
                             Upload assignment
                             <VisuallyHiddenInput
@@ -479,15 +509,45 @@ setChapterPdf( e.target.files[0])
                                 gap: 2,
                               }}
                             >
+                              {/* Plagiarism Check Result */}
+                              {plagiarismResults[selectedFile.name] !== undefined && (
+  <Typography
+    variant="body2"
+    sx={{
+      color:
+        plagiarismResults[selectedFile.name] > 30
+          ? theme.palette.error.main
+          : theme.palette.success.main,
+      fontWeight: "bold",
+    }}
+  >
+    AI Detection: {plagiarismResults[selectedFile.name].toFixed(2)}%
+  </Typography>
+)}
+
+                              {/* Submit Button with Plagiarism Check */}
                               <Button
                                 variant="contained"
                                 color="primary"
                                 onClick={() =>
                                   handleUpload(assignment.assignmentPdf)
                                 }
+                                disabled={
+                                  isCheckingPlagiarism ||
+                                  (plagiarismResults[selectedFile.name] !== undefined &&
+                                    plagiarismResults[selectedFile.name] > 75) ||
+                                  !selectedFile
+                                }
                               >
                                 Submit
                               </Button>
+
+                              {/* Loading Indicator */}
+                              {isCheckingPlagiarism && (
+                                <CircularProgress size={24} />
+                              )}
+
+                              {/* Existing Score Display */}
                               {scores[assignment.assignmentPdf] && (
                                 <Typography
                                   variant="body1"
@@ -498,7 +558,7 @@ setChapterPdf( e.target.files[0])
                                   }}
                                 >
                                   Score: {scores[assignment.assignmentPdf]}/
-                                  {assignment.questions?.length * 10 }
+                                  {assignment.questions?.length * 10}
                                 </Typography>
                               )}
                             </Box>
