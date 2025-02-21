@@ -56,7 +56,7 @@ const Interview = () => {
     utterance.rate = rate;
 
     utterance.onend = () => {
-      setTimer(10);
+      setTimer(timeofthinking*60);
       setMicOn(true);
       startAudioRecording();
     };

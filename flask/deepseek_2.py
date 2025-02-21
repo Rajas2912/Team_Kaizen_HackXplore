@@ -1,12 +1,14 @@
+import fitz
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import google.generativeai as genai
 import base64
 import io
-import fitz
+# import fitz
 from pdf2image import convert_from_bytes
 from PIL import Image
 import re
+import json
 import os
 from langchain.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -163,58 +165,56 @@ def extract_text_from_pdf(pdf_path):
 
 @app.route("/schedule", methods=["POST"])
 def upload_file():
-    if "file" not in request.files or "start_date" not in request.form or "end_date" not in request.form:
-        return jsonify({"error": "Missing required inputs"}), 400
+    try:
+        if "file" not in request.files or "start_date" not in request.form or "end_date" not in request.form:
+            return jsonify({"error": "Missing required inputs"}), 400
 
-    file = request.files["file"]
-    start_date = request.form["start_date"]
-    end_date = request.form["end_date"]
+        file = request.files["file"]
+        start_date = request.form["start_date"]
+        end_date = request.form["end_date"]
 
-    # Save file temporarily
-    file_path = os.path.join("temp.pdf")
-    file.save(file_path)
+        # Save and process file
+        file_path = os.path.join("temp.pdf")
+        file.save(file_path)
+        syllabus_text = extract_text_from_pdf(file_path)
+        os.remove(file_path)
 
-    # Extract text from PDF
-    syllabus_text = extract_text_from_pdf(file_path)
-    os.remove(file_path)  # Clean up
+        # Generate prompt
+        prompt = f"""
+        Generate a structured teaching schedule in JSON format.
+        - Start Date: {start_date}
+        - End Date: {end_date}
+        - Syllabus: {syllabus_text}
+        Output JSON array with: "date", "day", "topic", "hours".
+        """
 
-    # Create prompt for Gemini
-    prompt = f"""
-    I am providing a syllabus along with semester details. Your task is to generate a structured teaching schedule in tabular format.**Details:**
-    - Start Date: {start_date}
-    - End Date: {end_date}
-    - Syllabus:{syllabus_text}
-    **Requirements:**
-    - Generate a structured table where each lecture has a Date, Day, Topic and number of hours required according to which topic is hard or that topic is easy  in json format.
-    - Ensure topics are distributed evenly from start to end date.
-    - Format response in a JSON array with fields: "date", "day",  "topic" , "hours".
-    """
-
-    # Call Gemini API
-    model = genai.GenerativeModel("gemini-pro")
-    
-
-    # Convert response to structured JSON (assumes well-formatted output)
-    import json
-    
-    response = model.generate_content(prompt)
-
-    print("Gemini API Response:", response)
+        # Get AI response
+        model = genai.GenerativeModel("gemini-pro")
+        response = model.generate_content(prompt)
+        # print(response)
         
-    # Ensure response has text
-    if not hasattr(response, "text") or not response.text:
+        if not response.text:
             return jsonify({"error": "No valid response from AI"}), 500
         
-    ai_response = response.text.strip()
-    match = re.search(r"\{.*\}|\[.*\]", ai_response, re.DOTALL)
-    if not match:
-        return jsonify({"error": "Failed to extract JSON from AI response"}), 500
+        cleaned_response = response.text.strip()
+        # Clean response and extract JSON
+        # cleaned_response = re.sub(r'json|', '', response.text)
+        cleaned_response = re.sub(r"```json|```", "", cleaned_response).strip()
+        json_match = re.search(r"(\{.*\}|\[.*\])", cleaned_response, re.DOTALL)
+        print(cleaned_response)
+        print(json_match)
+        if not json_match:
+            return jsonify({"error": "No JSON found in AI response"}), 500
 
-    json_text = match.group(0)  # Extracted JSON
-    print(json_text)
-    schedule = json.loads(json_text)
-    return jsonify({"raw_schedule": schedule})
+        # Parse JSON
+        schedule = json.loads(json_match.group(1))
+        print(schedule)
+        return jsonify({"schedule": schedule})
 
+    except json.JSONDecodeError as e:
+        return jsonify({"error": f"Invalid JSON format: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Server error: {str(e)}"}),500
 
 # Routes
 @app.route('/get_student_score', methods=['POST'])
@@ -260,7 +260,7 @@ def evaluate_answers():
                     "question_no": idx+1,
                     "error": "Evaluation failed"
                 })
-        print(results)
+        # print(results)
         print(sum(r.get('score', 0) for r in results))
         return jsonify({
             "total_score": sum(r.get('score', 0) for r in results),

@@ -312,7 +312,7 @@ const AssignmentPage = ({ classId }) => {
 
       try {
         setIsCheckingPlagiarism(true);
-        const formData = new FormData();S
+        const formData = new FormData();
         formData.append("file", file);
 
         const response = await fetch("http://localhost:5000/detect_ai", {

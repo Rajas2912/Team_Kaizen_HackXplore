@@ -34,6 +34,7 @@ const UploadPDF = () => {
         }
       )
       setSchedule(response.data.raw_schedule)
+      console.log(response.data.raw_schedule)
     } catch (error) {
       console.error('Error uploading file:', error)
     }
