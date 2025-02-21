@@ -46,7 +46,7 @@ const CreateViva = ({ onClose, classId }) => {
         .filter((q) => q.questionText && q.answer)
 
       setQuestionAnswerSet(formattedData)
-      setTotalQuestions(formattedData?.length)
+      setTotalQuestions(formattedData.length)
     }
     reader.readAsBinaryString(file)
   }

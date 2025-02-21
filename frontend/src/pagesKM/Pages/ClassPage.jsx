@@ -35,6 +35,7 @@ import CommunityPage from './communityPage'
 import CreateViva from '../../pagesPP/Viva/CreateViva'
 import ShowAllViva from '../../pagesPP/Viva/AllVivaById'
 import TakePicture from '../../pagesPP/Viva/TakePicture'
+import HomeQuiz from '../../pagesPP/Quiz/QuizManagement'
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props
 
@@ -301,7 +302,7 @@ const ClassPage = ({ classId }) => {
         </CustomTabPanel>
 
         <CustomTabPanel value={value} index={2}>
-          <Typography>Quizzes will be listed here.</Typography>
+          <HomeQuiz classId={classId}/>
         </CustomTabPanel>
 
         {/* Viva Assignment Tab */}
