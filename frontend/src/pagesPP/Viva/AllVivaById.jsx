@@ -30,6 +30,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import CreateViva from "./CreateViva";
 import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router";
+import { jsPDF } from "jspdf"; // For PDF generation
+import "jspdf-autotable"; // For table support in PDF
 
 const API = import.meta.env.VITE_BACKEND_URL;
 
@@ -125,107 +127,168 @@ const AllVivaById = ({ classId }) => {
 
   const StudentDetailsModal = ({ student, open, onClose }) => {
     if (!student) return null;
+ // Function to download PDF
+ const downloadPDF = () => {
+  const doc = new jsPDF();
 
-    return (
-      <Modal open={open} onClose={onClose}>
-      <Box sx={modalStyle}>
-        {/* Student Details Section */}
-        <Typography variant="h5" gutterBottom sx={{ fontWeight: "bold" }}>
-          Student Details
-        </Typography>
-        <Typography variant="body1" gutterBottom>
-          <strong>Name:</strong> {student.studentName}
-        </Typography>
-        
-        <Typography variant="body1" gutterBottom>
-          <strong>Viva ID:</strong> {student.vivaId}
-        </Typography>
-        <Typography variant="body1" gutterBottom>
-          <strong>Date of Viva:</strong>{" "}
-          {new Date(student.dateOfViva).toLocaleString()}
-        </Typography>
-        <Typography variant="body1" gutterBottom>
-          <strong>Total Questions:</strong> {student.totalQuestions}
-        </Typography>
-        <Typography variant="body1" gutterBottom>
-          <strong>Questions Attempted:</strong>{" "}
-          {student.questionAnswerSet.length}
-        </Typography>
-        <Typography variant="body1" gutterBottom>
-          <strong>Total mark :</strong>{" "}
-          {student.overallMark}
-        </Typography>
+  // Add student details
+  doc.setFontSize(16);
+  doc.text("Student Details", 10, 10);
+  doc.setFontSize(12);
+  doc.text(`Name: ${student.studentName}`, 10, 20);
+  doc.text(`Viva ID: ${student.vivaId}`, 10, 30);
+  doc.text(`Date of Viva: ${new Date(student.dateOfViva).toLocaleString()}`, 10, 40);
+  doc.text(`Total Questions: ${student.totalQuestions}`, 10, 50);
+  doc.text(`Questions Attempted: ${student.questionAnswerSet.length}`, 10, 60);
+  doc.text(`Overall Mark: ${student.overallMark}`, 10, 70);
 
-        {/* Proctored Feedback Section */}
-        <Typography variant="h6" gutterBottom sx={{ mt: 3, fontWeight: "bold" }}>
-          Proctored Feedback
-        </Typography>
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="body1" gutterBottom>
-            <strong>Book Detected Count:</strong>{" "}
-            {student?.proctoredFeedback?.bookDetectedCount}
-          </Typography>
-          <Typography variant="body1" gutterBottom>
-            <strong>Laptop Detected Count:</strong>{" "}
-            {student?.proctoredFeedback?.laptopDetectedCount}
-          </Typography>
-          <Typography variant="body1" gutterBottom>
-            <strong>Multiple Users Detected Count:</strong>{" "}
-            {student?.proctoredFeedback?.multipleUsersDetectedCount}
-          </Typography>
-          <Typography variant="body1" gutterBottom>
-            <strong>Phone Detected Count:</strong>{" "}
-            {student?.proctoredFeedback?.phoneDetectedCount}
-          </Typography>
-          <Typography variant="body1" gutterBottom>
-            <strong>Tab Switching Detected Count:</strong>{" "}
-            {student?.proctoredFeedback?.tabSwitchingDetectedCount}
-          </Typography>
-        </Box>
+  // Add proctored feedback
+  doc.setFontSize(16);
+  doc.text("Proctored Feedback", 10, 90);
+  doc.setFontSize(12);
+  doc.text(`Book Detected Count: ${student?.proctoredFeedback?.bookDetectedCount}`, 10, 100);
+  doc.text(`Laptop Detected Count: ${student?.proctoredFeedback?.laptopDetectedCount}`, 10, 110);
+  doc.text(`Multiple Users Detected Count: ${student?.proctoredFeedback?.multipleUsersDetectedCount}`, 10, 120);
+  doc.text(`Phone Detected Count: ${student?.proctoredFeedback?.phoneDetectedCount}`, 10, 130);
+  doc.text(`Tab Switching Detected Count: ${student?.proctoredFeedback?.tabSwitchingDetectedCount}`, 10, 140);
 
-        {/* Question Details Table */}
-        <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
-          Question Details
+  // Add question details table
+  doc.setFontSize(16);
+  doc.text("Question Details", 10, 160);
+
+  const tableData = student.questionAnswerSet.map((question) => [
+    question.questionText,
+    question.modelAnswer,
+    question.studentAnswer,
+    `Relevance: ${question.evaluation?.Relevance || 0}/10\nCompleteness: ${question.evaluation?.Completeness || 0}/10\nAccuracy: ${question.evaluation?.Accuracy || 0}/10\nDepth of Knowledge: ${question.evaluation?.DepthOfKnowledge || 0}/10`,
+  ]);
+
+  doc.autoTable({
+    startY: 170,
+    head: [["Question", "Model Answer", "Student Answer", "Evaluation"]],
+    body: tableData,
+  });
+
+  // Save the PDF
+  doc.save(`student_report_${student.studentName}.pdf`);
+};
+
+return (
+  <Modal open={open} onClose={onClose}>
+    <Box sx={modalStyle}>
+      {/* Student Details Section */}
+      <Typography variant="h5" gutterBottom sx={{ fontWeight: "bold" }}>
+        Student Details
+      </Typography>
+      <Typography variant="body1" gutterBottom>
+        <strong>Name:</strong> {student.studentName}
+      </Typography>
+      <Typography variant="body1" gutterBottom>
+        <strong>Viva ID:</strong> {student.vivaId}
+      </Typography>
+      <Typography variant="body1" gutterBottom>
+        <strong>Date of Viva:</strong>{" "}
+        {new Date(student.dateOfViva).toLocaleString()}
+      </Typography>
+      <Typography variant="body1" gutterBottom>
+        <strong>Total Questions:</strong> {student.totalQuestions}
+      </Typography>
+      <Typography variant="body1" gutterBottom>
+        <strong>Questions Attempted:</strong>{" "}
+        {student.questionAnswerSet.length}
+      </Typography>
+      <Typography variant="body1" gutterBottom>
+        <strong>Overall Mark:</strong> {student.overallMark}
+      </Typography>
+
+      {/* Proctored Feedback Section */}
+      <Typography variant="h6" gutterBottom sx={{ mt: 3, fontWeight: "bold" }}>
+        Proctored Feedback
+      </Typography>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="body1" gutterBottom>
+          <strong>Book Detected Count:</strong>{" "}
+          {student?.proctoredFeedback?.bookDetectedCount}
         </Typography>
-        <TableContainer component={Paper} sx={{ mb: 3 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
+        <Typography variant="body1" gutterBottom>
+          <strong>Laptop Detected Count:</strong>{" "}
+          {student?.proctoredFeedback?.laptopDetectedCount}
+        </Typography>
+        <Typography variant="body1" gutterBottom>
+          <strong>Multiple Users Detected Count:</strong>{" "}
+          {student?.proctoredFeedback?.multipleUsersDetectedCount}
+        </Typography>
+        <Typography variant="body1" gutterBottom>
+          <strong>Phone Detected Count:</strong>{" "}
+          {student?.proctoredFeedback?.phoneDetectedCount}
+        </Typography>
+        <Typography variant="body1" gutterBottom>
+          <strong>Tab Switching Detected Count:</strong>{" "}
+          {student?.proctoredFeedback?.tabSwitchingDetectedCount}
+        </Typography>
+      </Box>
+
+      {/* Question Details Table */}
+      <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
+        Question Details
+      </Typography>
+      <TableContainer component={Paper} sx={{ mb: 3 }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>
+                <strong>Question</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Model Answer</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Student Answer</strong>
+              </TableCell>
+              <TableCell>
+                <strong>Evaluation</strong>
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {student.questionAnswerSet.map((question, index) => (
+              <TableRow key={question._id}>
+                <TableCell>{question.questionText}</TableCell>
+                <TableCell>{question.modelAnswer}</TableCell>
+                <TableCell>{question.studentAnswer}</TableCell>
                 <TableCell>
-                  <strong>Question</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Model Answer</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Student Answer</strong>
-                </TableCell>
-                <TableCell>
-                  <strong>Evaluation</strong>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Typography variant="body2">
+                      <strong>Relevance:</strong> {question.evaluation?.Relevance || 0}/10
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>Completeness:</strong> {question.evaluation?.Completeness || 0}/10
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>Accuracy:</strong> {question.evaluation?.Accuracy || 0}/10
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>Depth of Knowledge:</strong> {question.evaluation?.DepthOfKnowledge || 0}/10
+                    </Typography>
+                  </Box>
                 </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {student.questionAnswerSet.map((question, index) => (
-                <TableRow key={question._id}>
-                  <TableCell>{question.questionText}</TableCell>
-                  <TableCell>{question.modelAnswer}</TableCell>
-                  <TableCell>{question.studentAnswer}</TableCell>
-                  <TableCell>{question.evaluation}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-        {/* Close Button */}
-        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-          <Button variant="contained" onClick={onClose}>
-            Close
-          </Button>
-        </Box>
+      {/* Buttons Section */}
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+        <Button variant="contained" color="primary" onClick={downloadPDF}>
+          Download PDF
+        </Button>
+        <Button variant="contained" color="secondary" onClick={onClose}>
+          Close
+        </Button>
       </Box>
-    </Modal>
+    </Box>
+  </Modal>
     );
   };
 
@@ -521,7 +584,7 @@ const modalStyle = {
   left: "50%",
   transform: "translate(-50%, -50%)",
   width: "80%",
-  maxWidth: "800px",
+  maxWidth: "1000px",
   bgcolor: "background.paper",
   boxShadow: 24,
   p: 4,

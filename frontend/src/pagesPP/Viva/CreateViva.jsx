@@ -1,8 +1,16 @@
 import React, { useState } from "react";
 import * as XLSX from "xlsx";
 import axios from "axios";
-import { FaUpload, FaTimes } from "react-icons/fa";
-import "./CreateViva.css";
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  IconButton,
+  CircularProgress,
+  Paper,
+} from "@mui/material";
+import { Upload as UploadIcon, Close as CloseIcon } from "@mui/icons-material";
 
 const API = import.meta.env.VITE_BACKEND_URL;
 
@@ -38,7 +46,7 @@ const CreateViva = ({ onClose, classId }) => {
         .filter((q) => q.questionText && q.answer);
 
       setQuestionAnswerSet(formattedData);
-      setTotalQuestions(formattedData.length); // Update total number of questions
+      setTotalQuestions(formattedData.length);
     };
     reader.readAsBinaryString(file);
   };
@@ -46,8 +54,8 @@ const CreateViva = ({ onClose, classId }) => {
   const handleRemoveFile = () => {
     setSelectedFile(null);
     setQuestionAnswerSet([]);
-    setTotalQuestions(0); // Reset total questions
-    document.getElementById("fileInput").value = ""; // Clear input field
+    setTotalQuestions(0);
+    document.getElementById("fileInput").value = "";
   };
 
   const handleSubmit = async (e) => {
@@ -55,7 +63,6 @@ const CreateViva = ({ onClose, classId }) => {
     setIsLoading(true);
     setError(null);
 
-    // Validate number of questions to ask
     if (numberOfQuestionsToAsk > totalQuestions) {
       setError(
         `Number of questions to ask (${numberOfQuestionsToAsk}) cannot be greater than total questions (${totalQuestions}).`
@@ -71,7 +78,7 @@ const CreateViva = ({ onClose, classId }) => {
         timeofthinking: Number(timeOfThinking),
         duedate: dueDate,
         questionAnswerSet,
-        numberOfQuestionsToAsk: Number(numberOfQuestionsToAsk), // Add this field
+        numberOfQuestionsToAsk: Number(numberOfQuestionsToAsk),
       });
       setVivaName("");
       setTimeOfThinking("");
@@ -89,52 +96,63 @@ const CreateViva = ({ onClose, classId }) => {
   };
 
   return (
-    <div className="create-viva-container">
-      <h2>Create Viva</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Viva Name:</label>
-          <input
-            type="text"
-            value={vivaName}
-            onChange={(e) => setVivaName(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Time of Thinking (seconds):</label>
-          <input
-            type="number"
-            value={timeOfThinking}
-            onChange={(e) => setTimeOfThinking(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Due Date:</label>
-          <input
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label>Number of Questions to Ask:</label>
-          <input
-            type="number"
-            value={numberOfQuestionsToAsk}
-            onChange={(e) => setNumberOfQuestionsToAsk(e.target.value)}
-            required
-            min="1"
-            max={totalQuestions} // Ensure it doesn't exceed total questions
-          />
-          <small>
-            Total Questions in Uploaded File: {totalQuestions}
-          </small>
-        </div>
-        {/* Upload File Button */}
-        <div className="upload-container">
+    <Paper
+      sx={{
+        maxWidth: 500,
+        margin: "auto",
+        padding: 3,
+        backgroundColor: "#f9f9f9",
+        borderRadius: 2,
+        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+      }}
+    >
+      <Typography variant="h5" align="center" gutterBottom>
+        Create Viva
+      </Typography>
+      <Box component="form" onSubmit={handleSubmit}>
+        <TextField
+          fullWidth
+          label="Viva Name"
+          value={vivaName}
+          onChange={(e) => setVivaName(e.target.value)}
+          required
+          sx={{ mb: 2 }}
+        />
+        <TextField
+          fullWidth
+          label="Time of Thinking (seconds)"
+          type="number"
+          value={timeOfThinking}
+          onChange={(e) => setTimeOfThinking(e.target.value)}
+          required
+          sx={{ mb: 2 }}
+        />
+        <TextField
+          fullWidth
+          label="Due Date"
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+          required
+          InputLabelProps={{ shrink: true }}
+          sx={{ mb: 2 }}
+        />
+        <TextField
+          fullWidth
+          label="Number of Questions to Ask"
+          type="number"
+          value={numberOfQuestionsToAsk}
+          onChange={(e) => setNumberOfQuestionsToAsk(e.target.value)}
+          required
+          inputProps={{ min: 1, max: totalQuestions }}
+          sx={{ mb: 2 }}
+        />
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          Total Questions in Uploaded File: {totalQuestions}
+        </Typography>
+
+        {/* File Upload Section */}
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mb: 2 }}>
           <input
             type="file"
             accept=".xlsx, .xls, .csv"
@@ -142,33 +160,48 @@ const CreateViva = ({ onClose, classId }) => {
             id="fileInput"
             hidden
           />
-          <button
-            type="button"
-            className="upload-btn"
-            onClick={() => document.getElementById("fileInput").click()}
+          <Button
+            variant="contained"
+            component="label"
+            startIcon={<UploadIcon />}
             disabled={!!selectedFile}
+            sx={{ width: 200, height: 50 }}
           >
-            <FaUpload className="upload-icon" /> Upload File
-          </button>
+            Upload File
+            <input type="file" hidden onChange={handleFileUpload} />
+          </Button>
           {selectedFile && (
-            <div className="file-info">
-              <p className="file-name">📁 {selectedFile}</p>
-              <button
-                type="button"
-                className="remove-btn"
-                onClick={handleRemoveFile}
-              >
-                <FaTimes className="remove-icon" /> Remove
-              </button>
-            </div>
+            <Box sx={{ mt: 1, display: "flex", alignItems: "center" }}>
+              <Typography variant="body2" sx={{ mr: 1 }}>
+                📁 {selectedFile}
+              </Typography>
+              <IconButton size="small" onClick={handleRemoveFile}>
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
           )}
-        </div>
-        <button type="submit" disabled={isLoading}>
-          {isLoading ? "Creating..." : "Create Viva"}
-        </button>
-        {error && <p className="error-message">Error: {error}</p>}
-      </form>
-    </div>
+        </Box>
+
+        {/* Submit Button */}
+        <Button
+          type="submit"
+          fullWidth
+          variant="contained"
+          color="primary"
+          disabled={isLoading}
+          sx={{ mt: 2 }}
+        >
+          {isLoading ? <CircularProgress size={24} /> : "Create Viva"}
+        </Button>
+
+        {/* Error Message */}
+        {error && (
+          <Typography color="error" align="center" sx={{ mt: 2 }}>
+            Error: {error}
+          </Typography>
+        )}
+      </Box>
+    </Paper>
   );
 };
 
