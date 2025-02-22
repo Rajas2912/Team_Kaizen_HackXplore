@@ -302,7 +302,7 @@ const ClassPage = ({ classId }) => {
         </CustomTabPanel>
 
         <CustomTabPanel value={value} index={2}>
-          <HomeQuiz classId={classId}/>
+          <HomeQuiz classId={classId} />
         </CustomTabPanel>
 
         {/* Viva Assignment Tab */}

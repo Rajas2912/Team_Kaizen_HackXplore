@@ -20,7 +20,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Configure APIs
-EDENAI_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZmMxMGRkNDAtOGIxYS00YmUxLTllNmEtNDZjOTExYzIwYzI0IiwidHlwZSI6ImFwaV90b2tlbiJ9.UFwm-YijNasg9t0udv-aki7rr9LxetwquTPpWmNNcRg"
+EDENAI_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZmZiMTk0Y2QtZTk4NC00Y2NkLTgwMmItNjA2NTVlNzliMTA1IiwidHlwZSI6ImFwaV90b2tlbiJ9.43-ZE4QXFrUTITO1byD-T7LBC8JjeFLfcWLgwdA9Wfs"
 API_KEY = "AIzaSyAa1cT3_l3mcJto_JE8Y673UXv1F5eq0w0"
 genai.configure(api_key=API_KEY)
 
@@ -199,8 +199,8 @@ def upload_file():
         cleaned_response = response.text.strip()
         # Clean response and extract JSON
         # cleaned_response = re.sub(r'json|', '', response.text)
-        cleaned_response = re.sub(r"```json|```", "", cleaned_response).strip()
-        json_match = re.search(r"(\{.*\}|\[.*\])", cleaned_response, re.DOTALL)
+        cleaned_response = re.sub(r"json|", "", cleaned_response).strip()
+        json_match = re.search(r"(\{.\}|\[.\])", cleaned_response, re.DOTALL)
         print(cleaned_response)
         print(json_match)
         if not json_match:
@@ -229,15 +229,13 @@ def evaluate_answers():
         # Text extraction
         answer_text = process_pdf(answer_file)
         question_text = process_pdf(question_file)
-        print(answer_text)
-        print(question_text)
+
         # Question-answer processing
         questions = process_questions(question_text)
         answers = process_questions(answer_text)
         if len(questions) != len(answers):
             return jsonify({"error": "Q/A count mismatch"}), 400
-        print(questions)
-        print(answers)
+
         # Create knowledge base
         create_chroma_db(question_text).persist()
 
@@ -247,7 +245,7 @@ def evaluate_answers():
             try:
                 context = [doc.page_content for doc in get_chroma_context(q)]
                 score = evaluate_answer(q, a, "\n".join(context))
-                print(context)
+                
                 results.append({
                     "question_no": idx+1,
                     "question": q,
@@ -262,8 +260,9 @@ def evaluate_answers():
                     "question_no": idx+1,
                     "error": "Evaluation failed"
                 })
-        print(results)
+        # print(results)
         print(sum(r.get('score', 0) for r in results))
+        print(results)
         return jsonify({
             "total_score": sum(r.get('score', 0) for r in results),
             
@@ -341,35 +340,6 @@ def detect_ai():
     except Exception as e:
         return jsonify({"error":str(e)}),500
 
-
-@app.route("/ask_gemini", methods=["GET"])
-def ask_gemini():
-    """
-    Sends a prompt to the Gemini API and returns the response.
-
-    Query Parameters:
-    - prompt: The complete formatted prompt including system instructions, source document, and question.
-    - api_key: The API key to authenticate the request.
-
-    Returns:
-    - JSON response containing Gemini's generated text.
-    """
-    prompt = request.args.get("prompt")
-    api_key = request.args.get("api_key")
-
-    if not prompt or not api_key:
-        return jsonify({"error": "Missing 'prompt' or 'api_key'"}), 400
-
-    # Configure API
-    genai.configure(api_key=api_key)
-
-    # Initialize the model
-    model = genai.GenerativeModel("gemini-pro")
-
-    # Get response
-    response = model.generate_content(prompt)
-
-    return jsonify({"response": response.text})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
