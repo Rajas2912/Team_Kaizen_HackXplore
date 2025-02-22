@@ -30,6 +30,7 @@ function App() {
           <Route path="/report" element={<StudentReport />} />
           <Route path="/feedback" element={<FeedbackPage></FeedbackPage>} />
           <Route path="/personalized" element={<PersonalizedFeedback></PersonalizedFeedback>} />
+          {/* <Route path="/mindmap" element={<render} /> */}
         </Route>
       </Routes>
     </BrowserRouter>
