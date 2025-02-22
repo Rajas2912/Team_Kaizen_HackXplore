@@ -10,6 +10,10 @@ const SubmissionSchema = new mongoose.Schema({
   plagiarismScore: { type: Number, default: 0 },
   isConfirmed: { type: Boolean, default: false },
   submittedAt: { type: Date, default: Date.now }, // Timestamp of submission
+  result: {
+    results: [{ type: mongoose.Schema.Types.Mixed }], // Array of results
+    total_score: { type: Number, default: 0 }, // Total score
+  },
 })
 
 const AssignmentSchema = new mongoose.Schema({

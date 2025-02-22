@@ -20,7 +20,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Configure APIs
-EDENAI_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZmZiMTk0Y2QtZTk4NC00Y2NkLTgwMmItNjA2NTVlNzliMTA1IiwidHlwZSI6ImFwaV90b2tlbiJ9.43-ZE4QXFrUTITO1byD-T7LBC8JjeFLfcWLgwdA9Wfs"
+EDENAI_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiOTE3Zjk2NTEtZGE0Ny00OTA5LWI0MjktNGVmNWI5NWMxY2JhIiwidHlwZSI6ImFwaV90b2tlbiJ9.sF3gwGRaGriFh0-J0RgDZAPYfw3xmF3d3Zv476-e5HI"
 API_KEY = "AIzaSyAa1cT3_l3mcJto_JE8Y673UXv1F5eq0w0"
 genai.configure(api_key=API_KEY)
 
@@ -268,6 +268,7 @@ def evaluate_answers():
                 })
         # print(results)
         print(sum(r.get('score', 0) for r in results))
+        print(results)
         return jsonify({
             "total_score": sum(r.get('score', 0) for r in results),
             
@@ -345,6 +346,111 @@ def detect_ai():
     except Exception as e:
         return jsonify({"error":str(e)}),500
 
+def ask_gemini_internal(prompt, api_key):
+    """
+    Calls Gemini API and returns a structured JSON response.
+
+    Parameters:
+    - prompt: The formatted prompt.
+    - api_key: The API key for authentication.
+
+    Returns:
+    - JSON response in the required structure.
+    """
+    # Configure API
+    genai.configure(api_key=api_key)
+
+    # Initialize the model
+    model = genai.GenerativeModel("gemini-pro")
+
+    # Get response
+    response = model.generate_content(prompt)
+
+    # Process the AI response to ensure valid JSON
+    structured_response = clean_ai_response(response.text)
+
+    return structured_response
+
+def clean_ai_response(ai_response):
+    """
+    Cleans and extracts a valid JSON object from AI-generated text.
+
+    Args:
+        ai_response (str): The raw response from AI.
+
+    Returns:
+        dict: A properly formatted JSON object.
+    """
+    try:
+        # Remove unnecessary formatting (like json ... )
+        cleaned_text = re.sub(r"json\n|\n", "", ai_response).strip()
+
+        # Parse JSON response
+        quiz_data = json.loads(cleaned_text)
+
+        # Validate structure
+        required_keys = {"question", "context", "answer", "evaluation", "feedback"}
+        if not required_keys.issubset(quiz_data.keys()):
+            return {"error": "Invalid JSON structure received from AI"}
+
+        return quiz_data
+    except json.JSONDecodeError:
+        return {"error": "Invalid JSON format received from AI"}
+
+@app.route('/generate-feedback', methods=['POST'])
+def generate_feedback():
+    """
+    API endpoint to generate personalized feedback based on student responses.
+    """
+    data = request.json
+    results = data.get("results")
+
+    if not results:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    feedback_responses = []
+
+    for result in results:
+        question = result.get("question")
+        student_response = result.get("answer")
+
+        if not question or not student_response:
+            continue
+
+        # Construct prompt for AI
+        prompt = f"""
+        You are an AI that generates structured JSON responses for a personalized feedback system. 
+        Given the student's response to a question, provide the following details in JSON format:
+
+        - question: The question being answered.
+        - context: The original response provided by the student.
+        - answer: A simplified version of the response.
+        - evaluation: A short assessment of the answer's accuracy and completeness.
+        - feedback: Constructive feedback to improve the response.
+
+        eg - 
+        
+            question - What were the major causes of World War I?
+            context -  World War I was caused by a combination of political tensions, military buildup, and nationalistic sentiments.
+            answer - World War I started because of political tensions between nations and various alliances.
+            evaluation - Partial answer: Needs more depth.
+            feedback - You've identified alliances as a cause, which is a good start! However, your response could be more detailed. Try elaborating on specific alliances and other contributing factors like militarism, imperialism, and nationalism.
+        
+        Ensure the JSON output follows this structure:
+        {{
+          "question": "{question}",
+          "context": "{student_response}",
+          "answer": "Provide a simplified version of the response here.",
+          "evaluation": "Provide a short assessment here.",
+          "feedback": "Provide constructive feedback here."
+        }}
+        """
+
+        # Get feedback from Gemini
+        feedback = ask_gemini_internal(prompt,API_KEY)
+        feedback_responses.append(feedback)
+
+    return jsonify(feedback_responses)
 
 
 # for text too  speech 

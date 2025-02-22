@@ -5,8 +5,8 @@ import Backdrop from '@mui/material/Backdrop';
 import CircularProgress from '@mui/material/CircularProgress';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'; // Import the back icon
 import './TakePicture.css'; // Import the CSS file
-
-const URL = import.meta.env.VITE_PORT_URL;
+import { useSelector } from "react-redux";
+const URL = import.meta.env.VITE_FLASK_URL;
 
 const TakePicture = () => {
   const videoRef = useRef(null);
@@ -16,7 +16,8 @@ const TakePicture = () => {
   const [isCameraStart, setIsCameraStart] = useState(true);
   const [loading, setLoading] = useState(false); // Loading state
   const navigate = useNavigate();
-
+  const { userInfo } = useSelector((state) => state.user); // Access user role from Redux
+console.log(userInfo._id)
   const {vivaId}=useParams();
 
   const handleBack = () => {
@@ -70,7 +71,42 @@ const TakePicture = () => {
 
   // Process Image by sending as a File instead of Base64 URL
   const processImage = async () => {
-    navigate(`/give-viva/${vivaId}`)
+    const stdid = '67b4e81b9decbdf7991bc76f'
+    if (!imageFile) {
+      alert("No image captured.");
+      return;
+    }
+  
+    setLoading(true); // Show loading spinner
+  
+    try {
+      const formData = new FormData();
+      // console.log(imageFile)
+
+      console.log(userInfo._id)
+      formData.append('image', imageFile);
+      formData.append('student_id', stdid); // Pass student ID
+      console.log(formData)
+      console.log('Sending formData:', formData);
+  
+      const response = await axios.post(`${URL}/recognize_face`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+  
+      console.log('Response:', response);
+  
+      if (response.status === 200) {
+        alert('User Authenticated');
+        navigate(`/give-viva/${vivaId}`);
+      } else {
+        alert('Failed to authenticate');
+      }
+    } catch (error) {
+      console.error('Error processing image:', error);
+      alert('Error processing image');
+    } finally {
+      setLoading(false); // Hide loading spinner
+    }
     // if (imageFile) {
     //   setLoading(true); // Show loading spinner
     //   try {

@@ -18,6 +18,13 @@ import {
   Avatar,
   TextField,
   Collapse,
+  TableContainer,
+  Table,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableBody,
+  Paper,
 } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
@@ -26,6 +33,7 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import DescriptionIcon from '@mui/icons-material/Description'
 import { motion } from 'framer-motion'
 import { styled } from '@mui/system'
+import { useNavigate } from 'react-router-dom'
 import {
   useDeleteAssignmentMutation,
   useGetAssignmentsByClassQuery,
@@ -76,6 +84,7 @@ const AssignmentPage = ({ classId }) => {
   const { userInfo } = useSelector((state) => state.user)
   const [openDialog, setOpenDialog] = useState(false)
   const [openEditDialog, setOpenEditDialog] = useState(false)
+  const [openSubmissionsModal, setOpenSubmissionsModal] = useState(false)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [deadline, setDeadline] = useState('')
@@ -90,7 +99,16 @@ const AssignmentPage = ({ classId }) => {
     message: '',
     severity: 'success',
   })
+  const [selectedFiles, setSelectedFiles] = useState({})
+  const [plagiarismResults, setPlagiarismResults] = useState({})
+  const [isCheckingPlagiarism, setIsCheckingPlagiarism] = useState(false)
+  const [evaluationResults, setEvaluationResults] = useState({})
+  const [submissions, setSubmissions] = useState([])
+  const [isUploadingFile, setIsUploadingFile] = useState(false) // New state for file upload loading
+  const [isSubmitting, setIsSubmitting] = useState(false) // New state for submit loading
+
   const theme = useTheme()
+  const navigate = useNavigate()
 
   // RTK Query hooks
   const {
@@ -105,7 +123,7 @@ const AssignmentPage = ({ classId }) => {
   const [updateAssignment, { isLoading: isUpdating }] =
     useUpdateAssignmentMutation()
   const [submitAnswer, { isLoading: isAnswering }] = useSubmitAnswerMutation()
-
+  console.log(assignments)
   // Handle file input change for chapter PDF
   const handleChapterPdfChange = (e) => {
     const selectedFile = e.target.files[0]
@@ -142,7 +160,6 @@ const AssignmentPage = ({ classId }) => {
 
   // Handle assignment upload
   const handleUploadAssignment = async () => {
-    console.log(title, deadline, chapterPdf, assignmentPdf)
     if (!title || !deadline || !chapterPdf || !assignmentPdf) {
       setNotification({
         open: true,
@@ -182,7 +199,6 @@ const AssignmentPage = ({ classId }) => {
       })
     }
   }
-  const [selectedFile, setSelectedFile] = useState(null)
 
   // Handle assignment deletion
   const handleDeleteAssignment = async (assignmentId) => {
@@ -211,8 +227,7 @@ const AssignmentPage = ({ classId }) => {
     setDeadline(new Date(assignment.deadline).toISOString().split('T')[0])
     setOpenEditDialog(true)
   }
-  const [plagiarismResults, setPlagiarismResults] = useState({})
-  const [isCheckingPlagiarism, setIsCheckingPlagiarism] = useState(false)
+
   // Handle assignment update
   const handleUpdateAssignment = async () => {
     if (!title || !deadline) {
@@ -256,11 +271,53 @@ const AssignmentPage = ({ classId }) => {
       })
     }
   }
-  const handleUpload = async (assignmentPdfFilename) => {
+
+  // Handle file upload for student submissions
+  const handleFileChange = async (event, assignmentId) => {
+    if (event.target.files.length > 0) {
+      const file = event.target.files[0]
+      setSelectedFiles((prev) => ({ ...prev, [assignmentId]: file }))
+
+      try {
+        setIsCheckingPlagiarism(true)
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const response = await fetch('http://localhost:5000/detect_ai', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          const aiScore = (result.winstonai?.ai_score || 0) * 100
+          setPlagiarismResults((prev) => ({
+            ...prev,
+            [assignmentId]: aiScore,
+          }))
+        }
+      } catch (error) {
+        console.error('Plagiarism check failed:', error)
+        setNotification({
+          open: true,
+          message: 'Plagiarism check failed. Please try again.',
+          severity: 'error',
+        })
+      } finally {
+        setIsCheckingPlagiarism(false)
+      }
+    }
+  }
+
+  // Handle file upload for student submissions
+  const handleUpload = async (assignmentId, assignmentPdfFilename) => {
+    const selectedFile = selectedFiles[assignmentId]
     if (!selectedFile) {
       alert('Please select a file before uploading.')
       return
     }
+
+    setIsUploadingFile(true) // Start loading for upload
 
     try {
       // Fetch the assignment PDF from the server
@@ -295,85 +352,44 @@ const AssignmentPage = ({ classId }) => {
         // Update scores state with the new result
         setScores((prev) => ({
           ...prev,
-          [assignmentPdfFilename]: result.total_score,
+          [assignmentId]: result.total_score,
         }))
+        setEvaluationResults((prev) => ({
+          ...prev,
+          [assignmentId]: result,
+        }))
+        console.log({ result: result })
       } else {
         alert('Upload failed.')
       }
     } catch (error) {
       console.error('Error uploading file:', error)
       alert('Error uploading file: ' + error.message)
+    } finally {
+      setIsUploadingFile(false) // Stop loading for upload
     }
   }
-  const handleFileChange = async (event) => {
-    if (event.target.files.length > 0) {
-      const file = event.target.files[0]
-      setSelectedFile(file)
 
-      try {
-        setIsCheckingPlagiarism(true)
-        const formData = new FormData()
-        formData.append('file', file)
-
-        const response = await fetch('http://localhost:5000/detect_ai', {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (response.ok) {
-          const result = await response.json()
-          const aiScore = (result.winstonai?.ai_score || 0) * 100
-          setPlagiarismResults((prev) => ({
-            ...prev,
-            [file.name]: aiScore,
-          }))
-        }
-      } catch (error) {
-        console.error('Plagiarism check failed:', error)
-        setNotification({
-          open: true,
-          message: 'Plagiarism check failed. Please try again.',
-          severity: 'error',
-        })
-      } finally {
-        setIsCheckingPlagiarism(false)
-      }
-    }
-  }
-  const handleChapterUpload = async (e) => {
-    const selectedChapterFile = e.target.files[0]
-    setChapterPdf(e.target.files[0])
-    if (!selectedChapterFile) {
-      alert('Please select a chapter PDF before uploading.')
-      return
-    }
-
+  // Handle viewing submissions
+  const handleViewSubmissions = async (assignmentId) => {
     try {
-      // Create FormData and append the chapter PDF
-      const formData = new FormData()
-      formData.append('file', selectedChapterFile)
-
-      // Debugging log: Check if file is being appended correctly
-      console.log('Uploading:', selectedChapterFile.name)
-
-      // Send to Flask backend via "/upload"
-      const uploadResponse = await fetch('http://localhost:5000/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (uploadResponse.ok) {
-        const result = await uploadResponse.json()
-        console.log('Upload successful:', result)
-        alert('Chapter PDF uploaded successfully!')
+      const response = await fetch(
+        `${BASE_URL}/assignments/${assignmentId}/submissions`
+      )
+      if (response.ok) {
+        const data = await response.json()
+        setSubmissions(data)
+        setOpenSubmissionsModal(true)
       } else {
-        const errorText = await uploadResponse.text()
-        console.error('Upload failed:', errorText)
-        alert('Upload failed: ' + errorText)
+        throw new Error('Failed to fetch submissions')
       }
     } catch (error) {
-      console.error('Error uploading chapter PDF:', error)
-      alert('Error uploading chapter PDF: ' + error.message)
+      console.error('Error fetching submissions:', error)
+      setNotification({
+        open: true,
+        message: 'Failed to fetch submissions. Please try again.',
+        severity: 'error',
+      })
     }
   }
 
@@ -401,7 +417,7 @@ const AssignmentPage = ({ classId }) => {
       </Typography>
 
       {/* Create Assignment Button */}
-      {userInfo.role == 'teacher' && (
+      {userInfo.role === 'teacher' && (
         <StyledButton
           startIcon={<UploadIcon />}
           onClick={() => setOpenDialog(true)}
@@ -493,15 +509,17 @@ const AssignmentPage = ({ classId }) => {
                             variant="contained"
                             tabIndex={-1}
                             startIcon={<CloudUploadIcon />}
-                            disabled={isCheckingPlagiarism}
                           >
                             Upload assignment
                             <VisuallyHiddenInput
                               type="file"
-                              onChange={handleFileChange}
+                              onChange={(e) =>
+                                handleFileChange(e, assignment._id)
+                              }
                             />
                           </Button>
-                          {selectedFile && (
+
+                          {selectedFiles[assignment._id] && (
                             <Box
                               sx={{
                                 display: 'flex',
@@ -510,52 +528,50 @@ const AssignmentPage = ({ classId }) => {
                               }}
                             >
                               {/* Plagiarism Check Result */}
-                              {plagiarismResults[selectedFile.name] !==
+                              {plagiarismResults[assignment._id] !==
                                 undefined && (
                                 <Typography
                                   variant="body2"
                                   sx={{
                                     color:
-                                      plagiarismResults[selectedFile.name] > 30
+                                      plagiarismResults[assignment._id] > 30
                                         ? theme.palette.error.main
                                         : theme.palette.success.main,
                                     fontWeight: 'bold',
                                   }}
                                 >
                                   AI Detection:{' '}
-                                  {plagiarismResults[selectedFile.name].toFixed(
-                                    2
-                                  )}
+                                  {plagiarismResults[assignment._id].toFixed(2)}
                                   %
                                 </Typography>
                               )}
 
-                              {/* Submit Button with Plagiarism Check */}
+                              {/* Submit Button */}
                               <Button
                                 variant="contained"
                                 color="primary"
                                 onClick={() =>
-                                  handleUpload(assignment.assignmentPdf)
+                                  handleUpload(
+                                    assignment._id,
+                                    assignment.assignmentPdf
+                                  )
                                 }
                                 disabled={
-                                  isCheckingPlagiarism ||
-                                  (plagiarismResults[selectedFile.name] !==
+                                  (plagiarismResults[assignment._id] !==
                                     undefined &&
-                                    plagiarismResults[selectedFile.name] >
-                                      75) ||
-                                  !selectedFile
+                                    plagiarismResults[assignment._id] > 75) ||
+                                  isUploadingFile
                                 }
                               >
-                                Submit
+                                {isUploadingFile ? (
+                                  <CircularProgress size={24} />
+                                ) : (
+                                  'Submit'
+                                )}
                               </Button>
 
-                              {/* Loading Indicator */}
-                              {isCheckingPlagiarism && (
-                                <CircularProgress size={24} />
-                              )}
-
-                              {/* Existing Score Display */}
-                              {scores[assignment.assignmentPdf] && (
+                              {/* Score Display */}
+                              {scores[assignment._id] && (
                                 <Typography
                                   variant="body1"
                                   sx={{
@@ -564,17 +580,93 @@ const AssignmentPage = ({ classId }) => {
                                     color: theme.palette.success.main,
                                   }}
                                 >
-                                  Score: {scores[assignment.assignmentPdf]}/
+                                  Score: {scores[assignment._id]}/
                                   {assignment.questions?.length * 10}
                                 </Typography>
                               )}
                             </Box>
                           )}
+
+                          {/* View Report Button */}
+                          {evaluationResults[assignment._id] && (
+                            <Button
+                              variant="outlined"
+                              color="secondary"
+                              onClick={() => {
+                                navigate('/report', {
+                                  state: {
+                                    results: evaluationResults[assignment._id],
+                                    totalScore: scores[assignment._id],
+                                    assignmentTitle: assignment.title,
+                                  },
+                                })
+                              }}
+                              sx={{ ml: 2 }}
+                            >
+                              View Report
+                            </Button>
+                          )}
+                          {/* View Feedback Button */}
+                          {scores[assignment._id] && (
+                            <Button
+                              variant="outlined"
+                              color="primary"
+                              onClick={async () => {
+                                try {
+                                  const response = await fetch(
+                                    'http://localhost:5000/generate-feedback',
+                                    {
+                                      method: 'POST',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                      },
+                                      body: JSON.stringify({
+                                        assignmentId: assignment._id,
+                                      }),
+                                    }
+                                  )
+
+                                  if (response.ok) {
+                                    const feedbackData = await response.json()
+                                    navigate('/feedback', {
+                                      state: { feedbackData },
+                                    }) // Navigate to feedback page
+                                  } else {
+                                    throw new Error('Failed to fetch feedback')
+                                  }
+                                } catch (error) {
+                                  console.error(
+                                    'Error fetching feedback:',
+                                    error
+                                  )
+                                  setNotification({
+                                    open: true,
+                                    message:
+                                      'Failed to fetch feedback. Please try again.',
+                                    severity: 'error',
+                                  })
+                                }
+                              }}
+                              sx={{ ml: 2 }}
+                            >
+                              View Feedback
+                            </Button>
+                          )}
                         </>
                       )}
                       {/* Delete Button */}
-                      {userInfo.role == 'teacher' && (
+                      {userInfo.role === 'teacher' && (
                         <>
+                          <Button
+                            variant="outlined"
+                            color="secondary"
+                            onClick={() =>
+                              handleViewSubmissions(assignment._id)
+                            }
+                          >
+                            View Submissions
+                          </Button>
+
                           <IconButton
                             edge="end"
                             onClick={() =>
@@ -592,7 +684,6 @@ const AssignmentPage = ({ classId }) => {
                             )}
                           </IconButton>
 
-                          {/* Edit Button */}
                           <IconButton
                             edge="end"
                             onClick={() => handleEditAssignment(assignment)}
@@ -680,7 +771,7 @@ const AssignmentPage = ({ classId }) => {
               <input
                 type="file"
                 hidden
-                onChange={(e) => handleChapterUpload(e)}
+                onChange={handleChapterPdfChange}
                 accept="application/pdf"
                 required
               />
@@ -785,6 +876,45 @@ const AssignmentPage = ({ classId }) => {
           >
             {isUpdating ? <CircularProgress size={24} /> : 'Update'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Submissions Modal */}
+      <Dialog
+        open={openSubmissionsModal}
+        onClose={() => setOpenSubmissionsModal(false)}
+        fullWidth
+        maxWidth="md"
+      >
+        <DialogTitle>Submissions</DialogTitle>
+        <DialogContent>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Student Name</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Score</TableCell>
+                  <TableCell>Plagiarism Score</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {submissions?.map((submission) => (
+                  <TableRow key={submission._id}>
+                    <TableCell>{submission.studentId?.name}</TableCell>
+                    <TableCell>{submission.studentId?.email}</TableCell>
+                    <TableCell>
+                      {submission.result?.total_score || 'N/A'}
+                    </TableCell>
+                    <TableCell>{submission.plagiarismScore || 'N/A'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenSubmissionsModal(false)}>Close</Button>
         </DialogActions>
       </Dialog>
 
