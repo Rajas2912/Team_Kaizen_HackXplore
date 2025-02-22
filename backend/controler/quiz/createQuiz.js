@@ -13,6 +13,7 @@ export const createQuiz = async (req, res) => {
       questionAnswerSet,
     });
     await newquiz.save();
+    console.log(newquiz);
     return res.status(201).json({
       message: "Viva created successfully",
       data: newquiz,
