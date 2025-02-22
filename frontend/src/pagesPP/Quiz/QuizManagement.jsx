@@ -30,10 +30,27 @@ import CloseIcon from "@mui/icons-material/Close";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import dayjs from "dayjs"; // Import dayjs
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import CreateQuiz from "./CreateQuiz";
+import { jsPDF } from "jspdf";
+
 const API = import.meta.env.VITE_BACKEND_URL;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const QuizManagement = ({ classId }) => {
   const [quizzes, setQuizzes] = useState([]);
@@ -48,6 +65,7 @@ const QuizManagement = ({ classId }) => {
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const { userInfo } = useSelector((state) => state.user);
+  console.log(userInfo);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -71,8 +89,9 @@ const QuizManagement = ({ classId }) => {
 
   const fetchRegisteredStudents = async (quizId) => {
     try {
-      const response = await axios.get(`${API}/quizresult/getquizresult/${quizId}`);
+      const response = await axios.get(`${API}/quizresult/quizresultbyquizid/${quizId}`);
       setStudents((prev) => ({ ...prev, [quizId]: response?.data }));
+      console.log(response.data);
     } catch (error) {
       console.error("Error fetching students:", error);
     }
@@ -80,22 +99,20 @@ const QuizManagement = ({ classId }) => {
 
   const handleRowClick = (index, quizId) => {
     setOpenRows((prev) => ({ ...prev, [index]: !prev[index] }));
-    // if (!students[quizId]) fetchRegisteredStudents(quizId);
+    if (!students[quizId]) fetchRegisteredStudents(quizId);
   };
 
   const handleEdit = (quiz) => {
     setEditMode(quiz._id);
-    setEditedData({ ...quiz });
+    setEditedData({ ...quiz, duedate: dayjs(quiz.duedate), startTime: dayjs(quiz.startTime) });
   };
 
   const handleSave = async (quizId) => {
     try {
       const dataToSave = {
         ...editedData,
-        dueDate:editedData.dueDate,
-        startTime:editedData.startTime,
-       /*  dueDate: editedData.dueDate.toISOString(), // Convert to ISO string if needed
-        startTime: editedData.startTime.toISOString(), // Convert to ISO string if needed */
+        duedate: editedData.duedate.toISOString(),
+        startTime: editedData.startTime.toISOString(),
       };
       await axios.put(`${API}/quiz/updateQuiz/${quizId}`, dataToSave);
       setQuizzes((prev) =>
@@ -112,7 +129,7 @@ const QuizManagement = ({ classId }) => {
   };
 
   const handleStartQuiz = (quizId) => {
-    navigate(`/takequiz/${quizId}`);
+    navigate(`/givepicture/${quizId}`);
   };
 
   const handleQuestionModalOpen = (quiz) => {
@@ -124,9 +141,44 @@ const QuizManagement = ({ classId }) => {
     setIsQuestionModalOpen(false);
   };
 
+
   const StudentDetailsModal = ({ student, open, onClose }) => {
     if (!student) return null;
-
+  
+    const handleDownloadPDF = () => {
+      const doc = new jsPDF();
+  
+      // Add student details to the PDF
+      doc.text(`Student Name: ${student.studentName}`, 10, 10);
+      doc.text(`Quiz ID: ${student.quizId}`, 10, 20);
+      doc.text(`Date and Time: ${new Date(student.dateofquiz).toLocaleString()}`, 10, 30);
+      doc.text(`Total Questions: ${student.totalQuestions}`, 10, 40);
+      doc.text(`Questions Attempted: ${student.questionAnswerSet.length}`, 10, 50);
+      doc.text(`Total Score: ${student.overallMark}`, 10, 60);
+  
+      // Add proctored feedback to the PDF
+      doc.text("Proctored Feedback:", 10, 70);
+      doc.text(`Book Detected Count: ${student?.proctoredFeedback?.bookDetectedCount}`, 10, 80);
+      doc.text(`Laptop Detected Count: ${student?.proctoredFeedback?.laptopDetectedCount}`, 10, 90);
+      doc.text(`Multiple Users Detected Count: ${student?.proctoredFeedback?.multipleUsersDetectedCount}`, 10, 100);
+      doc.text(`Phone Detected Count: ${student?.proctoredFeedback?.phoneDetectedCount}`, 10, 110);
+      doc.text(`Tab Switching Detected Count: ${student?.proctoredFeedback?.tabSwitchingDetectedCount}`, 10, 120);
+  
+      // Add question details to the PDF
+      doc.text("Question Details:", 10, 130);
+      let yOffset = 140;
+      student.questionAnswerSet.forEach((question, index) => {
+        doc.text(`Question ${index + 1}: ${question.questionText}`, 10, yOffset);
+        doc.text(`Model Answer: ${question.correctoption}`, 10, yOffset + 10);
+        doc.text(`Student Answer: ${question.studentAnswer}`, 10, yOffset + 20);
+        doc.text(`Evaluation: ${question.studentAnswer === question.correctoption ? "Correct" : "Incorrect"}`, 10, yOffset + 30);
+        yOffset += 40;
+      });
+  
+      // Save the PDF
+      doc.save(`student_feedback_${student.studentName}.pdf`);
+    };
+  
     return (
       <Modal open={open} onClose={onClose}>
         <Box sx={modalStyle}>
@@ -140,8 +192,8 @@ const QuizManagement = ({ classId }) => {
             <strong>Quiz ID:</strong> {student.quizId}
           </Typography>
           <Typography variant="body1" gutterBottom>
-            <strong>Date of Quiz:</strong>{" "}
-            {new Date(student.dateOfQuiz).toLocaleString()}
+            <strong>Date and Time:</strong>{" "}
+            {new Date(student.dateofquiz).toLocaleString()}
           </Typography>
           <Typography variant="body1" gutterBottom>
             <strong>Total Questions:</strong> {student.totalQuestions}
@@ -153,7 +205,35 @@ const QuizManagement = ({ classId }) => {
           <Typography variant="body1" gutterBottom>
             <strong>Total Score:</strong> {student.overallMark}
           </Typography>
-
+  
+          {/* Proctored Feedback Section */}
+          <Typography variant="h6" gutterBottom sx={{ mt: 3, fontWeight: "bold" }}>
+            Proctored Feedback
+          </Typography>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="body1" gutterBottom>
+              <strong>Book Detected Count:</strong>{" "}
+              {student?.proctoredFeedback?.bookDetectedCount}
+            </Typography>
+            <Typography variant="body1" gutterBottom>
+              <strong>Laptop Detected Count:</strong>{" "}
+              {student?.proctoredFeedback?.laptopDetectedCount}
+            </Typography>
+            <Typography variant="body1" gutterBottom>
+              <strong>Multiple Users Detected Count:</strong>{" "}
+              {student?.proctoredFeedback?.multipleUsersDetectedCount}
+            </Typography>
+            <Typography variant="body1" gutterBottom>
+              <strong>Phone Detected Count:</strong>{" "}
+              {student?.proctoredFeedback?.phoneDetectedCount}
+            </Typography>
+            <Typography variant="body1" gutterBottom>
+              <strong>Tab Switching Detected Count:</strong>{" "}
+              {student?.proctoredFeedback?.tabSwitchingDetectedCount}
+            </Typography>
+          </Box>
+  
+          {/* Question Details Section */}
           <Typography variant="h6" gutterBottom sx={{ mt: 3, fontWeight: "bold" }}>
             Question Details
           </Typography>
@@ -178,17 +258,21 @@ const QuizManagement = ({ classId }) => {
               <TableBody>
                 {student.questionAnswerSet.map((question, index) => (
                   <TableRow key={question._id}>
-                    <TableCell>{question.questionText}</TableCell>
-                    <TableCell>{question.modelAnswer}</TableCell>
-                    <TableCell>{question.studentAnswer}</TableCell>
-                    <TableCell>{question.evaluation}</TableCell>
+                    <TableCell>{question?.questionText}</TableCell>
+                    <TableCell>{question?.correctoption}</TableCell>
+                    <TableCell>{question?.studentAnswer}</TableCell>
+                    <TableCell>{question?.studentAnswer === question?.correctoption ? "True" : "False"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </TableContainer>
-
-          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+  
+          {/* Download PDF Button */}
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+            <Button variant="contained" onClick={handleDownloadPDF}>
+              Download PDF
+            </Button>
             <Button variant="contained" onClick={onClose}>
               Close
             </Button>
@@ -341,50 +425,53 @@ const QuizManagement = ({ classId }) => {
                   </TableCell>
 
                   <TableCell>
-                    <Button onClick={() => handleQuestionModalOpen(quiz)}>
+                    {role==='teacher'?<Button onClick={() => handleQuestionModalOpen(quiz)}>
                       {quiz.questionAnswerSet.length}
-                    </Button>
+                    </Button>:
+                    <Button >
+                      {quiz.questionAnswerSet.length}
+                    </Button>}
                   </TableCell>
 
                   <TableCell>
-  {editMode === quiz._id ? (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <DateTimePicker
-        label="Due Date"
-        value={editedData.dueDate}
-        onChange={(newValue) =>
-          setEditedData({
-            ...editedData,
-            dueDate: newValue,
-          })
-        }
-        renderInput={(params) => <TextField {...params} size="small" />}
-      />
-    </LocalizationProvider>
-  ) : (
-    new Date(quiz.dueDate).toLocaleString()
-  )}
-</TableCell>
+                    {editMode === quiz._id ? (
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DateTimePicker
+                          label="Due Date"
+                          value={editedData.duedate}
+                          onChange={(newValue) =>
+                            setEditedData({
+                              ...editedData,
+                              duedate: newValue,
+                            })
+                          }
+                          slotProps={{ textField: { size: 'small' } }} // Updated prop
+                        />
+                      </LocalizationProvider>
+                    ) : (
+                      new Date(quiz.duedate).toLocaleString()
+                    )}
+                  </TableCell>
 
-<TableCell>
-  {editMode === quiz._id ? (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <DateTimePicker
-        label="Start Time"
-        value={editedData.startTime}
-        onChange={(newValue) =>
-          setEditedData({
-            ...editedData,
-            startTime: newValue,
-          })
-        }
-        renderInput={(params) => <TextField {...params} size="small" />}
-      />
-    </LocalizationProvider>
-  ) : (
-    new Date(quiz.startTime).toLocaleString()
-  )}
-</TableCell>
+                  <TableCell>
+                    {editMode === quiz._id ? (
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DateTimePicker
+                          label="Start Time"
+                          value={editedData.startTime}
+                          onChange={(newValue) =>
+                            setEditedData({
+                              ...editedData,
+                              startTime: newValue,
+                            })
+                          }
+                          slotProps={{ textField: { size: 'small' } }} // Updated prop
+                        />
+                      </LocalizationProvider>
+                    ) : (
+                      new Date(quiz.startTime).toLocaleString()
+                    )}
+                  </TableCell>
 
                   <TableCell>
                     {editMode === quiz._id ? (
@@ -448,7 +535,7 @@ const QuizManagement = ({ classId }) => {
                           <Typography variant="h6" gutterBottom component="div">
                             Registered Students:{" "}
                             {students[quiz._id]
-                              ? students[quiz._id].data.length
+                              ? students[quiz._id].length
                               : 0}
                           </Typography>
 
@@ -465,37 +552,31 @@ const QuizManagement = ({ classId }) => {
                                 </TableRow>
                               </TableHead>
                               <TableBody>
-                                {Array.isArray(students[quiz._id]?.data) ? (
-                                  students[quiz._id].data.map((student) => (
-                                    <TableRow key={student._id}>
-                                      <TableCell>{student.studentName}</TableCell>
-                                      <TableCell>{student.totalQuestions}</TableCell>
-                                      <TableCell>
-                                        {student.questionAnswerSet.length}
-                                      </TableCell>
-                                      <TableCell>
-                                        {new Date(student.dateOfQuiz).toLocaleString()}
-                                      </TableCell>
-                                      <TableCell>{student.overallMark}</TableCell>
-                                      <TableCell>
-                                        <Button
-                                          variant="contained"
-                                          color="primary"
-                                          onClick={() => {
-                                            setSelectedStudent(student);
-                                            setIsStudentModalOpen(true);
-                                          }}
-                                        >
-                                          Details
-                                        </Button>
-                                      </TableCell>
-                                    </TableRow>
-                                  ))
-                                ) : (
-                                  <Typography>
-                                    No students registered yet.
-                                  </Typography>
-                                )}
+                                {students[quiz._id].map((student) => (
+                                  <TableRow key={student._id}>
+                                    <TableCell>{student.studentName}</TableCell>
+                                    <TableCell>{student.totalQuestions}</TableCell>
+                                    <TableCell>
+                                      {student.questionAnswerSet.length}
+                                    </TableCell>
+                                    <TableCell>
+                                      {new Date(student.dateofquiz).toLocaleString()}
+                                    </TableCell>
+                                    <TableCell>{student.overallMark}</TableCell>
+                                    <TableCell>
+                                      <Button
+                                        variant="contained"
+                                        color="primary"
+                                        onClick={() => {
+                                          setSelectedStudent(student);
+                                          setIsStudentModalOpen(true);
+                                        }}
+                                      >
+                                        Details
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
                               </TableBody>
                             </Table>
                           ) : (

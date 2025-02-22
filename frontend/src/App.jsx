@@ -10,8 +10,13 @@ import ClassPage from './pagesKM/Pages/ClassPage.jsx'
 import LecturePage from './pagesKM/Pages/LecturePage.jsx'
 import TakePicture from './pagesPP/Viva/TakePicture.jsx'
 import GiveViva from './pagesPP/Viva/GiveViva.jsx'
+<<<<<<< HEAD
 import StudentReport from './pages_rajas/StudentReport';
 
+=======
+import GivePicture from './pagesPP/Quiz/GivePicture.jsx'
+import GiveQuiz from './pagesPP/Quiz/GiveQuiz.jsx'
+>>>>>>> 3274795329aa85f310ad295f6e74cf5c11f67650
 function App() {
   return (
     <BrowserRouter>
@@ -23,6 +28,8 @@ function App() {
           <Route path="/main" element={<Main />} />
           <Route path="/home" element={<Home />} />
           <Route path="/takepicture/:vivaId" element={<TakePicture/>} />
+          <Route path="/givepicture/:quizId" element={<GivePicture/>} />
+          <Route path="/give-quiz/:quizId" element={<GiveQuiz/>} />
           <Route path="/give-viva/:vivaId" element={<GiveViva/>} />
           <Route path="/class/:id" element={<ClassPage />} />
           <Route path="/lecture/:id" element={<LecturePage />} />

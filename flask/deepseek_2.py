@@ -29,6 +29,12 @@ DB_PATH = "chroma_db"
 os.makedirs(DB_PATH, exist_ok=True)
 SCORING_MODEL = genai.GenerativeModel('gemini-1.5-flash')
 
+# text to speech CONFIGRUATION
+# Global API Key
+LMNT_API_KEY = "b41b2d1dd2494ca0a54dcf92f1a74474"
+
+
+
 # Helper Functions
 def image_to_base64(image):
     buffered = io.BytesIO()
@@ -446,5 +452,49 @@ def generate_feedback():
 
     return jsonify(feedback_responses)
 
+
+# for text too  speech 
+# Function to generate speech from text
+def generate_speech(text, voice_id="d2b864ea-e642-4196-9b24-d8a928523a2b", model="blizzard", language="en",
+                    format="mp3", sample_rate="16000", speed="1.0"):
+    url = "https://api.lmnt.com/v1/ai/speech/bytes"
+
+    payload = {
+        "voice": voice_id,
+        "text": text,
+        "model": model,
+        "language": language,
+        "format": format,
+        "sample_rate": sample_rate,
+    }
+
+    headers = {
+        "X-API-Key": LMNT_API_KEY,
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+
+    response = requests.post(url, data=payload, headers=headers)
+
+    if response.status_code == 200:
+        # Convert raw audio bytes to Base64
+        audio_base64 = base64.b64encode(response.content).decode("utf-8")
+        return audio_base64
+    else:
+        return None
+
+
+@app.route("/generate_speech", methods=["POST"])
+def generate_speech_api():
+    data = request.json
+    text = data.get("text", "")
+    if not text:
+        return jsonify({"error": "Text parameter is required"}), 400
+
+    result = generate_speech(text)
+    if result:
+        return jsonify({"speech": result})
+    else:
+        return jsonify({"error": "Failed to generate speech"}), 500
+    
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -64,6 +64,7 @@ def upload_file():
 
         # Parse JSON
         schedule = json.loads(json_match.group(1))
+        print(schedule)
         return jsonify({"schedule": schedule})
 
     except json.JSONDecodeError as e:
