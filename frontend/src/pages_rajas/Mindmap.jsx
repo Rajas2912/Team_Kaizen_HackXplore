@@ -1,128 +1,139 @@
-// import React, { useState, useRef, useEffect } from 'react';
-// import { Markmap } from 'markmap-view';
-// import { transformer } from './markmap';
-// import { Toolbar } from 'markmap-toolbar';
-// import 'markmap-toolbar/dist/style.css';
+import React, { useState, useRef, useEffect } from 'react';
+import { Markmap } from 'markmap-view';
+import { Transformer } from 'markmap-lib';
+import { Toolbar } from 'markmap-toolbar';
+import 'markmap-toolbar/dist/style.css';
 
-// const initValue = `# Chhatrapati Shivaji Maharaj
+const transformer = new Transformer();
 
-// ## Early Life
-// - Born: February 19, 1627 (Disputed, officially recognized on 19 Feb)
-// - Birthplace: Shivneri Fort, Pune district
-// - Named after: Goddess Shivai Devi
-// - Descended from a noble family
+// Function to render the toolbar
+function renderToolbar(mm, wrapper) {
+  if (!wrapper) return;
+  while (wrapper.firstChild) wrapper.firstChild.remove();
 
-// ## Political Context
-// - India under Mughal and Deccan Sultanates
-// - Muslim rulers oppressed Hindus
-// - Inspired by the cause of Hindu freedom
+  const toolbar = new Toolbar();
+  toolbar.attach(mm);
 
-// ## Rise to Power
-// - Began military campaigns at age 16
-// - Seized weaker Bijapur outposts (~1655)
-// - Gained admiration for military skill and justice
+  toolbar.register({
+    id: 'alert',
+    title: 'Show Alert',
+    content: 'Alert',
+    onClick: () => alert('You made it!'),
+  });
 
-// ## Key Battles and Strategies
-// ### Against Bijapur
-// - 1659: Defeated Afzal Khan by luring him into mountain terrain
-// - Seized Bijapur’s army resources
+  toolbar.setItems([...Toolbar.defaultItems, 'alert']);
+  wrapper.append(toolbar.render());
+}
 
-// ### Against Mughals
-// - Conducted a daring midnight raid on Mughal viceroy
-// - Sacked Surat
-// - Aurangzeb sent Mirza Raja Jai Singh with 100,000 troops
-// - Forced to sue for peace, attended Aurangzeb’s court at Agra
+const Mindmap = () => {
+  const [value, setValue] = useState('');
+  const [showModal, setShowModal] = useState(true); // Control modal visibility
+  const refSvg = useRef(null);
+  const refMm = useRef(null);
+  const refToolbar = useRef(null);
 
-// ## Escape from Agra
-// - Feigned illness, hid in sweet baskets
-// - Escaped with his son on August 17, 1666
-// - Changed Indian history
+  // Handle PDF upload
+  const handleFileUpload = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
 
-// ## Maratha Empire
-// - 1674: Coronation as Chhatrapati at Raigad
-// - Established an independent Hindu kingdom
-// - Ruled with a cabinet of eight ministers
-// - Allowed reconversion of Hindus from Islam
-// - Respected religious beliefs of all communities
+    try {
+      const response = await fetch('http://localhost:5000/mipmap', {
+        method: 'POST',
+        body: formData,
+      });
 
-// ## Final Years
-// - Faced internal discord and betrayal
-// - Son defected to the Mughals (later returned)
-// - Died: April 3, 1680, at Raigad Fort
+      if (response.ok) {
+        const data = await response.text();
+        setValue(data); // Set the mindmap content
+        setShowModal(false); // Close the modal
+      } else {
+        throw new Error('Failed to fetch Mipmap data');
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      alert('Failed to process the PDF. Please try again.');
+    }
+  };
 
-// ## Legacy
-// - Inspired Hindu self-rule (Hindavi Swarajya)
-// - Practiced religious tolerance
-// - Fought against powerful Islamic empires
-// - Maratha Empire continued after his death
+  useEffect(() => {
+    if (refMm.current) return;
 
-// ## Maratha Empire Overview
-// - Established by Shivaji in 1674
-// - Expanded across India in the 18th century
-// - Ended in 1818 after defeat by the British
-// - Key enemy: Mughals, Deccan Sultanates, and English East India Company
-// - Army: Mobile warrior clans, primarily from Maharashtra`;
+    const mm = Markmap.create(refSvg.current);
+    refMm.current = mm;
+    renderToolbar(mm, refToolbar.current);
+  }, []);
 
-// function renderToolbar(mm: Markmap, wrapper: HTMLElement) {
-//   while (wrapper?.firstChild) wrapper.firstChild.remove();
-//   if (mm && wrapper) {
-//     const toolbar = new Toolbar();
-//     toolbar.attach(mm);
-//     // Register custom buttons
-//     toolbar.register({
-//       id: 'alert',
-//       title: 'Click to show an alert',
-//       content: 'Alert',
-//       onClick: () => alert('You made it!'),
-//     });
-//     toolbar.setItems([...Toolbar.defaultItems, 'alert']);
-//     wrapper.append(toolbar.render());
-//   }
-// }
+  useEffect(() => {
+    if (!refMm.current) return;
 
-// export default function Mindmap() {
-//   const [value, setValue] = useState(initValue);
-//   // Ref for SVG element
-//   const refSvg = useRef<SVGSVGElement>();
-//   // Ref for markmap object
-//   const refMm = useRef<Markmap>();
-//   // Ref for toolbar wrapper
-//   const refToolbar = useRef<HTMLDivElement>();
+    const { root } = transformer.transform(value);
+    refMm.current.setData(root).then(() => {
+      refMm.current.fit();
+    });
+  }, [value]);
 
-//   useEffect(() => {
-//     // Create markmap and save to refMm
-//     if (refMm.current) return;
-//     const mm = Markmap.create(refSvg.current);
-//     console.log('create', refSvg.current);
-//     refMm.current = mm;
-//     renderToolbar(refMm.current, refToolbar.current);
-//   }, [refSvg.current]);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
+      {/* Modal for PDF Upload */}
+      {showModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              padding: '20px',
+              borderRadius: '8px',
+              width: '400px',
+              textAlign: 'center',
+            }}
+          >
+            <h2>Upload PDF to Generate Mindmap</h2>
+            <input
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) handleFileUpload(file);
+              }}
+              style={{ margin: '20px 0' }}
+            />
+            <button
+              onClick={() => setShowModal(false)}
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#f44336',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+              }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
 
-//   useEffect(() => {
-//     // Update data for markmap once value is changed
-//     const mm = refMm.current;
-//     if (!mm) return;
-//     const { root } = transformer.transform(value);
-//     mm.setData(root).then(() => {
-//       mm.fit();
-//     });
-//   }, [refMm.current, value]);
+      {/* Mindmap Display */}
+      <svg
+        ref={refSvg}
+        style={{ flex: 2, border: '1px solid gray', width: '100%', height: '100%' }}
+      />
+      <div ref={refToolbar} style={{ position: 'absolute', bottom: '10px', right: '10px' }}></div>
+    </div>
+  );
+};
 
-//   const handleChange = (e) => {
-//     setValue(e.target.value);
-//   };
-
-//   return (
-//     <React.Fragment>
-//       <div className="flex-1">
-//         <textarea
-//           className="w-full h-full border border-gray-400"
-//           value={value}
-//           onChange={handleChange}
-//         />
-//       </div>
-//       <svg className="flex-1" ref={refSvg} />
-//       <div className="absolute bottom-1 right-1" ref={refToolbar}></div>
-//     </React.Fragment>
-//   );
-// }
+export default Mindmap;
