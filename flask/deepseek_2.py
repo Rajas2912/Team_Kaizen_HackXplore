@@ -448,6 +448,7 @@ def generate_feedback():
 
         # Get feedback from Gemini
         feedback = ask_gemini_internal(prompt,API_KEY)
+        print(feedback)
         feedback_responses.append(feedback)
 
     return jsonify(feedback_responses)

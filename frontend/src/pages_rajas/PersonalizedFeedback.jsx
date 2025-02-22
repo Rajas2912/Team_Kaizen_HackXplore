@@ -2,6 +2,7 @@ import React from 'react';
 import './PersonalizedFeedback.css'; // Import the CSS for styling
 
 const PersonalizedFeedback = ({ feedbackData }) => {
+  console.log('Feedback Data:', feedbackData); // Log feedback data
   return (
     <div className="container">
       <h2>Personalized Feedback</h2>

@@ -4,7 +4,7 @@
     padding: 20px;
   }
    */
-  .feedback-card {
+  .feedback-card12 {
     background: white;
     padding: 20px;
     margin: 15px 0;
@@ -12,14 +12,14 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
   
-  .question {
+  .question12 {
     font-weight: bold;
     color: #333;
     font-size: 1.2em;
     margin-bottom: 10px;
   }
   
-  .context {
+  .context12 {
     background: #fff3cd;
     padding: 10px;
     border-left: 4px solid #ff9800;
@@ -29,20 +29,20 @@
     color: #856404;
   }
   
-  .answer {
+  .answer12 {
     color: #555;
     margin: 10px 0;
     font-size: 1em;
   }
   
-  .evaluation {
+  .evaluation12 {
     font-style: italic;
     color: #666;
     margin: 10px 0;
     font-size: 0.95em;
   }
   
-  .feedback {
+  .feedback12{
     background: #e6f7ff;
     padding: 10px;
     border-left: 4px solid #2196F3;

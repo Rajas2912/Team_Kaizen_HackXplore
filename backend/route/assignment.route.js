@@ -9,7 +9,7 @@ import {
   updateSubmissionResult,
   getAssignmentsWithSubmissions,
   getAssignmentsWithSubmissionsByAssignmentId,
-} from '../controller/assignment.controller.js';
+} from '../controler/assignment.controler.js';
 import upload from '../middlewares/upload.js';
 
 const router = express.Router();
