@@ -135,7 +135,7 @@ export default function Main(props) {
     },
     {
       kind: 'header',
-      title: 'Teaching, Attendance & Scheduling',
+      title: 'Teaching & Scheduling',
     },
     {
       segment: 'class',
@@ -148,11 +148,6 @@ export default function Main(props) {
               title: classItem.name,
             }))
           : [], // Default to an empty array if invalid
-    },
-    {
-      segment: 'attendance',
-      title: 'Attendance',
-      icon: <CheckCircleIcon />,
     },
     {
       segment: 'timetable',
@@ -280,7 +275,6 @@ export default function Main(props) {
           {router.pathname == '/createClass' && <CreateClass />}
           {router.pathname == '/quizzes' && <AllTeaching />}
           {router.pathname == '/viva' && <AllTeaching />}
-          {router.pathname == '/attendance' && <AllTeaching />}
           {router.pathname == '/progress-tracking' && <AllTeaching />}
           {router.pathname == '/students' && <UsersPage />}
           {router.pathname == '/timetable' && <TimetablePage />}

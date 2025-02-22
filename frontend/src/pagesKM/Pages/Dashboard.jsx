@@ -69,7 +69,7 @@ const assignments = [
   },
 ]
 
-const DashboardPage = () => {
+const Dashboard = () => {
   const theme = useTheme()
 
   // Radar Chart Data Transformation
@@ -234,4 +234,4 @@ const DashboardPage = () => {
   )
 }
 
-export default DashboardPage
+export default Dashboard

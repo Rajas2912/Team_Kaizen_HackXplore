@@ -43,8 +43,8 @@ import { useSelector } from 'react-redux'
 import axios from 'axios'
 import { PYTHON_URL } from '../../redux/constants'
 
-// const API =
-// 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImtpZCI6IjEifQ.eyJpc3MiOiJuYWRsZXMiLCJpYXQiOiIxNzM5OTA0MzAxIiwicHVycG9zZSI6ImFwaV9hdXRoZW50aWNhdGlvbiIsInN1YiI6IjM1YjM4MzY0MGJjOTRlYTk5NTVlN2ZhMDRkOTdiMmRmIn0.vb_sF-BrjLTiatDun5DjvWAssBleVeMAqTNQNc6E9iw'
+const API =
+  'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImtpZCI6IjEifQ.eyJpc3MiOiJuYWRsZXMiLCJpYXQiOiIxNzM5OTA0MzAxIiwicHVycG9zZSI6ImFwaV9hdXRoZW50aWNhdGlvbiIsInN1YiI6IjM1YjM4MzY0MGJjOTRlYTk5NTVlN2ZhMDRkOTdiMmRmIn0.vb_sF-BrjLTiatDun5DjvWAssBleVeMAqTNQNc6E9iw'
 
 const LecturePage = () => {
   const { id } = useParams()

@@ -25,6 +25,8 @@ import {
   Menu,
   MenuItem,
   TextField,
+  Snackbar,
+  Alert,
 } from '@mui/material'
 import {
   Download as DownloadIcon,
@@ -49,6 +51,11 @@ const Timetable = () => {
   const [updateSchedule] = useUpdateScheduleItemsMutation()
   const [editingIndex, setEditingIndex] = useState(null) // Track which row is being edited
   const [editedSchedule, setEditedSchedule] = useState([]) // Store edited schedule data
+  const [notification, setNotification] = useState({
+    open: false,
+    message: '',
+    severity: 'success', // 'success', 'error', etc.
+  })
 
   // Access the schedule from the timetable data
   const schedule = timetable?.data?.schedule || []
@@ -148,8 +155,13 @@ const Timetable = () => {
 
   // Handle input changes in editable fields
   const handleInputChange = (index, field, value) => {
-    const updatedSchedule = [...editedSchedule]
-    updatedSchedule[index][field] = value
+    const updatedSchedule = editedSchedule.map((item, i) => {
+      if (i === index) {
+        // Create a new object for the edited row
+        return { ...item, [field]: value }
+      }
+      return item
+    })
     setEditedSchedule(updatedSchedule)
   }
 
@@ -299,6 +311,21 @@ const Timetable = () => {
           No schedule yet
         </Typography>
       )}
+
+      {/* Notification Snackbar */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={() => setNotification({ ...notification, open: false })}
+      >
+        <Alert
+          onClose={() => setNotification({ ...notification, open: false })}
+          severity={notification.severity}
+          sx={{ width: '100%' }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

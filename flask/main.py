@@ -1,21 +1,48 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import CORS  # PyMuPDF for PDF text extraction
 import google.generativeai as genai
 import os
 import fitz
+import datetime
 import re
-import json
 
 app = Flask(__name__)
-# Configure CORS to allow specific origin and handle credentials
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173", "supports_credentials": True}})
+CORS(app)  # Enable CORS for all routes
 
-# ... [Keep the existing ask_gemini route here] ...
+@app.route("/ask_gemini", methods=["GET"])
+def ask_gemini():
+    """
+    Sends a prompt to the Gemini API and returns the response.
+
+    Query Parameters:
+    - prompt: The complete formatted prompt including system instructions, source document, and question.
+    - api_key: The API key to authenticate the request.
+
+    Returns:
+    - JSON response containing Gemini's generated text.
+    """
+    prompt = request.args.get("prompt")
+    api_key = request.args.get("api_key")
+
+    if not prompt or not api_key:
+        return jsonify({"error": "Missing 'prompt' or 'api_key'"}), 400
+
+    # Configure API
+    genai.configure(api_key=api_key)
+
+    # Initialize the model
+    model = genai.GenerativeModel("gemini-pro")
+
+    # Get response
+    response = model.generate_content(prompt)
+
+    return jsonify({"response": response.text})
 
 # Configure Gemini API Key
 API_KEY = "AIzaSyC1bnVlj3c5Ob56gXWgglUkM7xZI76SKsQ"
 genai.configure(api_key=API_KEY)
 
+# Function to extract text from PDF
 def extract_text_from_pdf(pdf_path):
     text = ""
     with fitz.open(pdf_path) as doc:
@@ -25,52 +52,64 @@ def extract_text_from_pdf(pdf_path):
 
 @app.route("/schedule", methods=["POST"])
 def upload_file():
-    try:
-        if "file" not in request.files or "start_date" not in request.form or "end_date" not in request.form:
-            return jsonify({"error": "Missing required inputs"}), 400
+    if "file" not in request.files or "start_date" not in request.form or "end_date" not in request.form:
+        return jsonify({"error": "Missing required inputs"}), 400
 
-        file = request.files["file"]
-        start_date = request.form["start_date"]
-        end_date = request.form["end_date"]
+    file = request.files["file"]
+    start_date = request.form["start_date"]
+    end_date = request.form["end_date"]
 
-        # Save and process file
-        file_path = os.path.join("temp.pdf")
-        file.save(file_path)
-        syllabus_text = extract_text_from_pdf(file_path)
-        os.remove(file_path)
+    # Save file temporarily
+    file_path = os.path.join("temp.pdf")
+    file.save(file_path)
 
-        # Generate prompt
-        prompt = f"""
-        Generate a structured teaching schedule in JSON format.
-        - Start Date: {start_date}
-        - End Date: {end_date}
-        - Syllabus: {syllabus_text}
-        Output JSON array with: "date", "day", "topic", "hours".
-        """
+    # Extract text from PDF
+    syllabus_text = extract_text_from_pdf(file_path)
+    os.remove(file_path)  # Clean up
 
-        # Get AI response
-        model = genai.GenerativeModel("gemini-pro")
-        response = model.generate_content(prompt)
+    # Create prompt for Gemini
+    prompt = f"""
+    I am providing a syllabus along with semester details. Your task is to generate a structured teaching schedule in tabular format.**Details:**
+    - Start Date: {start_date}
+    - End Date: {end_date}
+    - Syllabus:{syllabus_text}
+    **Requirements:**
+    - Generate a structured table where each lecture has a Date, Day, Topic and number of hours required according to which topic is hard or that topic is easy  in json format.
+    - Ensure topics are distributed evenly from start to end date.
+    - Format response in a JSON array with fields: "date", "day",  "topic" , "hours".
+    """
+
+    # Call Gemini API
+    model = genai.GenerativeModel("gemini-pro")
+    
+
+    # Convert response to structured JSON (assumes well-formatted output)
+    import json
+    
+    response = model.generate_content(prompt)
+
+    print("Gemini API Response:", response)
         
-        if not response.text:
+    # Ensure response has text
+    if not hasattr(response, "text") or not response.text:
             return jsonify({"error": "No valid response from AI"}), 500
-
-        # Clean response and extract JSON
-        cleaned_response = re.sub(r'```json|```', '', response.text)
-        json_match = re.search(r'(\[.*\]|\{.*\})', cleaned_response, re.DOTALL)
         
-        if not json_match:
-            return jsonify({"error": "No JSON found in AI response"}), 500
+    ai_response = response.text.strip()
+    match = re.search(r"\{.*\}|\[.*\]", ai_response, re.DOTALL)
+    if not match:
+        return jsonify({"error": "Failed to extract JSON from AI response"}), 500
 
-        # Parse JSON
-        schedule = json.loads(json_match.group(1))
-        print(schedule)
-        return jsonify({"schedule": schedule})
-
-    except json.JSONDecodeError as e:
-        return jsonify({"error": f"Invalid JSON format: {str(e)}"}), 500
-    except Exception as e:
-        return jsonify({"error": f"Server error: {str(e)}"}), 500
-
+    json_text = match.group(0)  # Extracted JSON
+    print(json_text)
+    schedule = json.loads(json_text)
+    return jsonify({"raw_schedule": schedule})
+    # # print("Raw AI Response:", ai_response)
+    # json_start = ai_response.find("{")
+    # json_end = ai_response.rfind("}") + 1
+    # json_text = ai_response[json_start:json_end]
+    # print(json_text + " \n hello")
+    # schedule = json.loads(json_text)
+    # return jsonify({"raw_schedule": json_text})
+    
 if __name__ == "__main__":
     app.run(debug=True)
