@@ -34,7 +34,23 @@ import dayjs from "dayjs"; // Import dayjs
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import CreateQuiz from "./CreateQuiz";
+import { jsPDF } from "jspdf";
+
 const API = import.meta.env.VITE_BACKEND_URL;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const QuizManagement = ({ classId }) => {
   const [quizzes, setQuizzes] = useState([]);
@@ -49,6 +65,7 @@ const QuizManagement = ({ classId }) => {
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const { userInfo } = useSelector((state) => state.user);
+  console.log(userInfo);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -124,9 +141,44 @@ const QuizManagement = ({ classId }) => {
     setIsQuestionModalOpen(false);
   };
 
+
   const StudentDetailsModal = ({ student, open, onClose }) => {
     if (!student) return null;
-
+  
+    const handleDownloadPDF = () => {
+      const doc = new jsPDF();
+  
+      // Add student details to the PDF
+      doc.text(`Student Name: ${student.studentName}`, 10, 10);
+      doc.text(`Quiz ID: ${student.quizId}`, 10, 20);
+      doc.text(`Date and Time: ${new Date(student.dateofquiz).toLocaleString()}`, 10, 30);
+      doc.text(`Total Questions: ${student.totalQuestions}`, 10, 40);
+      doc.text(`Questions Attempted: ${student.questionAnswerSet.length}`, 10, 50);
+      doc.text(`Total Score: ${student.overallMark}`, 10, 60);
+  
+      // Add proctored feedback to the PDF
+      doc.text("Proctored Feedback:", 10, 70);
+      doc.text(`Book Detected Count: ${student?.proctoredFeedback?.bookDetectedCount}`, 10, 80);
+      doc.text(`Laptop Detected Count: ${student?.proctoredFeedback?.laptopDetectedCount}`, 10, 90);
+      doc.text(`Multiple Users Detected Count: ${student?.proctoredFeedback?.multipleUsersDetectedCount}`, 10, 100);
+      doc.text(`Phone Detected Count: ${student?.proctoredFeedback?.phoneDetectedCount}`, 10, 110);
+      doc.text(`Tab Switching Detected Count: ${student?.proctoredFeedback?.tabSwitchingDetectedCount}`, 10, 120);
+  
+      // Add question details to the PDF
+      doc.text("Question Details:", 10, 130);
+      let yOffset = 140;
+      student.questionAnswerSet.forEach((question, index) => {
+        doc.text(`Question ${index + 1}: ${question.questionText}`, 10, yOffset);
+        doc.text(`Model Answer: ${question.correctoption}`, 10, yOffset + 10);
+        doc.text(`Student Answer: ${question.studentAnswer}`, 10, yOffset + 20);
+        doc.text(`Evaluation: ${question.studentAnswer === question.correctoption ? "Correct" : "Incorrect"}`, 10, yOffset + 30);
+        yOffset += 40;
+      });
+  
+      // Save the PDF
+      doc.save(`student_feedback_${student.studentName}.pdf`);
+    };
+  
     return (
       <Modal open={open} onClose={onClose}>
         <Box sx={modalStyle}>
@@ -140,8 +192,8 @@ const QuizManagement = ({ classId }) => {
             <strong>Quiz ID:</strong> {student.quizId}
           </Typography>
           <Typography variant="body1" gutterBottom>
-            <strong>Date of Quiz:</strong>{" "}
-            {new Date(student.dateOfQuiz).toLocaleString()}
+            <strong>Date and Time:</strong>{" "}
+            {new Date(student.dateofquiz).toLocaleString()}
           </Typography>
           <Typography variant="body1" gutterBottom>
             <strong>Total Questions:</strong> {student.totalQuestions}
@@ -153,7 +205,35 @@ const QuizManagement = ({ classId }) => {
           <Typography variant="body1" gutterBottom>
             <strong>Total Score:</strong> {student.overallMark}
           </Typography>
-
+  
+          {/* Proctored Feedback Section */}
+          <Typography variant="h6" gutterBottom sx={{ mt: 3, fontWeight: "bold" }}>
+            Proctored Feedback
+          </Typography>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="body1" gutterBottom>
+              <strong>Book Detected Count:</strong>{" "}
+              {student?.proctoredFeedback?.bookDetectedCount}
+            </Typography>
+            <Typography variant="body1" gutterBottom>
+              <strong>Laptop Detected Count:</strong>{" "}
+              {student?.proctoredFeedback?.laptopDetectedCount}
+            </Typography>
+            <Typography variant="body1" gutterBottom>
+              <strong>Multiple Users Detected Count:</strong>{" "}
+              {student?.proctoredFeedback?.multipleUsersDetectedCount}
+            </Typography>
+            <Typography variant="body1" gutterBottom>
+              <strong>Phone Detected Count:</strong>{" "}
+              {student?.proctoredFeedback?.phoneDetectedCount}
+            </Typography>
+            <Typography variant="body1" gutterBottom>
+              <strong>Tab Switching Detected Count:</strong>{" "}
+              {student?.proctoredFeedback?.tabSwitchingDetectedCount}
+            </Typography>
+          </Box>
+  
+          {/* Question Details Section */}
           <Typography variant="h6" gutterBottom sx={{ mt: 3, fontWeight: "bold" }}>
             Question Details
           </Typography>
@@ -178,17 +258,21 @@ const QuizManagement = ({ classId }) => {
               <TableBody>
                 {student.questionAnswerSet.map((question, index) => (
                   <TableRow key={question._id}>
-                    <TableCell>{question.questionText}</TableCell>
-                    <TableCell>{question.modelAnswer}</TableCell>
-                    <TableCell>{question.studentAnswer}</TableCell>
-                    <TableCell>{question.evaluation}</TableCell>
+                    <TableCell>{question?.questionText}</TableCell>
+                    <TableCell>{question?.correctoption}</TableCell>
+                    <TableCell>{question?.studentAnswer}</TableCell>
+                    <TableCell>{question?.studentAnswer === question?.correctoption ? "True" : "False"}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </TableContainer>
-
-          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+  
+          {/* Download PDF Button */}
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+            <Button variant="contained" onClick={handleDownloadPDF}>
+              Download PDF
+            </Button>
             <Button variant="contained" onClick={onClose}>
               Close
             </Button>
@@ -341,9 +425,12 @@ const QuizManagement = ({ classId }) => {
                   </TableCell>
 
                   <TableCell>
-                    <Button onClick={() => handleQuestionModalOpen(quiz)}>
+                    {role==='teacher'?<Button onClick={() => handleQuestionModalOpen(quiz)}>
                       {quiz.questionAnswerSet.length}
-                    </Button>
+                    </Button>:
+                    <Button >
+                      {quiz.questionAnswerSet.length}
+                    </Button>}
                   </TableCell>
 
                   <TableCell>
@@ -404,7 +491,7 @@ const QuizManagement = ({ classId }) => {
                     )}
                   </TableCell>
 
-                  {role !== "student" ? (
+                  {role === "student" ? (
                     <TableCell>
                       <Button
                         variant="contained"

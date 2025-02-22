@@ -47,32 +47,53 @@ const Interview = () => {
   const streamRef = useRef(null);
 
   // Speech synthesis function with audio recording
-  const speakText = (text, rate = 0.95) => {
-    const synth = window.speechSynthesis;
-    synth.cancel(); // Cancel any ongoing speech
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "hi-IN";
-    utterance.rate = rate;
-
-    utterance.onend = () => {
-      setTimer(timeofthinking*60);
-      setMicOn(true);
-      startAudioRecording();
-    };
-
-    utterance.onerror = (event) => {
-      console.error("Speech synthesis error:", event);
-      setMicOn(false);
-    };
-
+  const speakText = async(text, rate = 0.95) => {
     try {
-      synth.speak(utterance);
+      const response = await fetch("http://127.0.0.1:5000/generate_speech", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+
+      const data = await response.json();
+      if (data.speech) {
+        const audio = new Audio(`data:audio/mp3;base64,${data.speech}`);
+        audio.play();
+      } else {
+        alert("Error generating speech.");
+      }
     } catch (error) {
-      console.error("Failed to start speech synthesis:", error);
-      setMicOn(false);
+      console.error("Error:", error);
     }
+
   };
+  // // Speech synthesis function with audio recording
+  // const speakText = (text, rate = 0.95) => {
+  //   const synth = window.speechSynthesis;
+  //   synth.cancel(); // Cancel any ongoing speech
+
+  //   const utterance = new SpeechSynthesisUtterance(text);
+  //   utterance.lang = "hi-IN";
+  //   utterance.rate = rate;
+
+  //   utterance.onend = () => {
+  //     setTimer(timeofthinking*60);
+  //     setMicOn(true);
+  //     startAudioRecording();
+  //   };
+
+  //   utterance.onerror = (event) => {
+  //     console.error("Speech synthesis error:", event);
+  //     setMicOn(false);
+  //   };
+
+  //   try {
+  //     synth.speak(utterance);
+  //   } catch (error) {
+  //     console.error("Failed to start speech synthesis:", error);
+  //     setMicOn(false);
+  //   }
+  // };
 
   // Start audio recording
   const startAudioRecording = () => {
