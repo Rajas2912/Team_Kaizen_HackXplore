@@ -652,6 +652,53 @@ const AssignmentPage = ({ classId }) => {
                               View Feedback
                             </Button>
                           )}
+                          {/* View Feedback Button */}
+                          {scores[assignment._id] && (
+                            <Button
+                              variant="outlined"
+                              color="primary"
+                              onClick={async () => {
+                                try {
+                                  const response = await fetch(
+                                    'http://localhost:5000/generate-feedback',
+                                    {
+                                      method: 'POST',
+                                      headers: {
+                                        'Content-Type': 'application/json',
+                                      },
+                                      body: JSON.stringify({
+                                        results:
+                                          evaluationResults[assignment._id], // Pass the results array
+                                      }),
+                                    }
+                                  )
+
+                                  if (response.ok) {
+                                    const feedbackData = await response.json()
+                                    navigate('/feedback', {
+                                      state: { feedbackData },
+                                    }) // Navigate to feedback page
+                                  } else {
+                                    throw new Error('Failed to fetch feedback')
+                                  }
+                                } catch (error) {
+                                  console.error(
+                                    'Error fetching feedback:',
+                                    error
+                                  )
+                                  setNotification({
+                                    open: true,
+                                    message:
+                                      'Failed to fetch feedback. Please try again.',
+                                    severity: 'error',
+                                  })
+                                }
+                              }}
+                              sx={{ ml: 2 }}
+                            >
+                              View Feedback
+                            </Button>
+                          )}
                         </>
                       )}
                       {/* Delete Button */}
