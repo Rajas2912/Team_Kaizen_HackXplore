@@ -10,6 +10,7 @@ import ClassPage from './pagesKM/Pages/ClassPage.jsx'
 import LecturePage from './pagesKM/Pages/LecturePage.jsx'
 import TakePicture from './pagesPP/Viva/TakePicture.jsx'
 import GiveViva from './pagesPP/Viva/GiveViva.jsx'
+import StudentReport from './pages_rajas/StudentReport';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path="/give-viva/:vivaId" element={<GiveViva/>} />
           <Route path="/class/:id" element={<ClassPage />} />
           <Route path="/lecture/:id" element={<LecturePage />} />
+          <Route path="/report" element={<StudentReport />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -9,6 +9,7 @@ import {
   Tooltip, 
   Legend 
 } from 'chart.js';
+import { useLocation } from 'react-router-dom';
 
 ChartJS.register(
   CategoryScale,
@@ -19,7 +20,10 @@ ChartJS.register(
   Legend
 );
 
-const StudentReport = ({ results = [], totalScore = 0 }) => {
+const StudentReport = () => {
+  const location = useLocation();
+  const { results = [], totalScore = 0, assignmentTitle = 'Evaluation Report' } = location.state || {};
+  
   // Calculate derived values
   const maxMarks = results.length * 10;
   const percentage = maxMarks > 0 ? ((totalScore / maxMarks) * 100).toFixed(2) : 0;
@@ -30,7 +34,7 @@ const StudentReport = ({ results = [], totalScore = 0 }) => {
 
   // Chart data configurations
   const barChartData = {
-    labels: results.map((_, i) => `Q${i + 1}`),
+    labels: results.map(result => `Q${result.question_no}`),
     datasets: [{
       label: 'Score (out of 10)',
       data: results.map(r => r?.score || 0),
@@ -46,11 +50,24 @@ const StudentReport = ({ results = [], totalScore = 0 }) => {
     }]
   };
 
+  if (!results || results.length === 0) {
+    return (
+      <div className="mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-lg">
+        <h1 className="text-center text-3xl font-bold text-gray-800">
+          No Report Data Available
+        </h1>
+        <p className="mt-4 text-center text-gray-600">
+          Please complete an assignment to view your report
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-lg">
       {/* Header Section */}
       <h1 className="mb-8 text-center text-3xl font-bold text-gray-800">
-        Evaluation Report
+        {assignmentTitle}
       </h1>
 
       {/* Summary Cards */}
@@ -82,7 +99,15 @@ const StudentReport = ({ results = [], totalScore = 0 }) => {
           <div className="h-64">
             <Bar 
               data={barChartData} 
-              options={{ maintainAspectRatio: false }}
+              options={{ 
+                maintainAspectRatio: false,
+                scales: {
+                  y: {
+                    max: 10,
+                    beginAtZero: true
+                  }
+                }
+              }}
             />
           </div>
         </div>
@@ -101,35 +126,34 @@ const StudentReport = ({ results = [], totalScore = 0 }) => {
       <div className="rounded-lg bg-gray-50 p-4 shadow">
         <h3 className="mb-4 text-lg font-semibold">Detailed Analysis</h3>
         <div className="space-y-4 overflow-y-auto pr-2" style={{ maxHeight: '500px' }}>
-          {results.map((result, index) => {
-            const safeContext = Array.isArray(result?.contexts) ? result.contexts : [];
-            return (
-              <div key={index} className="rounded-lg bg-white p-4 shadow-sm">
-                <div className="mb-3 flex items-start justify-between">
-                  <h4 className="text-lg font-semibold">
-                    Q{index + 1}: {result?.question || 'No question text'}
-                  </h4>
-                  <span className={`rounded px-2 py-1 ${
-                    (result?.score || 0) >= 8 ? 'bg-green-100 text-green-800' :
-                    (result?.score || 0) >= 5 ? 'bg-yellow-100 text-yellow-800' : 
-                    'bg-red-100 text-red-800'
-                  }`}>
-                    {(result?.score || 0).toFixed(1)}/10
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm">
-                    <span className="font-medium text-blue-600">Student Answer:</span>{' '}
-                    {result?.student_answer || 'No answer provided'}
-                  </p>
+          {results.map((result, index) => (
+            <div key={index} className="rounded-lg bg-white p-4 shadow-sm">
+              <div className="mb-3 flex items-start justify-between">
+                <h4 className="text-lg font-semibold">
+                  Q{result.question_no}: {result.question}
+                </h4>
+                <span className={`rounded px-2 py-1 ${
+                  result.score >= 8 ? 'bg-green-100 text-green-800' :
+                  result.score >= 5 ? 'bg-yellow-100 text-yellow-800' : 
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {result.score.toFixed(1)}/{result.max_score}
+                </span>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm">
+                  <span className="font-medium text-blue-600">Student Answer:</span>{' '}
+                  {result.answer || 'No answer provided'}
+                </p>
+                {/* {result.context && (
                   <p className="text-sm">
                     <span className="font-medium text-gray-600">Relevant Context:</span>{' '}
-                    {safeContext.join(' ').substring(0, 200) || 'No context available'}...
+                    {result.context[0].substring(0, 200)}...
                   </p>
-                </div>
+                )} */}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
     </div>
