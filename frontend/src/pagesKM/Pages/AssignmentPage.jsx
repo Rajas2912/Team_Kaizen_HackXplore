@@ -674,7 +674,8 @@ const AssignmentPage = ({ classId }) => {
                                       color: theme.palette.success.main,
                                     }}
                                   >
-                                    Score: {scores[assignment._id]}/100
+                                    Score: {scores[assignment._id]}/
+                                    {assignment.questions?.length * 10}
                                   </Typography>
                                 )}
                               </Box>
