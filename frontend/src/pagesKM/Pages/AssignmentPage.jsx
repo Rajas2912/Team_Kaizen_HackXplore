@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'
 import {
   Box,
   Button,
@@ -18,32 +18,32 @@ import {
   Avatar,
   TextField,
   Collapse,
-  Table,
-  TableBody,
-  TableCell,
   TableContainer,
+  Table,
   TableHead,
   TableRow,
+  TableCell,
+  TableBody,
   Paper,
-} from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
-import UploadIcon from '@mui/icons-material/Upload';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import DescriptionIcon from '@mui/icons-material/Description';
-import { motion } from 'framer-motion';
-import { styled } from '@mui/system';
+} from '@mui/material'
+import DeleteIcon from '@mui/icons-material/Delete'
+import EditIcon from '@mui/icons-material/Edit'
+import UploadIcon from '@mui/icons-material/Upload'
+import CloudUploadIcon from '@mui/icons-material/CloudUpload'
+import DescriptionIcon from '@mui/icons-material/Description'
+import { motion } from 'framer-motion'
+import { styled } from '@mui/system'
+import { useNavigate } from 'react-router-dom'
 import {
   useDeleteAssignmentMutation,
   useGetAssignmentsByClassQuery,
   useUpdateAssignmentMutation,
   useUploadAssignmentMutation,
   useSubmitAnswerMutation,
-  useGetAssignmentsWithSubmissionsByAssignmentIdQuery,
-} from '../../redux/api/assignmentSlice';
-import { BASE_URL } from '../../redux/constants';
-import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+  useGetSubmissionsQuery,
+} from '../../redux/api/assignmentSlice'
+import { BASE_URL } from '../../redux/constants'
+import { useSelector } from 'react-redux'
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -55,7 +55,7 @@ const VisuallyHiddenInput = styled('input')({
   left: 0,
   whiteSpace: 'nowrap',
   width: 1,
-});
+})
 
 // Custom styled components with blue theme
 const StyledButton = styled(Button)(({ theme }) => ({
@@ -69,7 +69,7 @@ const StyledButton = styled(Button)(({ theme }) => ({
   '&:hover': {
     transform: 'scale(1.05)',
   },
-}));
+}))
 
 const StyledCard = styled(Card)(({ theme }) => ({
   marginBottom: theme.spacing(2),
@@ -79,87 +79,87 @@ const StyledCard = styled(Card)(({ theme }) => ({
   '&:hover': {
     transform: 'translateY(-5px)',
   },
-}));
+}))
 
 const AssignmentPage = ({ classId }) => {
-  const { userInfo } = useSelector((state) => state.user);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [openSubmissionsModal, setOpenSubmissionsModal] = useState(false);
-  const [selectedAssignmentId, setSelectedAssignmentId] = useState(null);
-  const [submissionsData, setSubmissionsData] = useState([]);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [deadline, setDeadline] = useState('');
-  const [chapterPdf, setChapterPdf] = useState(null);
-  const [assignmentPdf, setAssignmentPdf] = useState(null);
-  const [editingAssignment, setEditingAssignment] = useState(null);
-  const [expandedAssignmentId, setExpandedAssignmentId] = useState(null);
-  const [selectedFiles, setSelectedFiles] = useState({});
-  const [plagiarismResults, setPlagiarismResults] = useState({});
-  const [scores, setScores] = useState({});
-  const [evaluationResults, setEvaluationResults] = useState({});
+  const { userInfo } = useSelector((state) => state.user)
+  const [openDialog, setOpenDialog] = useState(false)
+  const [openEditDialog, setOpenEditDialog] = useState(false)
+  const [openSubmissionsModal, setOpenSubmissionsModal] = useState(false)
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [deadline, setDeadline] = useState('')
+  const [chapterPdf, setChapterPdf] = useState(null)
+  const [assignmentPdf, setAssignmentPdf] = useState(null)
+  const [editingAssignment, setEditingAssignment] = useState(null)
+  const [expandedAssignmentId, setExpandedAssignmentId] = useState(null)
+  const [responseText, setResponseText] = useState('')
+  const [scores, setScores] = useState({})
+  const [ai_Score, setAi_Score] = useState(0)
+  const [studentAssignment, setStudentAssignment] = useState()
   const [notification, setNotification] = useState({
     open: false,
     message: '',
     severity: 'success',
-  });
-  const [feedbackData, setFeedbackData] = useState([]);
-const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
-  const theme = useTheme();
-  const navigate = useNavigate();
+  })
+  const [selectedFiles, setSelectedFiles] = useState({})
+  const [plagiarismResults, setPlagiarismResults] = useState({})
+  const [isCheckingPlagiarism, setIsCheckingPlagiarism] = useState(false)
+  const [evaluationResults, setEvaluationResults] = useState({})
+  const [submissions, setSubmissions] = useState([])
+  const [isUploadingFile, setIsUploadingFile] = useState(false) // New state for file upload loading
+  const [isSubmitting, setIsSubmitting] = useState(false) // New state for submit loading
+
+  const theme = useTheme()
+  const navigate = useNavigate()
 
   // RTK Query hooks
   const {
     data: assignments,
     isLoading,
     refetch,
-  } = useGetAssignmentsByClassQuery(classId);
+  } = useGetAssignmentsByClassQuery(classId)
+  console.log(assignments)
   const [uploadAssignment, { isLoading: isUploading }] =
-    useUploadAssignmentMutation();
+    useUploadAssignmentMutation()
   const [deleteAssignment, { isLoading: isDeleting }] =
-    useDeleteAssignmentMutation();
+    useDeleteAssignmentMutation()
   const [updateAssignment, { isLoading: isUpdating }] =
-    useUpdateAssignmentMutation();
-  const [submitAnswer, { isLoading: isAnswering }] = useSubmitAnswerMutation();
-  const { data: submissions, refetch: refetchSubmissions } =
-    useGetAssignmentsWithSubmissionsByAssignmentIdQuery(selectedAssignmentId, {
-      skip: !selectedAssignmentId, // Skip query if no assignmentId is selected
-    });
-    console.log({submissions:submissions})
-
+    useUpdateAssignmentMutation()
+  const [submitAnswer, { isLoading: isAnswering }] = useSubmitAnswerMutation()
   // Handle file input change for chapter PDF
   const handleChapterPdfChange = (e) => {
-    const selectedFile = e.target.files[0];
+    const selectedFile = e.target.files[0]
     if (selectedFile) {
       if (selectedFile.type === 'application/pdf') {
-        setChapterPdf(selectedFile);
+        setChapterPdf(selectedFile)
       } else {
         setNotification({
           open: true,
-          message: 'Invalid file type. Please upload a PDF file for the chapter.',
+          message:
+            'Invalid file type. Please upload a PDF file for the chapter.',
           severity: 'error',
-        });
+        })
       }
     }
-  };
+  }
 
   // Handle file input change for assignment PDF
   const handleAssignmentPdfChange = (e) => {
-    const selectedFile = e.target.files[0];
+    const selectedFile = e.target.files[0]
     if (selectedFile) {
       if (selectedFile.type === 'application/pdf') {
-        setAssignmentPdf(selectedFile);
+        setAssignmentPdf(selectedFile)
       } else {
         setNotification({
           open: true,
           message:
             'Invalid file type. Please upload a PDF file for the assignment.',
           severity: 'error',
-        });
+        })
       }
     }
-  };
+  }
 
   // Handle assignment upload
   const handleUploadAssignment = async () => {
@@ -168,68 +168,68 @@ const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
         open: true,
         message: 'Please provide a title, deadline, and select both files.',
         severity: 'error',
-      });
-      return;
+      })
+      return
     }
 
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('description', description);
-    formData.append('deadline', deadline);
-    formData.append('classId', classId);
-    formData.append('chapterPdf', chapterPdf);
-    formData.append('assignmentPdf', assignmentPdf);
+    const formData = new FormData()
+    formData.append('title', title)
+    formData.append('description', description)
+    formData.append('deadline', deadline)
+    formData.append('classId', classId)
+    formData.append('chapterPdf', chapterPdf)
+    formData.append('assignmentPdf', assignmentPdf)
 
     try {
-      await uploadAssignment(formData).unwrap();
+      await uploadAssignment(formData).unwrap()
       setNotification({
         open: true,
         message: 'Assignment uploaded successfully!',
         severity: 'success',
-      });
-      setOpenDialog(false);
-      setTitle('');
-      setDescription('');
-      setDeadline('');
-      setChapterPdf(null);
-      setAssignmentPdf(null);
-      refetch(); // Refresh the assignments list
+      })
+      setOpenDialog(false)
+      setTitle('')
+      setDescription('')
+      setDeadline('')
+      setChapterPdf(null)
+      setAssignmentPdf(null)
+      refetch() // Refresh the assignments list
     } catch (error) {
       setNotification({
         open: true,
         message: error.data?.message || 'Failed to upload assignment.',
         severity: 'error',
-      });
+      })
     }
-  };
+  }
 
   // Handle assignment deletion
   const handleDeleteAssignment = async (assignmentId) => {
     try {
-      await deleteAssignment(assignmentId).unwrap();
+      await deleteAssignment(assignmentId).unwrap()
       setNotification({
         open: true,
         message: 'Assignment deleted successfully!',
         severity: 'success',
-      });
-      refetch(); // Refresh the assignments list
+      })
+      refetch() // Refresh the assignments list
     } catch (error) {
       setNotification({
         open: true,
         message: error.data?.message || 'Failed to delete assignment.',
         severity: 'error',
-      });
+      })
     }
-  };
+  }
 
   // Handle assignment edit
   const handleEditAssignment = (assignment) => {
-    setEditingAssignment(assignment);
-    setTitle(assignment.title);
-    setDescription(assignment.description);
-    setDeadline(new Date(assignment.deadline).toISOString().split('T')[0]);
-    setOpenEditDialog(true);
-  };
+    setEditingAssignment(assignment)
+    setTitle(assignment.title)
+    setDescription(assignment.description)
+    setDeadline(new Date(assignment.deadline).toISOString().split('T')[0])
+    setOpenEditDialog(true)
+  }
 
   // Handle assignment update
   const handleUpdateAssignment = async () => {
@@ -238,105 +238,113 @@ const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
         open: true,
         message: 'Please provide a title and deadline.',
         severity: 'error',
-      });
-      return;
+      })
+      return
     }
 
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('description', description);
-    formData.append('deadline', deadline);
-    if (chapterPdf) formData.append('chapterPdf', chapterPdf);
-    if (assignmentPdf) formData.append('assignmentPdf', assignmentPdf);
+    const formData = new FormData()
+    formData.append('title', title)
+    formData.append('description', description)
+    formData.append('deadline', deadline)
+    if (chapterPdf) formData.append('chapterPdf', chapterPdf)
+    if (assignmentPdf) formData.append('assignmentPdf', assignmentPdf)
 
     try {
       await updateAssignment({
         assignmentId: editingAssignment._id,
         formData,
-      }).unwrap();
+      }).unwrap()
       setNotification({
         open: true,
         message: 'Assignment updated successfully!',
         severity: 'success',
-      });
-      setOpenEditDialog(false);
-      setTitle('');
-      setDescription('');
-      setDeadline('');
-      setChapterPdf(null);
-      setAssignmentPdf(null);
-      refetch(); // Refresh the assignments list
+      })
+      setOpenEditDialog(false)
+      setTitle('')
+      setDescription('')
+      setDeadline('')
+      setChapterPdf(null)
+      setAssignmentPdf(null)
+      refetch() // Refresh the assignments list
     } catch (error) {
       setNotification({
         open: true,
         message: error.data?.message || 'Failed to update assignment.',
         severity: 'error',
-      });
+      })
     }
-  };
+  }
 
-  // Handle file upload for student assignments
+  // Handle file upload for student submissions
   const handleFileChange = async (event, assignmentId) => {
     if (event.target.files.length > 0) {
-      const file = event.target.files[0];
-      const newFiles = { ...selectedFiles, [assignmentId]: file };
-      setSelectedFiles(newFiles);
-
+      const file = event.target.files[0]
+      setSelectedFiles((prev) => ({ ...prev, [assignmentId]: file }))
+      setStudentAssignment(event.target.files[0])
       try {
-        const formData = new FormData();
-        formData.append('file', file);
+        setIsCheckingPlagiarism(true)
+        const formData = new FormData()
+        formData.append('file', file)
 
+        // Perform plagiarism check
         const response = await fetch('http://localhost:5000/detect_ai', {
           method: 'POST',
           body: formData,
-        });
+        })
 
         if (response.ok) {
-          const result = await response.json();
-          const aiScore = (result.winstonai?.ai_score || 0) * 100;
+          const result = await response.json()
+          const aiScore = (result.winstonai?.ai_score || 0) * 100
           setPlagiarismResults((prev) => ({
             ...prev,
             [assignmentId]: aiScore,
-          }));
+          }))
+          setAi_Score(aiScore)
+        } else {
+          throw new Error('Plagiarism check failed')
         }
       } catch (error) {
-        console.error('Plagiarism check failed:', error);
+        console.error('Error submitting assignment:', error)
         setNotification({
           open: true,
-          message: 'Plagiarism check failed. Please try again.',
+          message: 'Failed to submit assignment. Please try again.',
           severity: 'error',
-        });
+        })
+      } finally {
+        setIsCheckingPlagiarism(false)
       }
     }
-  };
+  }
 
-  // Handle assignment submission
+  // Handle file upload for student submissions
   const handleUpload = async (assignmentId, assignmentPdfFilename) => {
-    const file = selectedFiles[assignmentId];
-    if (!file) {
-      alert('Please select a file before uploading.');
-      return;
+    const selectedFile = selectedFiles[assignmentId]
+    if (!selectedFile) {
+      alert('Please select a file before uploading.')
+      return
     }
+
+    setIsUploadingFile(true) // Start loading for upload
 
     try {
       // Fetch the assignment PDF from the server
-      const assignmentPdfUrl = `${BASE_URL}/uploads/${assignmentPdfFilename}`;
-      const response = await fetch(assignmentPdfUrl);
+      const assignmentPdfUrl = `${BASE_URL}/uploads/${assignmentPdfFilename}`
+      const response = await fetch(assignmentPdfUrl)
       if (!response.ok) {
-        throw new Error('Failed to fetch assignment PDF');
+        throw new Error('Failed to fetch assignment PDF')
       }
-      const assignmentPdfBlob = await response.blob();
+      const assignmentPdfBlob = await response.blob()
       const assignmentPdfFile = new File(
         [assignmentPdfBlob],
         assignmentPdfFilename,
         { type: 'application/pdf' }
-      );
+      )
 
       // Create FormData and append both files with correct keys
-      const formData = new FormData();
-      formData.append('answersheet', file);
-      formData.append('question_paper', assignmentPdfFile);
-
+      const formData = new FormData()
+      formData.append('answersheet', selectedFile)
+      formData.append('question_paper', assignmentPdfFile)
+      console.log({ selectedFile: selectedFile })
       // Send to Flask backend
       const uploadResponse = await fetch(
         'http://localhost:5000/get_student_score',
@@ -344,79 +352,119 @@ const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
           method: 'POST',
           body: formData,
         }
-      );
+      )
 
       if (uploadResponse.ok) {
-        const result = await uploadResponse.json();
-        // Update scores and evaluation results using assignmentId as key
+        const result = await uploadResponse.json()
+        // Update scores state with the new result
         setScores((prev) => ({
           ...prev,
           [assignmentId]: result.total_score,
-        }));
+        }))
         setEvaluationResults((prev) => ({
           ...prev,
-          [assignmentId]: result.results,
-        }));
-        console.log({ result: result });
+          [assignmentId]: result,
+        }))
+        console.log({ result: result })
+        const submissionData = new FormData()
+        submissionData.append('assignmentId', assignmentId)
+        submissionData.append('studentId', userInfo._id) // Use the logged-in student's ID
+        submissionData.append('results', JSON.stringify(result.results)) // Convert results to JSON string
+        submissionData.append('total_score', result.total_score)
+        submissionData.append('answerFile', studentAssignment)
+        submissionData.append('plagiarismScore', ai_Score)
+
+        // Submit the answer
+        const submissionResponse = await submitAnswer(submissionData).unwrap()
+        setNotification({
+          open: true,
+          message: 'Assignment submitted successfully!',
+          severity: 'success',
+        })
+        console.log({ submissionResponse: submissionResponse })
       } else {
-        alert('Upload failed.');
+        alert('Upload failed.')
       }
     } catch (error) {
-      console.error('Error uploading file:', error);
-      alert('Error uploading file: ' + error.message);
+      console.error('Error uploading file:', error)
+      alert('Error uploading file: ' + error.message)
+    } finally {
+      setIsUploadingFile(false) // Stop loading for upload
     }
-  };
+  }
 
-  // Close notification
-  const handleCloseNotification = () => {
-    setNotification({ ...notification, open: false });
-  };
-
-  // Toggle expanded state for assignment card
-  const toggleExpand = (assignmentId) => {
-    setExpandedAssignmentId((prevId) =>
-      prevId === assignmentId ? null : assignmentId
-    );
-  };
-
-  // Handle view submissions
-  const handleViewSubmissions = async (assignmentId) => {
-    setSelectedAssignmentId(assignmentId);
-    setOpenSubmissionsModal(true);
-  };
   const handleViewFeedback = async (assignmentId) => {
     try {
-      const results = evaluationResults[assignmentId]; // Get results for the assignment
+      const results = evaluationResults[assignmentId] // Get results for the assignment
       if (!results) {
-        throw new Error('No evaluation results found');
+        throw new Error('No evaluation results found')
       }
-  
-      const response = await fetch('http://localhost:5000/generate_feedback', {
+
+      const response = await fetch('http://localhost:5000/generate-feedback', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           results, // Pass the results array
         }),
-      });
-  
+      })
+      console.log(results)
       if (response.ok) {
-        const feedbackData = await response.json();
-        navigate('/feedback', { state: { feedbackData } }); // Navigate to feedback page
+        const feedbackData = await response.json()
+        navigate('/feedback', { state: { feedbackData } }) // Navigate to feedback page
       } else {
-        throw new Error('Failed to fetch feedback');
+        throw new Error('Failed to fetch feedback')
       }
     } catch (error) {
-      console.error('Error fetching feedback:', error);
+      console.error('Error fetching feedback:', error)
       setNotification({
         open: true,
         message: 'Failed to fetch feedback. Please try again.',
         severity: 'error',
-      });
+      })
     }
-  };
+  }
+  // Handle viewing submissions
+  // Handle viewing submissions
+  const handleViewSubmissions = async (assignmentId) => {
+    try {
+      const response = await fetch(
+        `${BASE_URL}/assignment/teacher/assignment/${assignmentId}`
+      )
+      if (response.ok) {
+        const data = await response.json()
+        console.log('API Response:', data) // Log the response to debug
 
+        // Ensure the response is an array
+        if (Array.isArray(data)) {
+          setSubmissions(data)
+        } else {
+          // If the response is not an array, transform it into one
+          setSubmissions([data])
+        }
+
+        setOpenSubmissionsModal(true)
+      } else {
+        throw new Error('Failed to fetch submissions')
+      }
+    } catch (error) {
+      console.error('Error fetching submissions:', error)
+      setNotification({
+        open: true,
+        message: 'Failed to fetch submissions. Please try again.',
+        severity: 'error',
+      })
+    }
+  }
+  // Close notification
+  const handleCloseNotification = () => {
+    setNotification({ ...notification, open: false })
+  }
+  console.log(submissions)
+  // Toggle expanded state for assignment card
+  const toggleExpand = (assignmentId) => {
+    setExpandedAssignmentId((prevId) =>
+      prevId === assignmentId ? null : assignmentId
+    )
+  }
 
   return (
     <Box sx={{ p: 3, background: theme.palette.background.default }}>
@@ -477,11 +525,11 @@ const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
                         </Typography>
 
                         <Typography variant="body2" color="textSecondary">
-                          Uploaded on:{" "}
+                          Uploaded on:{' '}
                           {new Date(assignment?.createdAt).toLocaleDateString()}
                         </Typography>
                         <Typography variant="body2" color="textSecondary">
-                          Deadline:{" "}
+                          Deadline:{' '}
                           {new Date(assignment?.deadline).toLocaleDateString()}
                         </Typography>
                       </Box>
@@ -514,121 +562,172 @@ const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
                           Chapter PDF
                         </Button>
                       )}
-
-                      {/* Student Actions */}
-                      {userInfo.role === 'student' && (
-                        <>
-                          <Button
-                            component="label"
-                            role={undefined}
-                            variant="contained"
-                            tabIndex={-1}
-                            startIcon={<CloudUploadIcon />}
-                          >
-                            Upload assignment
-                            <VisuallyHiddenInput
-                              type="file"
-                              onChange={(e) => handleFileChange(e, assignment._id)}
-                            />
-                          </Button>
-
-                          {selectedFiles[assignment._id] && (
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 2,
-                              }}
-                            >
-                              {/* Plagiarism Check Result */}
-                              {plagiarismResults[assignment._id] !== undefined && (
-                                <Typography
-                                  variant="body2"
-                                  sx={{
-                                    color:
-                                      plagiarismResults[assignment._id] > 30
-                                        ? theme.palette.error.main
-                                        : theme.palette.success.main,
-                                    fontWeight: 'bold',
-                                  }}
-                                >
-                                  AI Detection:{" "}
-                                  {plagiarismResults[assignment._id].toFixed(2)}%
-                                </Typography>
-                              )}
-
-                              {/* Submit Button */}
-                              <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={() =>
-                                  handleUpload(assignment._id, assignment.assignmentPdf)
-                                }
-                                disabled={
-                                  plagiarismResults[assignment._id] !== undefined &&
-                                  plagiarismResults[assignment._id] > 75
-                                }
-                              >
-                                Submit
-                              </Button>
-
-                              {/* Score Display */}
-                              {scores[assignment._id] && (
-                                <Typography
-                                  variant="body1"
-                                  sx={{
-                                    ml: 2,
-                                    fontWeight: 'bold',
-                                    color: theme.palette.success.main,
-                                  }}
-                                >
-                                  Score: {scores[assignment._id]}/
-                                  {assignment.questions?.length * 10}
-                                </Typography>
-                              )}
-                            </Box>
-                          )}
-
-                          {/* View Report Button */}
-                          {evaluationResults[assignment._id] && (
+                      {userInfo.role === 'student' &&
+                        (assignment.submissions?.some(
+                          (submission) => submission.studentId === userInfo._id
+                        ) ? (
+                          <>
                             <Button
                               variant="outlined"
-                              color="secondary"
-                              
-                              onClick={() => {
-                                navigate('/report', {
-                                  state: {
-                                    results: evaluationResults[assignment._id],
-                                    totalScore: scores[assignment._id],
-                                    assignmentTitle: assignment.title,
-                                  },
-                                });
-                              }}
-                              sx={{ ml: 2 }}
+                              startIcon={<DescriptionIcon />}
+                              component="a"
+                              href={`${BASE_URL}/uploads/${assignment.submissions?.find((sub) => sub.studentId === userInfo._id).answerFile}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
                             >
-                              View Report
+                              Submitted PDF
                             </Button>
-                          )}
-                              {/* {scores[assignment._id] && (
-  <Button
-    variant="outlined"
-    color="primary"
-    onClick={() => handleViewFeedback(assignment._id)} 
-    sx={{ ml: 2 }}
-  >
-    View Feedback
-  </Button>
-)} */}
-                        </>
-                      )}
+                            <Typography
+                              variant="body1"
+                              sx={{
+                                ml: 2,
+                                fontWeight: 'bold',
+                                color: theme.palette.success.main,
+                              }}
+                            >
+                              Score:{' '}
+                              {
+                                assignment.submissions?.find(
+                                  (sub) => sub.studentId === userInfo._id
+                                ).result.total_score
+                              }
+                            </Typography>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              component="label"
+                              role={undefined}
+                              variant="contained"
+                              tabIndex={-1}
+                              startIcon={<CloudUploadIcon />}
+                            >
+                              Upload assignment
+                              <VisuallyHiddenInput
+                                type="file"
+                                onChange={(e) =>
+                                  handleFileChange(e, assignment._id)
+                                }
+                              />
+                            </Button>
 
-                      {/* Teacher Actions */}
+                            {selectedFiles[assignment._id] && (
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 2,
+                                }}
+                              >
+                                {/* Plagiarism Check Result */}
+                                {plagiarismResults[assignment._id] !==
+                                  undefined && (
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      color:
+                                        plagiarismResults[assignment._id] > 30
+                                          ? theme.palette.error.main
+                                          : theme.palette.success.main,
+                                      fontWeight: 'bold',
+                                    }}
+                                  >
+                                    AI Detection:{' '}
+                                    {plagiarismResults[assignment._id].toFixed(
+                                      2
+                                    )}
+                                    %
+                                  </Typography>
+                                )}
+
+                                {/* Submit Button */}
+                                <Button
+                                  variant="contained"
+                                  color="primary"
+                                  onClick={() =>
+                                    handleUpload(
+                                      assignment._id,
+                                      assignment.assignmentPdf
+                                    )
+                                  }
+                                  disabled={
+                                    (plagiarismResults[assignment._id] !==
+                                      undefined &&
+                                      plagiarismResults[assignment._id] > 75) ||
+                                    isUploadingFile
+                                  }
+                                >
+                                  {isUploadingFile ? (
+                                    <CircularProgress size={24} />
+                                  ) : (
+                                    'Submit'
+                                  )}
+                                </Button>
+
+                                {/* Score Display */}
+                                {scores[assignment._id] && (
+                                  <Typography
+                                    variant="body1"
+                                    sx={{
+                                      ml: 2,
+                                      fontWeight: 'bold',
+                                      color: theme.palette.success.main,
+                                    }}
+                                  >
+                                    Score: {scores[assignment._id]}/
+                                    {assignment.questions?.length * 10}
+                                  </Typography>
+                                )}
+                              </Box>
+                            )}
+
+                            {/* View Report Button */}
+                            {evaluationResults[assignment._id] && (
+                              <Button
+                                variant="outlined"
+                                color="secondary"
+                                onClick={() => {
+                                  navigate('/report', {
+                                    state: {
+                                      results:
+                                        evaluationResults[assignment._id],
+                                      totalScore: scores[assignment._id],
+                                      assignmentTitle: assignment.title,
+                                    },
+                                  })
+                                }}
+                                sx={{ ml: 2 }}
+                              >
+                                View Report
+                              </Button>
+                            )}
+
+                            {/* View Feedback Button */}
+                            {scores[assignment._id] && (
+                              <>
+                                <Button
+                                  variant="outlined"
+                                  color="primary"
+                                  onClick={() =>
+                                    handleViewFeedback(assignment._id)
+                                  }
+                                  sx={{ ml: 2 }}
+                                >
+                                  View Feedback
+                                </Button>
+                              </>
+                            )}
+                          </>
+                        ))}
+                      {/* Delete Button */}
                       {userInfo.role === 'teacher' && (
                         <>
                           <Button
                             variant="outlined"
                             color="secondary"
-                            onClick={() => handleViewSubmissions(assignment._id)}
+                            onClick={() =>
+                              handleViewSubmissions(assignment._id)
+                            }
                           >
                             View Submissions
                           </Button>
@@ -850,7 +949,7 @@ const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
         open={openSubmissionsModal}
         onClose={() => setOpenSubmissionsModal(false)}
         fullWidth
-        maxWidth="md"
+        maxWidth="lg"
       >
         <DialogTitle>Submissions</DialogTitle>
         <DialogContent>
@@ -862,15 +961,30 @@ const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
                   <TableCell>Email</TableCell>
                   <TableCell>Score</TableCell>
                   <TableCell>Plagiarism Score</TableCell>
+                  <TableCell>Submitted PDF</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {submissions?.map((submission) => (
+                {submissions[0]?.submissions?.map((submission) => (
                   <TableRow key={submission._id}>
                     <TableCell>{submission.studentId?.name}</TableCell>
                     <TableCell>{submission.studentId?.email}</TableCell>
-                    <TableCell>{submission.result?.total_score || 'N/A'}</TableCell>
+                    <TableCell>
+                      {submission.result?.total_score || 'N/A'}
+                    </TableCell>
                     <TableCell>{submission.plagiarismScore || 'N/A'}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outlined"
+                        startIcon={<DescriptionIcon />}
+                        component="a"
+                        href={`${BASE_URL}/uploads/${submission.answerFile}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View PDF
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -881,7 +995,6 @@ const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
           <Button onClick={() => setOpenSubmissionsModal(false)}>Close</Button>
         </DialogActions>
       </Dialog>
-
       {/* Notification Snackbar */}
       <Snackbar
         open={notification.open}
@@ -897,7 +1010,7 @@ const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
         </Alert>
       </Snackbar>
     </Box>
-  );
-};
+  )
+}
 
-export default AssignmentPage;
+export default AssignmentPage

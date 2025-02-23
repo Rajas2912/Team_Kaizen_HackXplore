@@ -11,6 +11,8 @@ import {
   getAssignmentsWithSubmissionsByAssignmentId,
 } from '../controler/assignment.controler.js'
 import upload from '../middlewares/upload.js'
+import multer from 'multer'
+import path from 'path' // Import the path module
 
 const router = express.Router()
 
@@ -24,8 +26,25 @@ router.post(
 // Get assignments by class ID
 router.get('/class/:classId', getAssignmentsByClass)
 
+// Set up storage engine for Multer
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/') // Specify the directory where files should be saved
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname)) // Rename the file to avoid conflicts
+  },
+})
+
+// Initialize Multer with the storage engine
+const upload2 = multer({ storage: storage })
+
 // Submit an answer for an assignment (with file upload)
-router.post('/submit-answer', upload.single('answerFile'), submitAnswer)
+router.post(
+  '/submit-answer',
+  upload2.single('answerFile'), // Use upload.single for a single file upload
+  submitAnswer
+)
 
 // Get submissions for an assignment
 router.get('/submissions/:assignmentId', getSubmissions)
