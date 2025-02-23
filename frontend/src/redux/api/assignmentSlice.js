@@ -136,5 +136,5 @@ export const {
   useUpdateSubmissionResultMutation,
   useGetAssignmentsWithSubmissionsQuery,
   useGetSubmissionResultQuery,
-  useGetAssignmentsWithSubmissionsByAssignmentIdQuery
+  useGetAssignmentsWithSubmissionsByAssignmentIdQuery,
 } = assignmentApiSlice

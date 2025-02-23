@@ -40,6 +40,7 @@ import {
   useUpdateAssignmentMutation,
   useUploadAssignmentMutation,
   useSubmitAnswerMutation,
+  useGetSubmissionsQuery,
 } from '../../redux/api/assignmentSlice'
 import { BASE_URL } from '../../redux/constants'
 import { useSelector } from 'react-redux'
@@ -94,6 +95,8 @@ const AssignmentPage = ({ classId }) => {
   const [expandedAssignmentId, setExpandedAssignmentId] = useState(null)
   const [responseText, setResponseText] = useState('')
   const [scores, setScores] = useState({})
+  const [ai_Score, setAi_Score] = useState(0)
+  const [studentAssignment, setStudentAssignment] = useState()
   const [notification, setNotification] = useState({
     open: false,
     message: '',
@@ -116,6 +119,7 @@ const AssignmentPage = ({ classId }) => {
     isLoading,
     refetch,
   } = useGetAssignmentsByClassQuery(classId)
+  console.log(assignments)
   const [uploadAssignment, { isLoading: isUploading }] =
     useUploadAssignmentMutation()
   const [deleteAssignment, { isLoading: isDeleting }] =
@@ -123,7 +127,6 @@ const AssignmentPage = ({ classId }) => {
   const [updateAssignment, { isLoading: isUpdating }] =
     useUpdateAssignmentMutation()
   const [submitAnswer, { isLoading: isAnswering }] = useSubmitAnswerMutation()
-  console.log(assignments)
   // Handle file input change for chapter PDF
   const handleChapterPdfChange = (e) => {
     const selectedFile = e.target.files[0]
@@ -277,12 +280,13 @@ const AssignmentPage = ({ classId }) => {
     if (event.target.files.length > 0) {
       const file = event.target.files[0]
       setSelectedFiles((prev) => ({ ...prev, [assignmentId]: file }))
-
+      setStudentAssignment(event.target.files[0])
       try {
         setIsCheckingPlagiarism(true)
         const formData = new FormData()
         formData.append('file', file)
 
+        // Perform plagiarism check
         const response = await fetch('http://localhost:5000/detect_ai', {
           method: 'POST',
           body: formData,
@@ -295,12 +299,15 @@ const AssignmentPage = ({ classId }) => {
             ...prev,
             [assignmentId]: aiScore,
           }))
+          setAi_Score(aiScore)
+        } else {
+          throw new Error('Plagiarism check failed')
         }
       } catch (error) {
-        console.error('Plagiarism check failed:', error)
+        console.error('Error submitting assignment:', error)
         setNotification({
           open: true,
-          message: 'Plagiarism check failed. Please try again.',
+          message: 'Failed to submit assignment. Please try again.',
           severity: 'error',
         })
       } finally {
@@ -337,7 +344,7 @@ const AssignmentPage = ({ classId }) => {
       const formData = new FormData()
       formData.append('answersheet', selectedFile)
       formData.append('question_paper', assignmentPdfFile)
-
+      console.log({ selectedFile: selectedFile })
       // Send to Flask backend
       const uploadResponse = await fetch(
         'http://localhost:5000/get_student_score',
@@ -359,6 +366,22 @@ const AssignmentPage = ({ classId }) => {
           [assignmentId]: result,
         }))
         console.log({ result: result })
+        const submissionData = new FormData()
+        submissionData.append('assignmentId', assignmentId)
+        submissionData.append('studentId', userInfo._id) // Use the logged-in student's ID
+        submissionData.append('results', JSON.stringify(result.results)) // Convert results to JSON string
+        submissionData.append('total_score', result.total_score)
+        submissionData.append('answerFile', studentAssignment)
+        submissionData.append('plagiarismScore', ai_Score)
+
+        // Submit the answer
+        const submissionResponse = await submitAnswer(submissionData).unwrap()
+        setNotification({
+          open: true,
+          message: 'Assignment submitted successfully!',
+          severity: 'success',
+        })
+        console.log({ submissionResponse: submissionResponse })
       } else {
         alert('Upload failed.')
       }
@@ -370,15 +393,54 @@ const AssignmentPage = ({ classId }) => {
     }
   }
 
+  const handleViewFeedback = async (assignmentId) => {
+    try {
+      const results = evaluationResults[assignmentId] // Get results for the assignment
+      if (!results) {
+        throw new Error('No evaluation results found')
+      }
+
+      const response = await fetch('http://localhost:5000/generate-feedback', {
+        method: 'POST',
+        body: JSON.stringify({
+          results, // Pass the results array
+        }),
+      })
+      console.log(results)
+      if (response.ok) {
+        const feedbackData = await response.json()
+        navigate('/feedback', { state: { feedbackData } }) // Navigate to feedback page
+      } else {
+        throw new Error('Failed to fetch feedback')
+      }
+    } catch (error) {
+      console.error('Error fetching feedback:', error)
+      setNotification({
+        open: true,
+        message: 'Failed to fetch feedback. Please try again.',
+        severity: 'error',
+      })
+    }
+  }
+  // Handle viewing submissions
   // Handle viewing submissions
   const handleViewSubmissions = async (assignmentId) => {
     try {
       const response = await fetch(
-        `${BASE_URL}/assignments/${assignmentId}/submissions`
+        `${BASE_URL}/assignment/teacher/assignment/${assignmentId}`
       )
       if (response.ok) {
         const data = await response.json()
-        setSubmissions(data)
+        console.log('API Response:', data) // Log the response to debug
+
+        // Ensure the response is an array
+        if (Array.isArray(data)) {
+          setSubmissions(data)
+        } else {
+          // If the response is not an array, transform it into one
+          setSubmissions([data])
+        }
+
         setOpenSubmissionsModal(true)
       } else {
         throw new Error('Failed to fetch submissions')
@@ -392,12 +454,11 @@ const AssignmentPage = ({ classId }) => {
       })
     }
   }
-
   // Close notification
   const handleCloseNotification = () => {
     setNotification({ ...notification, open: false })
   }
-
+  console.log(submissions)
   // Toggle expanded state for assignment card
   const toggleExpand = (assignmentId) => {
     setExpandedAssignmentId((prevId) =>
@@ -501,206 +562,162 @@ const AssignmentPage = ({ classId }) => {
                           Chapter PDF
                         </Button>
                       )}
-                      {userInfo.role === 'student' && (
-                        <>
-                          <Button
-                            component="label"
-                            role={undefined}
-                            variant="contained"
-                            tabIndex={-1}
-                            startIcon={<CloudUploadIcon />}
-                          >
-                            Upload assignment
-                            <VisuallyHiddenInput
-                              type="file"
-                              onChange={(e) =>
-                                handleFileChange(e, assignment._id)
-                              }
-                            />
-                          </Button>
-
-                          {selectedFiles[assignment._id] && (
-                            <Box
+                      {userInfo.role === 'student' &&
+                        (assignment.submissions?.some(
+                          (submission) => submission.studentId === userInfo._id
+                        ) ? (
+                          <>
+                            <Button
+                              variant="outlined"
+                              startIcon={<DescriptionIcon />}
+                              component="a"
+                              href={`${BASE_URL}/uploads/${assignment.submissions?.find((sub) => sub.studentId === userInfo._id).answerFile}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              Submitted PDF
+                            </Button>
+                            <Typography
+                              variant="body1"
                               sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 2,
+                                ml: 2,
+                                fontWeight: 'bold',
+                                color: theme.palette.success.main,
                               }}
                             >
-                              {/* Plagiarism Check Result */}
-                              {plagiarismResults[assignment._id] !==
-                                undefined && (
-                                <Typography
-                                  variant="body2"
-                                  sx={{
-                                    color:
-                                      plagiarismResults[assignment._id] > 30
-                                        ? theme.palette.error.main
-                                        : theme.palette.success.main,
-                                    fontWeight: 'bold',
-                                  }}
-                                >
-                                  AI Detection:{' '}
-                                  {plagiarismResults[assignment._id].toFixed(2)}
-                                  %
-                                </Typography>
-                              )}
+                              Score:{' '}
+                              {
+                                assignment.submissions?.find(
+                                  (sub) => sub.studentId === userInfo._id
+                                ).result.total_score
+                              }
+                            </Typography>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              component="label"
+                              role={undefined}
+                              variant="contained"
+                              tabIndex={-1}
+                              startIcon={<CloudUploadIcon />}
+                            >
+                              Upload assignment
+                              <VisuallyHiddenInput
+                                type="file"
+                                onChange={(e) =>
+                                  handleFileChange(e, assignment._id)
+                                }
+                              />
+                            </Button>
 
-                              {/* Submit Button */}
-                              <Button
-                                variant="contained"
-                                color="primary"
-                                onClick={() =>
-                                  handleUpload(
-                                    assignment._id,
-                                    assignment.assignmentPdf
-                                  )
-                                }
-                                disabled={
-                                  (plagiarismResults[assignment._id] !==
-                                    undefined &&
-                                    plagiarismResults[assignment._id] > 75) ||
-                                  isUploadingFile
-                                }
+                            {selectedFiles[assignment._id] && (
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 2,
+                                }}
                               >
-                                {isUploadingFile ? (
-                                  <CircularProgress size={24} />
-                                ) : (
-                                  'Submit'
+                                {/* Plagiarism Check Result */}
+                                {plagiarismResults[assignment._id] !==
+                                  undefined && (
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      color:
+                                        plagiarismResults[assignment._id] > 30
+                                          ? theme.palette.error.main
+                                          : theme.palette.success.main,
+                                      fontWeight: 'bold',
+                                    }}
+                                  >
+                                    AI Detection:{' '}
+                                    {plagiarismResults[assignment._id].toFixed(
+                                      2
+                                    )}
+                                    %
+                                  </Typography>
                                 )}
-                              </Button>
 
-                              {/* Score Display */}
-                              {scores[assignment._id] && (
-                                <Typography
-                                  variant="body1"
-                                  sx={{
-                                    ml: 2,
-                                    fontWeight: 'bold',
-                                    color: theme.palette.success.main,
-                                  }}
+                                {/* Submit Button */}
+                                <Button
+                                  variant="contained"
+                                  color="primary"
+                                  onClick={() =>
+                                    handleUpload(
+                                      assignment._id,
+                                      assignment.assignmentPdf
+                                    )
+                                  }
+                                  disabled={
+                                    (plagiarismResults[assignment._id] !==
+                                      undefined &&
+                                      plagiarismResults[assignment._id] > 75) ||
+                                    isUploadingFile
+                                  }
                                 >
-                                  Score: {scores[assignment._id]}/
-                                  {assignment.questions?.length * 10}
-                                </Typography>
-                              )}
-                            </Box>
-                          )}
+                                  {isUploadingFile ? (
+                                    <CircularProgress size={24} />
+                                  ) : (
+                                    'Submit'
+                                  )}
+                                </Button>
 
-                          {/* View Report Button */}
-                          {evaluationResults[assignment._id] && (
-                            <Button
-                              variant="outlined"
-                              color="secondary"
-                              onClick={() => {
-                                navigate('/report', {
-                                  state: {
-                                    results: evaluationResults[assignment._id],
-                                    totalScore: scores[assignment._id],
-                                    assignmentTitle: assignment.title,
-                                  },
-                                })
-                              }}
-                              sx={{ ml: 2 }}
-                            >
-                              View Report
-                            </Button>
-                          )}
-                          {/* View Feedback Button */}
-                          {scores[assignment._id] && (
-                            <Button
-                              variant="outlined"
-                              color="primary"
-                              onClick={async () => {
-                                try {
-                                  const response = await fetch(
-                                    'http://localhost:5000/generate-feedback',
-                                    {
-                                      method: 'POST',
-                                      headers: {
-                                        'Content-Type': 'application/json',
-                                      },
-                                      body: JSON.stringify({
-                                        assignmentId: assignment._id,
-                                      }),
-                                    }
-                                  )
+                                {/* Score Display */}
+                                {scores[assignment._id] && (
+                                  <Typography
+                                    variant="body1"
+                                    sx={{
+                                      ml: 2,
+                                      fontWeight: 'bold',
+                                      color: theme.palette.success.main,
+                                    }}
+                                  >
+                                    Score: {scores[assignment._id]}/100
+                                  </Typography>
+                                )}
+                              </Box>
+                            )}
 
-                                  if (response.ok) {
-                                    const feedbackData = await response.json()
-                                    navigate('/feedback', {
-                                      state: { feedbackData },
-                                    }) // Navigate to feedback page
-                                  } else {
-                                    throw new Error('Failed to fetch feedback')
-                                  }
-                                } catch (error) {
-                                  console.error(
-                                    'Error fetching feedback:',
-                                    error
-                                  )
-                                  setNotification({
-                                    open: true,
-                                    message:
-                                      'Failed to fetch feedback. Please try again.',
-                                    severity: 'error',
+                            {/* View Report Button */}
+                            {evaluationResults[assignment._id] && (
+                              <Button
+                                variant="outlined"
+                                color="secondary"
+                                onClick={() => {
+                                  navigate('/report', {
+                                    state: {
+                                      results:
+                                        evaluationResults[assignment._id],
+                                      totalScore: scores[assignment._id],
+                                      assignmentTitle: assignment.title,
+                                    },
                                   })
-                                }
-                              }}
-                              sx={{ ml: 2 }}
-                            >
-                              View Feedback
-                            </Button>
-                          )}
-                          {/* View Feedback Button */}
-                          {scores[assignment._id] && (
-                            <Button
-                              variant="outlined"
-                              color="primary"
-                              onClick={async () => {
-                                try {
-                                  const response = await fetch(
-                                    'http://localhost:5000/generate-feedback',
-                                    {
-                                      method: 'POST',
-                                      headers: {
-                                        'Content-Type': 'application/json',
-                                      },
-                                      body: JSON.stringify({
-                                        results:
-                                          evaluationResults[assignment._id], // Pass the results array
-                                      }),
-                                    }
-                                  )
+                                }}
+                                sx={{ ml: 2 }}
+                              >
+                                View Report
+                              </Button>
+                            )}
 
-                                  if (response.ok) {
-                                    const feedbackData = await response.json()
-                                    navigate('/feedback', {
-                                      state: { feedbackData },
-                                    }) // Navigate to feedback page
-                                  } else {
-                                    throw new Error('Failed to fetch feedback')
+                            {/* View Feedback Button */}
+                            {scores[assignment._id] && (
+                              <>
+                                <Button
+                                  variant="outlined"
+                                  color="primary"
+                                  onClick={() =>
+                                    handleViewFeedback(assignment._id)
                                   }
-                                } catch (error) {
-                                  console.error(
-                                    'Error fetching feedback:',
-                                    error
-                                  )
-                                  setNotification({
-                                    open: true,
-                                    message:
-                                      'Failed to fetch feedback. Please try again.',
-                                    severity: 'error',
-                                  })
-                                }
-                              }}
-                              sx={{ ml: 2 }}
-                            >
-                              View Feedback
-                            </Button>
-                          )}
-                        </>
-                      )}
+                                  sx={{ ml: 2 }}
+                                >
+                                  View Feedback
+                                </Button>
+                              </>
+                            )}
+                          </>
+                        ))}
                       {/* Delete Button */}
                       {userInfo.role === 'teacher' && (
                         <>
@@ -931,7 +948,7 @@ const AssignmentPage = ({ classId }) => {
         open={openSubmissionsModal}
         onClose={() => setOpenSubmissionsModal(false)}
         fullWidth
-        maxWidth="md"
+        maxWidth="lg"
       >
         <DialogTitle>Submissions</DialogTitle>
         <DialogContent>
@@ -943,10 +960,11 @@ const AssignmentPage = ({ classId }) => {
                   <TableCell>Email</TableCell>
                   <TableCell>Score</TableCell>
                   <TableCell>Plagiarism Score</TableCell>
+                  <TableCell>Submitted PDF</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {submissions?.map((submission) => (
+                {submissions[0]?.submissions?.map((submission) => (
                   <TableRow key={submission._id}>
                     <TableCell>{submission.studentId?.name}</TableCell>
                     <TableCell>{submission.studentId?.email}</TableCell>
@@ -954,6 +972,18 @@ const AssignmentPage = ({ classId }) => {
                       {submission.result?.total_score || 'N/A'}
                     </TableCell>
                     <TableCell>{submission.plagiarismScore || 'N/A'}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outlined"
+                        startIcon={<DescriptionIcon />}
+                        component="a"
+                        href={`${BASE_URL}/uploads/${submission.answerFile}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View PDF
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -964,7 +994,6 @@ const AssignmentPage = ({ classId }) => {
           <Button onClick={() => setOpenSubmissionsModal(false)}>Close</Button>
         </DialogActions>
       </Dialog>
-
       {/* Notification Snackbar */}
       <Snackbar
         open={notification.open}

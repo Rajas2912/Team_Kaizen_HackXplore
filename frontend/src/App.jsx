@@ -14,7 +14,6 @@ import StudentReport from './pages_rajas/StudentReport'
 
 import GivePicture from './pagesPP/Quiz/GivePicture.jsx'
 import GiveQuiz from './pagesPP/Quiz/GiveQuiz.jsx'
-import StudentReport from './pages_rajas/StudentReport'
 import FeedbackPage from './pages_rajas/FeedbackPage.jsx'
 import PersonalizedFeedback from './pages_rajas/PersonalizedFeedback.jsx'
 function App() {

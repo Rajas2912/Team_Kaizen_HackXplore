@@ -21,7 +21,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Configure APIs
-EDENAI_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiOTE3Zjk2NTEtZGE0Ny00OTA5LWI0MjktNGVmNWI5NWMxY2JhIiwidHlwZSI6ImFwaV90b2tlbiJ9.sF3gwGRaGriFh0-J0RgDZAPYfw3xmF3d3Zv476-e5HI"
+EDENAI_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZmMxMGRkNDAtOGIxYS00YmUxLTllNmEtNDZjOTExYzIwYzI0IiwidHlwZSI6ImFwaV90b2tlbiJ9.UFwm-YijNasg9t0udv-aki7rr9LxetwquTPpWmNNcRg"
 API_KEY = "AIzaSyA9MjZo6sIOlCQPQo5ojKBdHnGmUjlcsGc"
 genai.configure(api_key=API_KEY)
 
@@ -59,7 +59,6 @@ def process_pdf(file):
             text = extract_text_from_image(image)
             extracted_text += text + "\n"
         file.seek(0)
-        print(extracted_text + "hrllo")
         return extracted_text
     except Exception as e:
         return f"PDF Processing Error: {str(e)}"
@@ -211,8 +210,8 @@ def upload_file():
         cleaned_response = response.text.strip()
         # Clean response and extract JSON
         # cleaned_response = re.sub(r'json|', '', response.text)
-        cleaned_response = re.sub(r"json|", "", cleaned_response).strip()
-        json_match = re.search(r"(\{.\}|\[.\])", cleaned_response, re.DOTALL)
+        cleaned_response = re.sub(r"```json|```", "", cleaned_response).strip()
+        json_match = re.search(r"(\{.*\}|\[.*\])", cleaned_response, re.DOTALL)
         print(cleaned_response)
         print(json_match)
         if not json_match:
@@ -385,33 +384,6 @@ def ask_gemini():
 
     return jsonify({"response": response.text})
 
-
-def ask_gemini_internal(prompt, api_key):
-    """
-    Calls Gemini API and returns a structured JSON response.
-
-    Parameters:
-    - prompt: The formatted prompt.
-    - api_key: The API key for authentication.
-
-    Returns:
-    - JSON response in the required structure.
-    """
-    # Configure API
-    genai.configure(api_key=api_key)
-
-    # Initialize the model
-    model = genai.GenerativeModel("gemini-pro")
-
-    # Get response
-    response = model.generate_content(prompt)
-
-    # Process the AI response to ensure valid JSON
-    structured_response = clean_ai_response(response.text)
-
-    return structured_response
-
-
 def clean_ai_response(ai_response):
     """
     Cleans and extracts a valid JSON object from AI-generated text.
@@ -439,14 +411,14 @@ def clean_ai_response(ai_response):
         return {"error": "Invalid JSON format received from AI"}
 
 
-@app.route('/generate_feedback', methods=['POST'])
+@app.route('/generate-feedback', methods=['POST'])
 def generate_feedback():
     """
     API endpoint to generate personalized feedback based on student responses.
     """
     data = request.json
     results = data.get("results")
-    print("input for feedback - " + results)
+
     if not results:
         return jsonify({"error": "Missing required fields"}), 400
 
@@ -491,99 +463,23 @@ def generate_feedback():
         # Get feedback from Gemini
         feedback = ask_gemini_internal(prompt, API_KEY)
         feedback_responses.append(feedback)
+        # print(feedback)
         print(feedback_responses)
-
     return jsonify(feedback_responses)
 
+@app.route("/ask_gemini_internal", methods=["GET"])
+def ask_gemini_internal():
+    prompt = request.args.get("prompt")
+    api_key = request.args.get("api_key")
 
-def postprocess_mipmap_response(response_text):
-    """
-    Postprocesses the response from Gemini API to ensure it adheres to the Mipmap format.
-    """
-    cleaned_text = response_text.strip()
+    if not prompt or not api_key:
+        return jsonify({"error": "Missing 'prompt' or 'api_key'"}), 400
 
-    if not cleaned_text.startswith("Mipmap"):
-        cleaned_text = "Mipmap\n\n" + cleaned_text
-
-    cleaned_text = re.sub(r'\\*Level (\d+):\\', r'\nLevel \1:*', cleaned_text)
-    cleaned_text = re.sub(r'Key Points:\s*-', 'Key Points:\n-', cleaned_text)
-    cleaned_text = re.sub(r'\n+', '\n', cleaned_text).strip()
-
-    return cleaned_text
-
-
-def ask_gemini_mipmap(prompt, api_key):
-    """
-    Calls Gemini API and returns a properly structured Mipmap response.
-    """
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel("gemini-pro")
+    response = model.generate_content(prompt)
 
-    mipmap_prompt = f"""
-    Extract key points from the following text and structure them in a hierarchical Mipmap format.
-
-    *FORMAT STRICTLY LIKE THIS (NO EXTRA CHARACTERS):*
-
-    # Main Topic
-    - Brief introduction to the topic
-
-    ## Subtopic 1
-    - Overview of the subtopic
-      - Key points related to this subtopic
-      - Additional details if needed
-
-    ### Nested Subtopic (Level 2)
-    - Further breakdown of Subtopic 1
-      - Important details or facts
-      - Supporting arguments or examples
-
-    ## Subtopic 2
-    - Explanation of another key area
-      - Step-by-step breakdown (if process-based)
-      - Important aspects to consider
-
-    *DO NOT ADD EXTRA TEXT OR SYMBOLS. ONLY RETURN FORMATTED MIPMAP STRUCTURE.*
-    but omit the keywords like topic ,subtopic , main topic
-    Text:
-    {prompt}
-    """
-
-    response = model.generate_content(mipmap_prompt)
-    print(response)
-    if response and response.text:
-        formatted_text = postprocess_mipmap_response(response.text)
-        return formatted_text
-    else:
-        return "Error: No response received from Gemini API."
-
-
-@app.route("/mipmap", methods=["POST"])
-def mipmap_endpoint():
-    """
-    Flask API endpoint to process text from form-data and return a structured Mipmap response.
-    """
-    try:
-        if 'file' not in request.files:
-            return jsonify({"error": "No file uploaded"}), 400
-
-        file = request.files['file']
-        if file.filename == '':
-            return jsonify({"error": "No selected file"}), 400
-
-        # Extract text from PDF
-        text = process_pdf(file)
-        print(text)
-        if not text:
-            return jsonify({"error": "Failed to extract text from PDF"}), 400
-
-        # Generate Mipmap response
-        response = ask_gemini_mipmap(text, API_KEY)
-        print(response)
-        return response
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
+    return jsonify({"response": response.text})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
