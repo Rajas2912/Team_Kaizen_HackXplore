@@ -40,6 +40,7 @@ import ClassPage from '../pagesKM/Pages/ClassPage'
 import UsersPage from '../pagesKM/Pages/UsersPage'
 import TimetableGeneratorPage from '../pagesKM/Pages/TimetableGeneratorPage'
 import TimetablePage from '../pagesKM/Pages/TimetablePage'
+import Temp from '../Component/Temp';
 
 const demoTheme = extendTheme({
   colorSchemes: { light: true },
@@ -281,7 +282,7 @@ export default function Main(props) {
           {router.pathname == '/quizzes' && <AllTeaching />}
           {router.pathname == '/viva' && <AllTeaching />}
           {router.pathname == '/attendance' && <AllTeaching />}
-          {router.pathname == '/progress-tracking' && <AllTeaching />}
+          {router.pathname == '/progress-tracking' && <Temp />}
           {router.pathname == '/students' && <UsersPage />}
           {router.pathname == '/timetable' && <TimetablePage />}
           {router.pathname?.startsWith('/class/') && (

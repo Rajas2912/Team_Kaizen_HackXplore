@@ -1,13 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import Video_analysis from "./VideoAnalysis.jsx";
-import {
-  Button,
-  Skeleton,
-  Box,
-  Typography,
-  Paper,
-} from "@mui/material";
+import { Button, Skeleton, Box, Typography, Paper } from "@mui/material";
 import MicIcon from "@mui/icons-material/Mic";
 import CallEndIcon from "@mui/icons-material/CallEnd";
 import axios from "axios";
@@ -47,26 +41,101 @@ const Interview = () => {
   const streamRef = useRef(null);
 
   // Speech synthesis function with audio recording
-  const speakText = async(text, rate = 0.95) => {
+  const speakText = async (text, rate = 0.95) => {
     try {
+     
+  
+      // Make a POST request to the backend API
       const response = await fetch("http://127.0.0.1:5000/generate_speech", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text }), // Send the text to the backend
       });
-
+  
+      // Check if the response is OK
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+  
+      // Parse the JSON response
       const data = await response.json();
+  
+      // Check if the response contains the base64-encoded audio
       if (data.speech) {
-        const audio = new Audio(`data:audio/mp3;base64,${data.speech}`);
+        // Convert the base64 string to a Blob
+        const byteCharacters = atob(data.speech); // Decode base64
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        setCurrentQuestion(text); // Now safe to access
+        setQuestionload(false);
+        setStarted(true);
+        const byteArray = new Uint8Array(byteNumbers);
+        const audioBlob = new Blob([byteArray], { type: "audio/mp3" });
+  
+        // Create a URL for the Blob
+        const audioUrl = URL.createObjectURL(audioBlob);
+  
+        // Create an Audio object and play the audio
+        const audio = new Audio(audioUrl);
         audio.play();
+  
+        // Optional: Handle audio events (e.g., when playback ends)
+        audio.addEventListener("ended", () => {
+          setTimer(timeofthinking * 60);
+          setMicOn(true);
+          startAudioRecording();
+          console.log("Audio playback finished.");
+          URL.revokeObjectURL(audioUrl); // Clean up the object URL
+        });
       } else {
-        alert("Error generating speech.");
+        const synth = window.speechSynthesis;
+        synth.cancel(); // Cancel any ongoing speech
+        setCurrentQuestion(text); // Now safe to access
+        setStarted(true);
+  
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "hi-IN";
+        utterance.rate = rate; // Ensure `rate` is defined (see below)
+  
+        utterance.onend = () => {
+          setTimer(timeofthinking * 60);
+          setMicOn(true);
+          startAudioRecording();
+        };
+  
+        utterance.onerror = (event) => {
+          console.error("Speech synthesis error:", event);
+          setMicOn(false);
+        };
       }
     } catch (error) {
       console.error("Error:", error);
+      const synth = window.speechSynthesis;
+      synth.cancel(); // Cancel any ongoing speech
+      setCurrentQuestion(text); // Now safe to access
+      setStarted(true);
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "hi-IN";
+      utterance.rate = rate; // Ensure `rate` is defined (see below)
+  
+      utterance.onend = () => {
+        setTimer(timeofthinking * 60);
+        setMicOn(true);
+        startAudioRecording();
+      };
+  
+      utterance.onerror = (event) => {
+        console.error("Speech synthesis error:", event);
+        setMicOn(false);
+      };
     }
-
+    finally{
+      text="";
+    }
   };
+
   // // Speech synthesis function with audio recording
   // const speakText = (text, rate = 0.95) => {
   //   const synth = window.speechSynthesis;
@@ -193,13 +262,14 @@ const Interview = () => {
       handleAgree();
       return;
     }
-
+    
     const randomIndex = Math.floor(Math.random() * remainingQuestions.length);
     const selectedQuestion = remainingQuestions[randomIndex];
-    setCurrentQuestion(selectedQuestion.questionText);
+    // setCurrentQuestion(selectedQuestion.questionText);
     speakText(selectedQuestion.questionText); // Speak the question
+    // setQuestionload(false);
     setCurrentAnswer(selectedQuestion.answer);
-    setStarted(true);
+    // setStarted(true);
     setRemainingQuestions((prev) =>
       prev.filter((q) => q._id !== selectedQuestion._id)
     ); // Remove the selected question
@@ -225,11 +295,15 @@ const Interview = () => {
     formData.append("audio", audioFile); // Append the audio file
 
     try {
-      const response = await axios.post(`${API}/viva/send-to-gemini`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data", // Set the correct content type
-        },
-      });
+      const response = await axios.post(
+        `${API}/viva/send-to-gemini`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data", // Set the correct content type
+          },
+        }
+      );
 
       console.log(response?.data?.evaluation);
       // Store Gemini API response
@@ -245,7 +319,7 @@ const Interview = () => {
     } catch (error) {
       console.error("Error sending data to Gemini API:", error);
     } finally {
-      setLoading(false);
+      // setLoading(false);
       if (!isVivaEnded) {
         selectNextQuestion(); // Move to the next question only if the viva hasn't ended
       }
@@ -289,35 +363,35 @@ const Interview = () => {
     // }
   };
 
-    // Effect to save results once the report is ready
-    useEffect(() => {
-      if (reportReady && report) {
-        const saveResults = async () => {
-          try {
-            const response = await axios.post(`${API}/vivaresult/addvivaresult`, {
-              vivaId,
-              studentId: userInfo?._id,
-              studentName: userInfo?.name,
-              totalQuestions: questionSet?.length,
-              questionAnswerSet: qHistory, // All Gemini API responses
-              dateOfViva: Date.now(),
-              proctoredFeedback: report?.allDetectedObjects,
-            });
-  
-            if (response.status === 200) {
-              navigate("/viva-end", { state: { qHistory } }); // Pass qHistory to the end screen
-            } else {
-              console.error("Failed to save viva results:", response.data);
-            }
-          } catch (error) {
-            console.error("Error saving viva results:", error);
+  // Effect to save results once the report is ready
+  useEffect(() => {
+    if (reportReady && report) {
+      const saveResults = async () => {
+        try {
+          const response = await axios.post(`${API}/vivaresult/addvivaresult`, {
+            vivaId,
+            studentId: userInfo?._id,
+            studentName: userInfo?.name,
+            totalQuestions: questionSet?.length,
+            questionAnswerSet: qHistory, // All Gemini API responses
+            dateOfViva: Date.now(),
+            proctoredFeedback: report?.allDetectedObjects,
+          });
+
+          if (response.status === 200) {
+            navigate("/main", { state: { qHistory } }); // Pass qHistory to the end screen
+          } else {
+            console.error("Failed to save viva results:", response.data);
           }
-        };
-  
-        saveResults();
-      }
-    }, [reportReady, report, qHistory, userInfo, vivaId, questionSet, navigate]);
-  
+        } catch (error) {
+          console.error("Error saving viva results:", error);
+        }
+      };
+
+      saveResults();
+    }
+  }, [reportReady, report, qHistory, userInfo, vivaId, questionSet, navigate]);
+
   // Handle user disagreeing to end the viva
   const handleDisagree = () => {
     setOpenDialog(false);
@@ -410,7 +484,8 @@ const Interview = () => {
               onAnalysisComplete={(report) => {
                 setReport(report);
                 setReportReady(true); // Set report as ready
-              }}/>
+              }}
+            />
           </Box>
           {/* Content Column */}
           <Box

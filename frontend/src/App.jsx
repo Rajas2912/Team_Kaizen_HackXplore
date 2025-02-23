@@ -12,6 +12,7 @@ import TakePicture from './pagesPP/Viva/TakePicture.jsx'
 import GiveViva from './pagesPP/Viva/GiveViva.jsx'
 import GivePicture from './pagesPP/Quiz/GivePicture.jsx'
 import GiveQuiz from './pagesPP/Quiz/GiveQuiz.jsx'
+import temp from './Component/Temp.jsx';
 function App() {
   return (
     <BrowserRouter>
@@ -28,6 +29,7 @@ function App() {
           <Route path="/give-viva/:vivaId" element={<GiveViva/>} />
           <Route path="/class/:id" element={<ClassPage />} />
           <Route path="/lecture/:id" element={<LecturePage />} />
+          <Route path="/temp" element={<temp/>}/>
         </Route>
       </Routes>
     </BrowserRouter>

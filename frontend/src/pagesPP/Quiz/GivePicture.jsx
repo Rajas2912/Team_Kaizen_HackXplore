@@ -6,7 +6,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'; // Import the back icon
 // import './TakePicture.css'; // Import the CSS file
 
-const URL = import.meta.env.VITE_PORT_URL;
+const URL = import.meta.env.VITE_BACKEND_URL;
 
 const GivePicture = () => {
   const videoRef = useRef(null);
