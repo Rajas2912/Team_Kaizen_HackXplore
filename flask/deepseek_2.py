@@ -341,6 +341,38 @@ def detect_ai():
     except Exception as e:
         return jsonify({"error":str(e)}),500
 
+@app.route("/ask_gemini", methods=["GET"])
+def ask_gemini():
+    """
+    Sends a prompt to the Gemini API and returns the response.
+
+    Query Parameters:
+    - prompt: The complete formatted prompt including system instructions, source document, and question.
+    - api_key: The API key to authenticate the request.
+
+    Returns:
+    - JSON response containing Gemini's generated text.
+    """
+    prompt = request.args.get("prompt")
+    api_key = request.args.get("api_key")
+
+    if not prompt or not api_key:
+        return jsonify({"error": "Missing 'prompt' or 'api_key'"}), 400
+
+    # Configure API
+    genai.configure(api_key=api_key)
+
+    # Initialize the model
+    model = genai.GenerativeModel("gemini-pro")
+
+    # Get response
+    response = model.generate_content(prompt)
+
+    return jsonify({"response": response.text})
+
+
+
+
 def ask_gemini_internal(prompt, api_key):
     """
     Calls Gemini API and returns a structured JSON response.
@@ -399,7 +431,7 @@ def generate_feedback():
     """
     data = request.json
     results = data.get("results")
-
+    print("input for feedback - "+results)
     if not results:
         return jsonify({"error": "Missing required fields"}), 400
 
@@ -444,6 +476,7 @@ def generate_feedback():
         # Get feedback from Gemini
         feedback = ask_gemini_internal(prompt,API_KEY)
         feedback_responses.append(feedback)
+        print(feedback_responses)
 
     return jsonify(feedback_responses)
 def postprocess_mipmap_response(response_text):

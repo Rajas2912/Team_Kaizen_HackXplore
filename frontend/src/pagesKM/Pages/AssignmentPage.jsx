@@ -609,17 +609,16 @@ const [openFeedbackModal, setOpenFeedbackModal] = useState(false);
                               View Report
                             </Button>
                           )}
-                              {/* View Feedback Button */}
-                              {scores[assignment._id] && (
+                              {/* {scores[assignment._id] && (
   <Button
     variant="outlined"
     color="primary"
-    onClick={() => handleViewFeedback(assignment._id)} // Use the method
+    onClick={() => handleViewFeedback(assignment._id)} 
     sx={{ ml: 2 }}
   >
     View Feedback
   </Button>
-)}
+)} */}
                         </>
                       )}
 
