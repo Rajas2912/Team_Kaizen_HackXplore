@@ -136,7 +136,7 @@ export default function Main(props) {
     },
     {
       kind: 'header',
-      title: 'Teaching, Attendance & Scheduling',
+      title: 'Teaching & Scheduling',
     },
     {
       segment: 'class',
@@ -151,11 +151,6 @@ export default function Main(props) {
           : [], // Default to an empty array if invalid
     },
     {
-      segment: 'attendance',
-      title: 'Attendance',
-      icon: <CheckCircleIcon />,
-    },
-    {
       segment: 'timetable',
       title: 'Timetable Generator',
       icon: <CalendarMonthIcon />,
@@ -167,20 +162,6 @@ export default function Main(props) {
     },
     {
       kind: 'divider',
-    },
-    {
-      kind: 'header',
-      title: 'AI Monitoring & Reports',
-    },
-    {
-      segment: 'proctoring-reports',
-      title: 'Proctoring Reports',
-      icon: <VisibilityIcon />,
-    },
-    {
-      segment: 'performance-analytics',
-      title: 'Performance Analytics',
-      icon: <InsightsIcon />,
     },
     {
       kind: 'divider',
@@ -282,7 +263,7 @@ export default function Main(props) {
           {router.pathname == '/quizzes' && <AllTeaching />}
           {router.pathname == '/viva' && <AllTeaching />}
           {router.pathname == '/attendance' && <AllTeaching />}
-          {router.pathname == '/progress-tracking' && <Temp />}
+          {/* {router.pathname == '/progress-tracking' && <Temp />} */}
           {router.pathname == '/students' && <UsersPage />}
           {router.pathname == '/timetable' && <TimetablePage />}
           {router.pathname?.startsWith('/class/') && (

@@ -382,6 +382,7 @@ const Interview = () => {
             navigate("/main", { state: { qHistory } }); // Pass qHistory to the end screen
           } else {
             console.error("Failed to save viva results:", response.data);
+            navigate('/main');
           }
         } catch (error) {
           console.error("Error saving viva results:", error);

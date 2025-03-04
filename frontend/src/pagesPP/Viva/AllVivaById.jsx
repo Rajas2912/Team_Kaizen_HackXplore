@@ -259,16 +259,7 @@ return (
                 <TableCell>
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                     <Typography variant="body2">
-                      <strong>Relevance:</strong> {console.log(question?.evaluation)}{question.evaluation?.Relevance || 0}/10
-                    </Typography>
-                    <Typography variant="body2">
-                      <strong>Completeness:</strong> {question.evaluation?.Completeness || 0}/10
-                    </Typography>
-                    <Typography variant="body2">
-                      <strong>Accuracy:</strong> {question.evaluation?.Accuracy || 0}/10
-                    </Typography>
-                    <Typography variant="body2">
-                      <strong>Depth of Knowledge:</strong> {question.evaluation?.DepthOfKnowledge || 0}/10
+                      <strong>Relevance:</strong> {console.log(question?.evaluation)}{question.evaluation }
                     </Typography>
                   </Box>
                 </TableCell>

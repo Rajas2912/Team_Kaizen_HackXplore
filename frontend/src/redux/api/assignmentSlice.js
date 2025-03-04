@@ -82,6 +82,46 @@ const assignmentApiSlice = apiSlice.injectEndpoints({
         { type: 'Submission', id: assignmentId },
       ],
     }),
+
+    // Update the result for a submission
+    updateSubmissionResult: builder.mutation({
+      query: ({ assignmentId, studentId, results, total_score }) => ({
+        url: `${ASSIGNMENT_URL}/${assignmentId}/result`,
+        method: 'PUT',
+        body: { studentId, results, total_score },
+        credentials: 'include',
+      }),
+      invalidatesTags: (result, error, { assignmentId }) => [
+        { type: 'Submission', id: assignmentId },
+      ],
+    }),
+
+    // Get all assignments with submissions for a teacher (by class ID)
+    getAssignmentsWithSubmissions: builder.query({
+      query: (classId) => ({
+        url: `${ASSIGNMENT_URL}/teacher/${classId}`,
+        credentials: 'include',
+      }),
+      providesTags: ['Assignment'],
+    }),
+    getAssignmentsWithSubmissionsByAssignmentId: builder.query({
+      query: (assignmentId) => ({
+        url: `${ASSIGNMENT_URL}/teacher/assignment/${assignmentId}`,
+        credentials: 'include',
+      }),
+    }),
+
+    // Get the result for a specific submission (by assignment ID and student ID)
+    getSubmissionResult: builder.query({
+      query: ({ assignmentId, studentId }) => ({
+        url: `${ASSIGNMENT_URL}/${assignmentId}/result/${studentId}`,
+        credentials: 'include',
+      }),
+      providesTags: (result, error, { assignmentId, studentId }) => [
+        { type: 'Submission', id: assignmentId },
+        { type: 'Submission', id: studentId },
+      ],
+    }),
   }),
 })
 
@@ -93,4 +133,8 @@ export const {
   useUpdateAssignmentMutation,
   useSubmitAnswerMutation,
   useGetSubmissionsQuery,
+  useUpdateSubmissionResultMutation,
+  useGetAssignmentsWithSubmissionsQuery,
+  useGetSubmissionResultQuery,
+  useGetAssignmentsWithSubmissionsByAssignmentIdQuery,
 } = assignmentApiSlice

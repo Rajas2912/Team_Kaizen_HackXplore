@@ -43,8 +43,8 @@ import { useSelector } from 'react-redux'
 import axios from 'axios'
 import { PYTHON_URL } from '../../redux/constants'
 
-// const API =
-// 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImtpZCI6IjEifQ.eyJpc3MiOiJuYWRsZXMiLCJpYXQiOiIxNzM5OTA0MzAxIiwicHVycG9zZSI6ImFwaV9hdXRoZW50aWNhdGlvbiIsInN1YiI6IjM1YjM4MzY0MGJjOTRlYTk5NTVlN2ZhMDRkOTdiMmRmIn0.vb_sF-BrjLTiatDun5DjvWAssBleVeMAqTNQNc6E9iw'
+const API =
+  'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiIsImtpZCI6IjEifQ.eyJpc3MiOiJuYWRsZXMiLCJpYXQiOiIxNzM5OTA0MzAxIiwicHVycG9zZSI6ImFwaV9hdXRoZW50aWNhdGlvbiIsInN1YiI6IjM1YjM4MzY0MGJjOTRlYTk5NTVlN2ZhMDRkOTdiMmRmIn0.vb_sF-BrjLTiatDun5DjvWAssBleVeMAqTNQNc6E9iw'
 
 const LecturePage = () => {
   const { id } = useParams()
@@ -103,9 +103,7 @@ const LecturePage = () => {
 
             // Fetch summary using the optimized prompt
             const prompt = `Summarize the following video lecture transcript in 150 words or less, focusing on key points and main ideas: ${response.data.content}`
-            const url2 = `${PYTHON_URL}/ask_gemini?prompt=${encodeURIComponent(
-              prompt
-            )}&api_key=AIzaSyAa1cT3_l3mcJto_JE8Y673UXv1F5eq0w0`
+            const url2 = `${PYTHON_URL}/ask_gemini?prompt=${encodeURIComponent(prompt)}&api_key=AIzaSyA9MjZo6sIOlCQPQo5ojKBdHnGmUjlcsGc`
 
             const response2 = await axios.get(url2)
             console.log(response2)
