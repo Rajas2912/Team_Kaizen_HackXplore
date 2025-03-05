@@ -1,10 +1,10 @@
 import Class from '../model/class.model.js'
 import User from '../model/user.model.js'
 
+// Create a new class (Teacher only)
 export const createClass = async (req, res) => {
   try {
-    const { name, description, subject, userId } = req.body
-    console.log({ body: req.body })
+    const { name, description, subject, userId, isPublic } = req.body
 
     const teacher = await User.findById(userId)
     if (!teacher || teacher.role !== 'teacher') {
@@ -13,15 +13,12 @@ export const createClass = async (req, res) => {
         .json({ message: 'Only teachers can create classes' })
     }
 
-    // Generate a unique class code (e.g., random 6-character alphanumeric string)
-    const classCode = Math.random().toString(36).substring(2, 8).toUpperCase()
-
     const newClass = await Class.create({
       name,
       description,
       subject,
       teacher: userId,
-      classCode, // 🔥 Add this line
+      isPublic,
     })
 
     res
@@ -32,23 +29,38 @@ export const createClass = async (req, res) => {
     res.status(500).json({ message: 'Server Error', error })
   }
 }
-
+// Join a class (Student only)
 export const joinClass = async (req, res) => {
   try {
-    const { classCode, studentId } = req.body
+    const { classCode, studentId, classId } = req.body
 
-    // Find class by classCode
-    const classData = await Class.findOne({ classCode })
+    // Find the class by classId or classCode
+    const classData = classId
+      ? await Class.findById(classId)
+      : await Class.findOne({ classCode })
+
     if (!classData) {
-      return res.status(404).json({ message: 'Invalid class code' })
+      return res.status(404).json({ message: 'Class not found' })
     }
 
-    // Check if student is already in the class
+    // Check if the student is already in the class
     if (classData.students.includes(studentId)) {
       return res.status(400).json({ message: 'You are already in this class' })
     }
 
-    // Add student to class
+    // If the class is private, verify the class code
+    if (!classData.isPublic && !classCode) {
+      return res
+        .status(400)
+        .json({ message: 'Class code is required to join this class' })
+    }
+
+    // If the class is private and a class code is provided, verify it
+    if (!classData.isPublic && classCode !== classData.classCode) {
+      return res.status(400).json({ message: 'Invalid class code' })
+    }
+
+    // Add the student to the class
     classData.students.push(studentId)
     await classData.save()
 
@@ -59,6 +71,50 @@ export const joinClass = async (req, res) => {
   }
 }
 
+// Get all classes for a student or teacher
+export const getAllClasses = async (req, res) => {
+  try {
+    const { userId } = req.body
+
+    let query = {}
+    if (userId) {
+      query = {
+        $or: [{ teacher: userId }, { students: { $in: [userId] } }],
+      }
+    }
+
+    const classes = await Class.find(query)
+      .populate('teacher', 'name email')
+      .populate('students', 'name email')
+
+    res.status(200).json({ classes })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Server Error', error })
+  }
+}
+
+// Leave a class (Student only)
+export const leaveClass = async (req, res) => {
+  try {
+    const { classId } = req.params
+    const { studentId } = req.body
+
+    const classData = await Class.findById(classId)
+    if (!classData) return res.status(404).json({ message: 'Class not found' })
+
+    // Remove the student from the class
+    classData.students = classData.students.filter(
+      (id) => id.toString() !== studentId
+    )
+    await classData.save()
+
+    res.status(200).json({ message: 'Left the class successfully' })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ message: 'Server Error', error })
+  }
+}
 // 📌 3️⃣ Update Class (Only by Teacher)
 export const updateClass = async (req, res) => {
   try {
@@ -125,48 +181,6 @@ export const getClassDetails = async (req, res) => {
     res.status(500).json({ message: 'Server Error', error })
   }
 }
-export const leaveClass = async (req, res) => {
-  try {
-    const { classId } = req.params
-    const { studentId } = req.body // Extract from body, not params
-
-    const classData = await Class.findById(classId)
-    if (!classData) return res.status(404).json({ message: 'Class not found' })
-
-    // Remove student from the class
-    classData.students = classData.students.filter(
-      (id) => id.toString() !== studentId
-    )
-    await classData.save()
-
-    res.status(200).json({ message: 'Left the class successfully' })
-  } catch (error) {
-    console.log(error)
-    res.status(500).json({ message: 'Server Error', error })
-  }
-}
-export const getAllClasses = async (req, res) => {
-  try {
-    const { userId } = req.body
-    console.log(userId)
-
-    let query = {}
-    if (userId) {
-      query = {
-        $or: [{ teacher: userId }, { students: { $in: [userId] } }],
-      }
-    }
-
-    const classes = await Class.find(query)
-      .populate('teacher', 'name email')
-      .populate('students', 'name email')
-
-    res.status(200).json({ classes })
-  } catch (error) {
-    console.log(error)
-    res.status(500).json({ message: 'Server Error', error })
-  }
-}
 
 export const getAllStudentsWithClassInfo = async (req, res) => {
   try {
@@ -197,5 +211,29 @@ export const getAllStudentsWithClassInfo = async (req, res) => {
       success: false,
       message: 'Failed to fetch students with class info',
     })
+  }
+}
+
+// 📌 Get All Public Classes
+export const getAllPublicClasses = async (req, res) => {
+  try {
+    const { userId, role } = req.body // Assuming userId and role are passed in the request body
+
+    let query = { isPublic: true } // Base query for public classes
+
+    // If the user is a teacher, filter classes created by the logged-in teacher
+    if (role === 'teacher') {
+      query.teacher = userId
+    }
+
+    // Find all public classes based on the query
+    const publicClasses = await Class.find(query)
+      .populate('teacher', 'name email') // Populate teacher details
+      .select('name description subject teacher isPublic students') // Include students field
+
+    res.status(200).json({ success: true, classes: publicClasses })
+  } catch (error) {
+    console.error('Error fetching public classes:', error)
+    res.status(500).json({ success: false, message: 'Server Error', error })
   }
 }

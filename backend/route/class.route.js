@@ -1,13 +1,14 @@
 import express from 'express'
 import {
   createClass,
-  joinClass,
-  updateClass,
-  deleteClass,
-  getClassDetails,
-  leaveClass,
   getAllClasses,
   getAllStudentsWithClassInfo,
+  getClassDetails,
+  updateClass,
+  deleteClass,
+  leaveClass,
+  joinClass,
+  getAllPublicClasses,
 } from '../controler/class.controller.js'
 import { authenticate } from '../middlewares/authMiddleware.js' // Assuming authentication
 
@@ -15,6 +16,7 @@ const router = express.Router()
 
 router.post('/create', authenticate, createClass)
 router.post('/getAllClasses', authenticate, getAllClasses)
+router.post('/getAllPublicClasses', authenticate, getAllPublicClasses)
 router.get('/students', getAllStudentsWithClassInfo)
 router.get('/dashboard/:studentId', getAllStudentsWithClassInfo)
 router.post('/join', authenticate, joinClass)

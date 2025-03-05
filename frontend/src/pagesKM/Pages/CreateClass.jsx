@@ -8,15 +8,24 @@ const CreateClass = ({ onClose, refetch }) => {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [subject, setSubject] = useState('')
+  const [isPublic, setIsPublic] = useState(false) // Public or private class
   const [createClass, { isLoading, error }] = useCreateClassMutation()
   const userId = userInfo._id
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await createClass({ name, description, subject, userId }).unwrap()
+      await createClass({
+        name,
+        description,
+        subject,
+        userId,
+        isPublic,
+      }).unwrap()
       setName('')
       setDescription('')
       setSubject('')
+      setIsPublic(false)
       onClose() // Close modal after successful submission
     } catch (err) {
       console.error('Failed to create class:', err)
@@ -56,6 +65,16 @@ const CreateClass = ({ onClose, refetch }) => {
             required
             className="form-input"
           />
+        </div>
+        <div className="form-group">
+          <label>
+            <input
+              type="checkbox"
+              checked={isPublic}
+              onChange={(e) => setIsPublic(e.target.checked)}
+            />
+            Make this class public
+          </label>
         </div>
         <button type="submit" className="submit-button" disabled={isLoading}>
           Create Class
