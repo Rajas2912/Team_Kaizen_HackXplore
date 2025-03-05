@@ -18,6 +18,9 @@ import FeedbackPage from './pages_rajas/FeedbackPage.jsx'
 import PersonalizedFeedback from './pages_rajas/PersonalizedFeedback.jsx'
 import Mindmap from './pages_rajas/Mindmap.jsx'
 import Studentreport2 from './pages_rajas/Studentreport2.jsx'
+import HomePage from './pagesPP/VideoCall/VideoMetting.jsx'
+import VideoMeeting from './pagesPP/VideoCall/VideoMetting.jsx'
+import RoomMeet from './pagesPP/VideoCall/RoomMeet.jsx'
 function App() {
   return (
     <BrowserRouter>
@@ -34,9 +37,12 @@ function App() {
           <Route path="/give-viva/:vivaId" element={<GiveViva />} />
           <Route path="/takepicture/:vivaId" element={<TakePicture />} />
           <Route path="/give-viva/:vivaId" element={<GiveViva />} />
+          {/* <Route path="/room" element={<VideoMeeting />} />{} */}
+          <Route path="/room/:roomId" element={<RoomMeet />} />
           <Route path="/class/:id" element={<ClassPage />} />
           <Route path="/lecture/:id" element={<LecturePage />} />
           <Route path="/temp" element={<temp/>}/>
+
           <Route path="/mindmap" element={<Mindmap></Mindmap>} />
           <Route path="/report" element={<Studentreport2></Studentreport2>} />
           <Route path="/feedback" element={<FeedbackPage></FeedbackPage>} />

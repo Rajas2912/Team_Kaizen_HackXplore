@@ -36,6 +36,7 @@ import CreateViva from '../../pagesPP/Viva/CreateViva'
 import ShowAllViva from '../../pagesPP/Viva/AllVivaById'
 import TakePicture from '../../pagesPP/Viva/TakePicture'
 import HomeQuiz from '../../pagesPP/Quiz/QuizManagement'
+import VideoMetting from '../../pagesPP/VideoCall/VideoMetting'
 import SelfStudy from './SelfStudy'
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props
@@ -193,6 +194,7 @@ const ClassPage = ({ classId }) => {
             <Tab label="Viva Assignment" {...a11yProps(3)} />
             <Tab label="Community" {...a11yProps(4)} />
             <Tab label="Self Study" {...a11yProps(5)} />
+            <Tab label="Live meeting " {...a11yProps(5)} />
           </Tabs>
         </Box>
 
@@ -321,6 +323,11 @@ const ClassPage = ({ classId }) => {
         <CustomTabPanel value={value} index={5}>
           <Typography>
             <SelfStudy />
+          </Typography>
+        </CustomTabPanel>
+        <CustomTabPanel value={value} index={6}>
+          <Typography>
+            <VideoMetting/>
           </Typography>
         </CustomTabPanel>
       </Box>
