@@ -99,9 +99,7 @@ const DashboardPage = () => {
         variant="h4"
         gutterBottom
         sx={{ color: theme.palette.primary.main }}
-      >
-        Student Dashboard
-      </Typography>
+      ></Typography>
 
       {/* Quick Stats Row */}
       <Grid container spacing={3} sx={{ mb: 3 }}>

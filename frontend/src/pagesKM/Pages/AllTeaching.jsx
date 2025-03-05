@@ -16,8 +16,8 @@ import './AllTeaching.css'
 import {
   useGetAllClassesQuery,
   useJoinClassMutation,
+  useGetAllPublicClassesQuery,
 } from '../../redux/api/classApiSlice'
-import { Link } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 
 const AllTeaching = ({ navigate }) => {
@@ -25,13 +25,28 @@ const AllTeaching = ({ navigate }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
   const [classCode, setClassCode] = useState('')
-  const { data, isLoading, error, refetch } = useGetAllClassesQuery(
-    userInfo._id
-  )
+
+  // Fetch all classes for the logged-in user (teacher or student)
+  const {
+    data: userClasses,
+    isLoading: isUserClassesLoading,
+    error: userClassesError,
+    refetch: refetchUserClasses,
+  } = useGetAllClassesQuery(userInfo._id)
+
+  // Fetch all public classes that the student has not joined
+  const {
+    data: publicClassesData,
+    isLoading: isPublicClassesLoading,
+    error: publicClassesError,
+    refetch: refetchPublicClasses,
+  } = useGetAllPublicClassesQuery({ userId: userInfo._id, role: userInfo.role })
+
   const [joinClass, { isLoading: isJoining }] = useJoinClassMutation()
 
-  const handleJoinClass = async () => {
-    if (!classCode) {
+  // Handle joining a class (public or private)
+  const handleJoinClass = async (classId = null) => {
+    if (!classId && !classCode) {
       alert('Please enter a class code.')
       return
     }
@@ -40,18 +55,28 @@ const AllTeaching = ({ navigate }) => {
       const response = await joinClass({
         classCode,
         studentId: userInfo._id,
+        classId, // For public classes
       }).unwrap()
       alert(response.message) // Show success message
       setIsJoinModalOpen(false) // Close the join modal
-      refetch() // Refresh the class list
+      refetchUserClasses() // Refresh the user's class list
+      refetchPublicClasses() // Refresh the public classes list
     } catch (error) {
       alert(error.data?.message || 'Failed to join class.') // Show error message
     }
     setClassCode('')
   }
 
-  if (isLoading) return <p>Loading classes...</p>
-  if (error) return <p>Error fetching classes</p>
+  // Separate private classes from the user's classes
+  const privateClasses = userClasses?.classes?.filter(
+    (classItem) => !classItem.isPublic
+  )
+
+  // Loading and error states
+  if (isUserClassesLoading || isPublicClassesLoading)
+    return <p>Loading classes...</p>
+  if (userClassesError || publicClassesError)
+    return <p>Error fetching classes</p>
 
   return (
     <section>
@@ -71,7 +96,7 @@ const AllTeaching = ({ navigate }) => {
             endIcon={<FaPlus />}
             onClick={() => setIsJoinModalOpen(true)}
           >
-            Join Class
+            Join Private Class
           </Button>
         )}
       </div>
@@ -83,17 +108,20 @@ const AllTeaching = ({ navigate }) => {
         fullWidth
         maxWidth="sm"
       >
-        <CreateClass refetch={refetch} onClose={() => setIsModalOpen(false)} />
+        <CreateClass
+          refetch={refetchUserClasses}
+          onClose={() => setIsModalOpen(false)}
+        />
       </Dialog>
 
-      {/* Join Class Dialog */}
+      {/* Join Private Class Dialog */}
       <Dialog
         open={isJoinModalOpen}
         onClose={() => setIsJoinModalOpen(false)}
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>Join Class</DialogTitle>
+        <DialogTitle>Join Private Class</DialogTitle>
         <DialogContent>
           <TextField
             name="classCode"
@@ -107,7 +135,7 @@ const AllTeaching = ({ navigate }) => {
         <DialogActions>
           <Button onClick={() => setIsJoinModalOpen(false)}>Cancel</Button>
           <Button
-            onClick={handleJoinClass}
+            onClick={() => handleJoinClass()}
             disabled={isJoining}
             variant="contained"
             color="primary"
@@ -117,10 +145,51 @@ const AllTeaching = ({ navigate }) => {
         </DialogActions>
       </Dialog>
 
-      {/* Class List */}
+      {/* Public Classes Section */}
+      <h2 className="mx-6 font-normal text-xl">Public Classes</h2>
       <div className="classList">
-        {data?.classes?.length > 0 ? (
-          data.classes.map((classItem) => (
+        {publicClassesData?.classes?.length > 0 ? (
+          publicClassesData.classes.map((classItem) => (
+            <div key={classItem._id} className="classCardWrapper">
+              <Card className="classCard">
+                <div className="classHeader">{classItem.name}</div>
+                <CardContent className="classContent">
+                  <Typography className="classCode">
+                    Class Code: {classItem.classCode}
+                  </Typography>
+                  <Typography className="teacherInfo">
+                    Teacher: {classItem.teacher.name} ({classItem.teacher.email}
+                    )
+                  </Typography>
+                  <Typography className="studentCount">
+                    Students: {classItem.students.length}
+                  </Typography>
+                  {userInfo.role === 'student' && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={() => handleJoinClass(classItem._id)}
+                      disabled={classItem.students.includes(userInfo._id)}
+                    >
+                      {classItem.students.includes(userInfo._id)
+                        ? 'Joined'
+                        : 'Join Class'}
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          ))
+        ) : (
+          <p>No public classes available</p>
+        )}
+      </div>
+
+      {/* Private Classes Section */}
+      <h2 className="mx-6 font-normal text-xl">Private Classes</h2>
+      <div className="classList">
+        {privateClasses?.length > 0 ? (
+          privateClasses.map((classItem) => (
             <div
               key={classItem._id}
               onClick={() => navigate(`/class/${classItem._id}`)}
@@ -144,7 +213,7 @@ const AllTeaching = ({ navigate }) => {
             </div>
           ))
         ) : (
-          <p>No classes available</p>
+          <p>No private classes available</p>
         )}
       </div>
     </section>

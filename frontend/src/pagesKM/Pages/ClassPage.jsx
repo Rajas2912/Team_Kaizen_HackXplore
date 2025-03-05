@@ -192,7 +192,9 @@ const ClassPage = ({ classId }) => {
             <Tab label="Quizzes" {...a11yProps(2)} />
             <Tab label="Viva Assignment" {...a11yProps(3)} />
             <Tab label="Community" {...a11yProps(4)} />
-            <Tab label="Self Study" {...a11yProps(5)} />
+            {userInfo?.role == 'student' && (
+              <Tab label="Self Study" {...a11yProps(5)} />
+            )}
           </Tabs>
         </Box>
 
@@ -318,11 +320,13 @@ const ClassPage = ({ classId }) => {
             <CommunityPage classId={classId} />
           </Typography>
         </CustomTabPanel>
-        <CustomTabPanel value={value} index={5}>
-          <Typography>
-            <SelfStudy />
-          </Typography>
-        </CustomTabPanel>
+        {userInfo?.role == 'student' && (
+          <CustomTabPanel value={value} index={5}>
+            <Typography>
+              <SelfStudy />
+            </Typography>
+          </CustomTabPanel>
+        )}
       </Box>
 
       {/* Upload Lecture Modal */}

@@ -100,10 +100,12 @@ const LecturePage = () => {
           })
           if (response && response?.data?.content) {
             setTranscript(response.data.content)
-
+            console.log(response)
             // Fetch summary using the optimized prompt
             const prompt = `Summarize the following video lecture transcript in 150 words or less, focusing on key points and main ideas: ${response.data.content}`
-            const url2 = `${PYTHON_URL}/ask_gemini?prompt=${encodeURIComponent(prompt)}&api_key=AIzaSyA9MjZo6sIOlCQPQo5ojKBdHnGmUjlcsGc`
+            const url2 = `${PYTHON_URL}/ask_gemini?prompt=${encodeURIComponent(
+              prompt
+            )}&api_key=AIzaSyA9MjZo6sIOlCQPQo5ojKBdHnGmUjlcsGc`
 
             const response2 = await axios.get(url2)
             console.log(response2)

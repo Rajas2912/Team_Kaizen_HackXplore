@@ -11,6 +11,7 @@ import MicIcon from '@mui/icons-material/Mic'
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
+import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import InsightsIcon from '@mui/icons-material/Insights'
@@ -150,31 +151,14 @@ export default function Main(props) {
           : [], // Default to an empty array if invalid
     },
     {
+      segment: 'mentor-mentee',
+      title: 'Mentor-Mentee',
+      icon: <SupervisorAccountIcon />,
+    },
+    {
       segment: 'timetable',
       title: 'Timetable Generator',
       icon: <CalendarMonthIcon />,
-    },
-    {
-      segment: 'progress-tracking',
-      title: 'Progress Tracking',
-      icon: <TrendingUpIcon />,
-    },
-    {
-      kind: 'divider',
-    },
-    {
-      kind: 'header',
-      title: 'AI Monitoring & Reports',
-    },
-    {
-      segment: 'proctoring-reports',
-      title: 'Proctoring Reports',
-      icon: <VisibilityIcon />,
-    },
-    {
-      segment: 'performance-analytics',
-      title: 'Performance Analytics',
-      icon: <InsightsIcon />,
     },
     {
       kind: 'divider',
@@ -182,11 +166,6 @@ export default function Main(props) {
     {
       kind: 'header',
       title: 'User Management',
-    },
-    {
-      segment: 'teachers',
-      title: 'Teachers',
-      icon: <PersonIcon />,
     },
     {
       segment: 'students',
