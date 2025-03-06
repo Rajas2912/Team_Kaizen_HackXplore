@@ -20,8 +20,8 @@ app = Flask(__name__)
 CORS(app)
 
 # Configure APIs
-EDENAI_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZmZiMTk0Y2QtZTk4NC00Y2NkLTgwMmItNjA2NTVlNzliMTA1IiwidHlwZSI6ImFwaV90b2tlbiJ9.43-ZE4QXFrUTITO1byD-T7LBC8JjeFLfcWLgwdA9Wfs"
-API_KEY = "AIzaSyAa1cT3_l3mcJto_JE8Y673UXv1F5eq0w0"
+EDENAI_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDE3YjgwYzAtNzg5ZS00YmZkLWIwOTUtMWViZGE0YjNjMjY0IiwidHlwZSI6ImFwaV90b2tlbiJ9.X6hlGB842uLh2-CWDGgmt60ucJE6gYF-pS8BS0_lvXs"
+API_KEY = "AIzaSyD0OeybMGrh3-moDIORXej225okK2DAEM0"
 genai.configure(api_key=API_KEY)
 
 # Configuration
@@ -55,6 +55,7 @@ def process_pdf(file):
             text = extract_text_from_image(image)
             extracted_text += text + "\n"
         file.seek(0)
+        print(extracted_text + "hrllo")
         return extracted_text
     except Exception as e:
         return f"PDF Processing Error: {str(e)}"
@@ -339,6 +340,226 @@ def detect_ai():
         return jsonify(response.json()), response.status_code
     except Exception as e:
         return jsonify({"error":str(e)}),500
+
+def ask_gemini_internal(prompt, api_key):
+    """
+    Calls Gemini API and returns a structured JSON response.
+
+    Parameters:
+    - prompt: The formatted prompt.
+    - api_key: The API key for authentication.
+
+    Returns:
+    - JSON response in the required structure.
+    """
+    # Configure API
+    genai.configure(api_key=api_key)
+
+    # Initialize the model
+    model = genai.GenerativeModel("gemini-pro")
+
+    # Get response
+    response = model.generate_content(prompt)
+
+    # Process the AI response to ensure valid JSON
+    structured_response = clean_ai_response(response.text)
+
+    return structured_response
+
+def clean_ai_response(ai_response):
+    """
+    Cleans and extracts a valid JSON object from AI-generated text.
+
+    Args:
+        ai_response (str): The raw response from AI.
+
+    Returns:
+        dict: A properly formatted JSON object.
+    """
+    try:
+        # Remove unnecessary formatting (like json ... )
+        cleaned_text = re.sub(r"json\n|\n", "", ai_response).strip()
+
+        # Parse JSON response
+        quiz_data = json.loads(cleaned_text)
+
+        # Validate structure
+        required_keys = {"question", "context", "answer", "evaluation", "feedback"}
+        if not required_keys.issubset(quiz_data.keys()):
+            return {"error": "Invalid JSON structure received from AI"}
+
+        return quiz_data
+    except json.JSONDecodeError:
+        return {"error": "Invalid JSON format received from AI"}
+
+@app.route('/generate_feedback', methods=['POST'])
+def generate_feedback():
+    """
+    API endpoint to generate personalized feedback based on student responses.
+    """
+    data = request.json
+    results = data.get("results")
+
+    if not results:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    feedback_responses = []
+
+    for result in results:
+        question = result.get("question")
+        student_response = result.get("answer")
+
+        if not question or not student_response:
+            continue
+
+        # Construct prompt for AI
+        prompt = f"""
+        You are an AI that generates structured JSON responses for a personalized feedback system. 
+        Given the student's response to a question, provide the following details in JSON format:
+
+        - question: The question being answered.
+        - context: The original response provided by the student.
+        - answer: A simplified version of the response.
+        - evaluation: A short assessment of the answer's accuracy and completeness.
+        - feedback: Constructive feedback to improve the response.
+
+        eg - 
+        
+            question - What were the major causes of World War I?
+            context -  World War I was caused by a combination of political tensions, military buildup, and nationalistic sentiments.
+            answer - World War I started because of political tensions between nations and various alliances.
+            evaluation - Partial answer: Needs more depth.
+            feedback - You've identified alliances as a cause, which is a good start! However, your response could be more detailed. Try elaborating on specific alliances and other contributing factors like militarism, imperialism, and nationalism.
+        
+        Ensure the JSON output follows this structure:
+        {{
+          "question": "{question}",
+          "context": "{student_response}",
+          "answer": "Provide a simplified version of the response here.",
+          "evaluation": "Provide a short assessment here.",
+          "feedback": "Provide constructive feedback here."
+        }}
+        """
+
+        # Get feedback from Gemini
+        feedback = ask_gemini_internal(prompt,API_KEY)
+        feedback_responses.append(feedback)
+
+    return jsonify(feedback_responses)
+def postprocess_mipmap_response(response_text):
+    """
+    Postprocesses the response from Gemini API to ensure it adheres to the Mipmap format.
+    """
+    cleaned_text = response_text.strip()
+
+    if not cleaned_text.startswith("Mipmap"):
+        cleaned_text = "Mipmap\n\n" + cleaned_text
+
+    cleaned_text = re.sub(r'\\*Level (\d+):\\', r'\nLevel \1:*', cleaned_text)
+    cleaned_text = re.sub(r'Key Points:\s*-', 'Key Points:\n-', cleaned_text)
+    cleaned_text = re.sub(r'\n+', '\n', cleaned_text).strip()
+
+    return cleaned_text
+
+def ask_gemini_mipmap(prompt, api_key):
+    """
+    Calls Gemini API and returns a properly structured Mipmap response.
+    """
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("gemini-pro")
+
+    mipmap_prompt = f"""
+    Extract key points from the following text and structure them in a hierarchical Mipmap format.
+
+    *FORMAT STRICTLY LIKE THIS (NO EXTRA CHARACTERS):*
+
+    # Main Topic
+    - Brief introduction to the topic
+    
+    ## Subtopic 1
+    - Overview of the subtopic
+      - Key points related to this subtopic
+      - Additional details if needed
+    
+    ### Nested Subtopic (Level 2)
+    - Further breakdown of Subtopic 1
+      - Important details or facts
+      - Supporting arguments or examples
+    
+    ## Subtopic 2
+    - Explanation of another key area
+      - Step-by-step breakdown (if process-based)
+      - Important aspects to consider
+
+    *DO NOT ADD EXTRA TEXT OR SYMBOLS. ONLY RETURN FORMATTED MIPMAP STRUCTURE.*
+    but omit the keywords like topic ,subtopic , main topic
+    Text:
+    {prompt}
+    """
+
+    response = model.generate_content(mipmap_prompt)
+    print(response)
+    if response and response.text:
+        formatted_text = postprocess_mipmap_response(response.text)
+        return formatted_text
+    else:
+        return "Error: No response received from Gemini API."
+
+@app.route("/mipmap", methods=["POST"])
+def mipmap_endpoint():
+    """
+    Flask API endpoint to process text from form-data and return a structured Mipmap response.
+    """
+    try:
+        if 'file' not in request.files:
+            return jsonify({"error": "No file uploaded"}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"error": "No selected file"}), 400
+
+        # Extract text from PDF
+        text = process_pdf(file)
+        print(text)
+        if not text:
+            return jsonify({"error": "Failed to extract text from PDF"}), 400
+
+        # Generate Mipmap response
+        response = ask_gemini_mipmap(text, API_KEY)
+        print(response)
+        return response
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/ask_gemini", methods=["GET"])
+def ask_gemini():
+    """
+    Sends a prompt to the Gemini API and returns the response.
+
+    Query Parameters:
+    - prompt: The complete formatted prompt including system instructions, source document, and question.
+    - api_key: The API key to authenticate the request.
+
+    Returns:
+    - JSON response containing Gemini's generated text.
+    """
+    prompt = request.args.get("prompt")
+    api_key = request.args.get("api_key")
+
+    if not prompt or not api_key:
+        return jsonify({"error": "Missing 'prompt' or 'api_key'"}), 400
+
+    # Configure API
+    genai.configure(api_key=api_key)
+
+    # Initialize the model
+    model = genai.GenerativeModel("gemini-pro")
+
+    # Get response
+    response = model.generate_content(prompt)
+
+    return jsonify({"response": response.text})
 
 
 if __name__ == '__main__':

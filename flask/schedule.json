@@ -1,0 +1,458 @@
+[
+    {
+        "date": "2025-02-01",
+        "day": "Saturday",
+        "topic": "Introduction to Computer Networks, Network Types (LAN, MAN, WAN, PAN, Ad Hoc), Network Architectures (Client-Server, P2P), Network Topologies",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-03",
+        "day": "Monday",
+        "topic": "Communication Models (OSI, TCP/IP), Design Issues for Layers",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-04",
+        "day": "Tuesday",
+        "topic": "Physical Layer: Transmission Media (Guided, Unguided), Transmission Modes, Network Devices",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-05",
+        "day": "Wednesday",
+        "topic": "Physical Layer: Spread Spectrum, FHSS, DSSS",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-06",
+        "day": "Thursday",
+        "topic": "Data Link Layer: LLC (Framing, Error Control, Flow Control)",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-07",
+        "day": "Friday",
+        "topic": "Data Link Layer: Error Control (Parity, Hamming Codes, CRC), Flow Control Protocols",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-08",
+        "day": "Saturday",
+        "topic": "Data Link Layer: WAN Connectivity (PPP, HDLC)",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-10",
+        "day": "Monday",
+        "topic": "MAC: Channel Allocation, Multiple Access Protocols (ALOHA, CSMA, WDMA)",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-11",
+        "day": "Tuesday",
+        "topic": "MAC: IEEE 802.3 Standards, Frame Formats, CSMA/CD",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-12",
+        "day": "Wednesday",
+        "topic": "Network Layer: Switching Techniques, IP Protocol, IPv4/IPv6 Addressing",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-13",
+        "day": "Thursday",
+        "topic": "Network Layer: Subnetting, NAT, CIDR, ICMP",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-14",
+        "day": "Friday",
+        "topic": "Network Layer: Routing Protocols (Distance Vector, Link State, Path Vector)",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-15",
+        "day": "Saturday",
+        "topic": "Network Layer: Routing in Internet (RIP, OSPF, BGP), Congestion Control, QoS",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-17",
+        "day": "Monday",
+        "topic": "Transport Layer: Services, Berkeley Sockets, Addressing, Connection Management",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-18",
+        "day": "Tuesday",
+        "topic": "Transport Layer: Flow Control, Buffering, Multiplexing, TCP, TCP Timer Management",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-19",
+        "day": "Wednesday",
+        "topic": "Transport Layer: QoS, Differentiated Services, TCP/UDP for Wireless",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-20",
+        "day": "Thursday",
+        "topic": "Application Layer: DNS, HTTP",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-21",
+        "day": "Friday",
+        "topic": "Application Layer: Email (SMTP, MIME, POP3, Webmail), FTP, TELNET",
+        "hours": 2
+    },
+    {
+        "date": "2025-02-22",
+        "day": "Saturday",
+        "topic": "Application Layer: DHCP, SNMP",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-04",
+        "day": "Tuesday",
+        "topic": "Introduction to Computer Networks, LAN, MAN, WAN, PAN, Ad Hoc Networks, Network Architectures",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-05",
+        "day": "Wednesday",
+        "topic": "Network Topologies, Communication Models (OSI, TCP/IP), Design Issues for Layers",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-06",
+        "day": "Thursday",
+        "topic": "Physical Layer: Transmission Media (Guided, Unguided), Transmission Modes",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-07",
+        "day": "Friday",
+        "topic": "Physical Layer: Network Devices (Hub, Repeater, Bridge, Switch, Router, Gateways, Brouter), Spread Spectrum",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-10",
+        "day": "Monday",
+        "topic": "Data Link Layer: LLC (Framing, Error Control, Flow Control)",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-11",
+        "day": "Tuesday",
+        "topic": "Data Link Layer: Error Control (Parity, Hamming Codes, CRC), Flow Control Protocols",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-12",
+        "day": "Wednesday",
+        "topic": "Data Link Layer: WAN Connectivity (PPP, HDLC)",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-13",
+        "day": "Thursday",
+        "topic": "MAC: Channel Allocation, Multiple Access Protocols (ALOHA, CSMA, WDMA)",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-14",
+        "day": "Friday",
+        "topic": "MAC: IEEE 802.3 Standards, CSMA/CD",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-17",
+        "day": "Monday",
+        "topic": "Network Layer: Switching Techniques, IP Protocol (IPv4, IPv6)",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-18",
+        "day": "Tuesday",
+        "topic": "Network Layer: Subnetting, NAT, CIDR, ICMP",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-19",
+        "day": "Wednesday",
+        "topic": "Network Layer: Routing Protocols (Distance Vector, Link State, Path Vector)",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-20",
+        "day": "Thursday",
+        "topic": "Network Layer: Routing in Internet (RIP, OSPF, BGP), Congestion Control, QoS",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-21",
+        "day": "Friday",
+        "topic": "Transport Layer: Services, Berkley Sockets, Addressing, Connection Establishment/Release",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-24",
+        "day": "Monday",
+        "topic": "Transport Layer: Flow Control, Buffering, Multiplexing, TCP, TCP Timer Management",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-25",
+        "day": "Tuesday",
+        "topic": "Transport Layer: QoS, Differentiated Services, TCP/UDP for Wireless",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-26",
+        "day": "Wednesday",
+        "topic": "Application Layer: DNS, HTTP",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-27",
+        "day": "Thursday",
+        "topic": "Application Layer: Email (SMTP, MIME, POP3, Webmail), FTP, TELNET",
+        "hours": 2
+    },
+    {
+        "date": "2025-03-28",
+        "day": "Friday",
+        "topic": "Application Layer: DHCP, SNMP",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-04",
+        "day": "Friday",
+        "topic": "Introduction to Computer Networks, LAN, MAN, WAN, PAN, Ad Hoc Networks, Network Architectures",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-07",
+        "day": "Monday",
+        "topic": "Network Topologies, Communication Models (OSI, TCP/IP), Design Issues",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-08",
+        "day": "Tuesday",
+        "topic": "Physical Layer: Transmission Media (Guided, Unguided), Modes, Network Devices",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-09",
+        "day": "Wednesday",
+        "topic": "Physical Layer: Spread Spectrum, FHSS, DSSS",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-10",
+        "day": "Thursday",
+        "topic": "Data Link Layer: LLC (Framing, Error Control, Flow Control)",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-11",
+        "day": "Friday",
+        "topic": "Data Link Layer: Error Detection/Correction, Parity, Hamming Codes, CRC",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-14",
+        "day": "Monday",
+        "topic": "Data Link Layer: Flow Control Protocols, WAN Connectivity (PPP, HDLC)",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-15",
+        "day": "Tuesday",
+        "topic": "MAC: Channel Allocation, Multiple Access Protocols (ALOHA, CSMA, WDMA)",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-16",
+        "day": "Wednesday",
+        "topic": "MAC: IEEE 802.3 Standards, Frame Formats, CSMA/CD",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-17",
+        "day": "Thursday",
+        "topic": "Network Layer: Switching Techniques, IP Protocol, IPv4/IPv6 Addressing",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-18",
+        "day": "Friday",
+        "topic": "Network Layer: Subnetting, NAT, CIDR, ICMP",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-21",
+        "day": "Monday",
+        "topic": "Network Layer: Routing Protocols (Distance Vector, Link State, Path Vector)",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-22",
+        "day": "Tuesday",
+        "topic": "Network Layer: Routing in Internet (RIP, OSPF, BGP), Congestion Control, QoS",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-23",
+        "day": "Wednesday",
+        "topic": "Transport Layer: Services, Berkley Sockets, Addressing, Connection Management",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-24",
+        "day": "Thursday",
+        "topic": "Transport Layer: Flow Control, Buffering, Multiplexing, TCP, TCP Timers",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-25",
+        "day": "Friday",
+        "topic": "Transport Layer: QoS, Differentiated Services, TCP/UDP for Wireless",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-28",
+        "day": "Monday",
+        "topic": "Application Layer: DNS, HTTP",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-29",
+        "day": "Tuesday",
+        "topic": "Application Layer: Email (SMTP, MIME, POP3, Webmail)",
+        "hours": 2
+    },
+    {
+        "date": "2025-04-30",
+        "day": "Wednesday",
+        "topic": "Application Layer: FTP, TELNET, DHCP, SNMP",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-05",
+        "day": "Monday",
+        "topic": "Introduction to Computer Networks, LAN, MAN, WAN, PAN, Ad hoc Networks, Network Architectures",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-06",
+        "day": "Tuesday",
+        "topic": "Network Topologies, Communication Models (OSI, TCP/IP), Design Issues",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-07",
+        "day": "Wednesday",
+        "topic": "Physical Layer: Transmission Media (Guided, Unguided), Modes, Network Devices",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-08",
+        "day": "Thursday",
+        "topic": "Physical Layer: Spread Spectrum, FHSS, DSSS",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-09",
+        "day": "Friday",
+        "topic": "Data Link Layer: LLC (Framing, Error Control, Flow Control)",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-12",
+        "day": "Monday",
+        "topic": "Data Link Layer: Error Detection/Correction, Parity, Hamming Codes, CRC",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-13",
+        "day": "Tuesday",
+        "topic": "Data Link Layer: Flow Control Protocols, WAN Connectivity (PPP, HDLC)",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-14",
+        "day": "Wednesday",
+        "topic": "MAC: Channel Allocation, Multiple Access Protocols (ALOHA, CSMA)",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-15",
+        "day": "Thursday",
+        "topic": "MAC: WDMA, IEEE 802.3, CSMA/CD",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-16",
+        "day": "Friday",
+        "topic": "Network Layer: Switching Techniques, IP Protocol, IPv4/IPv6 Addressing",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-19",
+        "day": "Monday",
+        "topic": "Network Layer: Subnetting, NAT, CIDR, ICMP",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-20",
+        "day": "Tuesday",
+        "topic": "Network Layer: Routing Protocols (Distance Vector, Link State, Path Vector)",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-21",
+        "day": "Wednesday",
+        "topic": "Network Layer: Routing (RIP, OSPF, BGP), Congestion Control, QoS",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-22",
+        "day": "Thursday",
+        "topic": "Transport Layer: Services, Sockets, Addressing, Connection Management",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-23",
+        "day": "Friday",
+        "topic": "Transport Layer: Flow Control, Buffering, Multiplexing, TCP, TCP Timers",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-26",
+        "day": "Monday",
+        "topic": "Transport Layer: QoS, Differentiated Services, TCP/UDP for Wireless",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-27",
+        "day": "Tuesday",
+        "topic": "Application Layer: DNS, HTTP",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-28",
+        "day": "Wednesday",
+        "topic": "Application Layer: Email (SMTP, MIME, POP3, Webmail), FTP, TELNET",
+        "hours": 2
+    },
+    {
+        "date": "2025-05-29",
+        "day": "Thursday",
+        "topic": "Application Layer: DHCP, SNMP",
+        "hours": 2
+    }
+]

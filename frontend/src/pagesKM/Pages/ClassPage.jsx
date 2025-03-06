@@ -193,6 +193,7 @@ const ClassPage = ({ classId }) => {
             <Tab label="Viva Assignment" {...a11yProps(3)} />
             <Tab label="Community" {...a11yProps(4)} />
             <Tab label="Self Study" {...a11yProps(5)} />
+            <Tab label="Self Study" {...a11yProps(6)} />
           </Tabs>
         </Box>
 

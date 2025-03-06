@@ -162,59 +162,9 @@ export default function Main(props) {
     {
       kind: 'divider',
     },
-    {
-      kind: 'header',
-      title: 'AI Monitoring & Reports',
-    },
-    {
-      segment: 'proctoring-reports',
-      title: 'Proctoring Reports',
-      icon: <VisibilityIcon />,
-    },
-    {
-      segment: 'performance-analytics',
-      title: 'Performance Analytics',
-      icon: <InsightsIcon />,
-    },
-    {
-      kind: 'divider',
-    },
-    {
-      kind: 'header',
-      title: 'User Management',
-    },
-    {
-      segment: 'teachers',
-      title: 'Teachers',
-      icon: <PersonIcon />,
-    },
-    {
-      segment: 'students',
-      title: 'Students',
-      icon: <SchoolIcon />,
-    },
-    {
-      kind: 'divider',
-    },
-    {
-      kind: 'header',
-      title: 'Settings',
-    },
-    {
-      segment: 'settings',
-      title: 'Settings',
-      icon: <SettingsIcon />,
-    },
-    {
-      segment: 'security',
-      title: 'Security & Privacy',
-      icon: <LockIcon />,
-    },
-    {
-      segment: 'theme',
-      title: 'Theme & UI',
-      icon: <PaletteIcon />,
-    },
+    
+   
+    
   ]
 
   const { window } = props
