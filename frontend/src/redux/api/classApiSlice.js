@@ -56,6 +56,15 @@ const classApiSlice = apiSlice.injectEndpoints({
       }),
       providesTags: ['Class'], // Optional: For caching and invalidation
     }),
+    getAllPublicClasses: builder.query({
+      query: (data) => ({
+        url: `${CLASS_URL}/getAllPublicClasses`,
+        method: 'POST',
+        body: data,
+        credentials: 'include',
+      }),
+      providesTags: ['Class'], // Optional: For caching and invalidation
+    }),
     leaveClass: builder.mutation({
       query: ({ classId, studentId }) => ({
         url: `${CLASS_URL}/leave/${classId}`,
@@ -65,7 +74,6 @@ const classApiSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['Class'],
     }),
-
     // New endpoint to get all students with their names, emails, and class names
     getAllStudentsWithClassInfo: builder.query({
       query: () => ({
@@ -86,4 +94,5 @@ export const {
   useLeaveClassMutation,
   useGetAllClassesQuery,
   useGetAllStudentsWithClassInfoQuery,
+  useGetAllPublicClassesQuery,
 } = classApiSlice

@@ -10,6 +10,168 @@ import fitz  # PyMuPDF
 # Load environment variables
 load_dotenv()
 
+
+{
+  "lectures": [
+    {
+      "lecture_number": 1,
+      "topics": [
+        "Introduction to Computer Networks",
+        "LAN, MAN, WAN, PAN, Ad hoc Networks"
+      ]
+    },
+    {
+      "lecture_number": 2,
+      "topics": [
+        "Network Architectures: Client-Server, Peer-to-Peer",
+        "Network Topologies: Bus, Ring, Tree, Star, Mesh, Hybrid"
+      ]
+    },
+    {
+      "lecture_number": 3,
+      "topics": [
+        "Communication Models: OSI Model"
+      ]
+    },
+    {
+      "lecture_number": 4,
+      "topics": [
+        "Communication Models: TCP/IP Model",
+        "Design Issues for Layers"
+      ]
+    },
+    {
+      "lecture_number": 5,
+      "topics": [
+        "Physical Layer: Transmission Media (Guided and Unguided)"
+      ]
+    },
+    {
+      "lecture_number": 6,
+      "topics": [
+        "Physical Layer: Transmission Modes (Simplex, Half Duplex, Full Duplex)"
+      ]
+    },
+    {
+      "lecture_number": 7,
+      "topics": [
+        "Physical Layer: Network Devices (Hub, Repeater, Bridge)"
+      ]
+    },
+    {
+      "lecture_number": 8,
+      "topics": [
+        "Physical Layer: Network Devices (Switch, Router, Gateway, Brouter)"
+      ]
+    },
+    {
+      "lecture_number": 9,
+      "topics": [
+        "Physical Layer: Spread Spectrum Signal, FHSS, DSSS"
+      ]
+    },
+    {
+      "lecture_number": 10,
+      "topics": [
+        "Data Link Layer: Logical Link Control (LLC) - Services, Framing"
+      ]
+    },
+    {
+      "lecture_number": 11,
+      "topics": [
+        "Data Link Layer: LLC - Framing Challenges and Types"
+      ]
+    },
+    {
+      "lecture_number": 12,
+      "topics": [
+        "Data Link Layer: LLC - Error Control, Parity Bits, Hamming Codes, CRC"
+      ]
+    },
+    {
+      "lecture_number": 13,
+      "topics": [
+        "Data Link Layer: Flow Control Protocols (Unrestricted Simplex, Stop and Wait, Sliding Window)"
+      ]
+    },
+    {
+      "lecture_number": 14,
+      "topics": [
+        "Data Link Layer: WAN Connectivity (PPP and HDLC)"
+      ]
+    },
+    {
+      "lecture_number": 15,
+      "topics": [
+        "Medium Access Control: Channel Allocation (Static and Dynamic)"
+      ]
+    },
+    {
+      "lecture_number": 16,
+      "topics": [
+        "Medium Access Control: Multiple Access Protocols (ALOHA, CSMA, WDMA)"
+      ]
+    },
+    {
+      "lecture_number": 17,
+      "topics": [
+        "Medium Access Control: IEEE 802.3 Standards and Frame Formats, CSMA/CD"
+      ]
+    },
+    {
+      "lecture_number": 18,
+      "topics": [
+        "Network Layer: Switching Techniques, IP Protocol, IPv4 and IPv6 Addressing"
+      ]
+    },
+    {
+      "lecture_number": 19,
+      "topics": [
+        "Network Layer: Subnetting, NAT, CIDR, ICMP"
+      ]
+    },
+    {
+      "lecture_number": 20,
+      "topics": [
+        "Network Layer: Routing Protocols (Distance Vector, Link State, Path Vector)"
+      ]
+    },
+    {
+      "lecture_number": 21,
+      "topics": [
+        "Network Layer: Routing in Internet (RIP, OSPF, BGP), Congestion Control, QoS"
+      ]
+    },
+    {
+      "lecture_number": 22,
+      "topics": [
+        "Transport Layer: Services, Berkeley Sockets, Addressing, Connection Establishment/Release"
+      ]
+    },
+    {
+      "lecture_number": 23,
+      "topics": [
+        "Transport Layer: Flow Control, Buffering, Multiplexing, TCP, TCP Timer Management, QoS, Differentiated Services, TCP/UDP for Wireless"
+      ]
+    },
+    {
+      "lecture_number": 24,
+      "topics": [
+        "Application Layer: DNS, HTTP, Email (SMTP, MIME, POP3, Webmail), FTP, TELNET"
+      ]
+    },
+    {
+      "lecture_number": 25,
+      "topics": [
+        "Application Layer: DHCP, SNMP"
+      ]
+    }
+  ]
+}
+
+
+
+
 # Initialize Flask app
 app = Flask(__name__)
 
@@ -25,6 +187,7 @@ def extract_text_from_pdf(pdf_path):
         for page in doc:
             text += page.get_text("text") + "\n"
     return text.strip()
+
 
 def divide_syllabus_into_lectures(syllabus_text, num_lectures):
     """Use Gemini to divide the syllabus into the specified number of lectures."""
@@ -74,6 +237,14 @@ def divide_syllabus_into_lectures(syllabus_text, num_lectures):
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON format: {e}")
 
+
+
+
+
+
+
+
+
 # Routes
 @app.route("/divide_syllabus", methods=["POST"])
 def divide_syllabus():
@@ -92,7 +263,7 @@ def divide_syllabus():
 
         # Extract text from the PDF
         syllabus_text = extract_text_from_pdf(file_path)
-
+        print(syllabus_text)
         # Clean up the temporary file
         os.remove(file_path)
 

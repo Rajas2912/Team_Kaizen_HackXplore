@@ -399,7 +399,6 @@ def generate_feedback():
     """
     data = request.json
     results = data.get("results")
-
     if not results:
         return jsonify({"error": "Missing required fields"}), 400
 
@@ -560,7 +559,6 @@ def ask_gemini():
     response = model.generate_content(prompt)
 
     return jsonify({"response": response.text})
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

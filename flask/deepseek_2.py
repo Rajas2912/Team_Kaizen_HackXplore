@@ -15,6 +15,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 import requests
+
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
@@ -35,6 +36,7 @@ def image_to_base64(image):
     image.save(buffered, format="PNG")
     return base64.b64encode(buffered.getvalue()).decode('utf-8')
 
+
 def extract_text_from_image(image):
     try:
         img_base64 = image_to_base64(image)
@@ -46,6 +48,7 @@ def extract_text_from_image(image):
         return response.text.strip() if response else ""
     except Exception as e:
         return f"OCR Error: {str(e)}"
+
 
 def process_pdf(file):
     try:
@@ -60,32 +63,35 @@ def process_pdf(file):
     except Exception as e:
         return f"PDF Processing Error: {str(e)}"
 
+
 def process_questions(text):
     questions = re.split(r'(?=Q\d+)', text)
     indices = []
     for q in questions:
         match = re.match(r'Q(\d+)', q)
         if match: indices.append(int(match.group(1)))
-    
+
     if not indices: return []
-    
+
     min_idx, max_idx = min(indices), max(indices)
     questions_list = [""] * (max_idx - min_idx + 1)
-    
+
     for q in questions:
         match = re.match(r'Q(\d+)', q)
         if match:
             idx = int(match.group(1)) - min_idx
             if 0 <= idx < len(questions_list):
                 questions_list[idx] = q[match.end():].strip()
-    
+
     return questions_list
+
 
 def load_pdf(pdf_path):
     """Loads and splits a PDF into pages."""
     pdf_loader = PyPDFLoader(pdf_path)
     pages = pdf_loader.load_and_split()
     return pages
+
 
 def create_or_load_db(pages):
     """Splits PDF text into smaller chunks and either creates or loads a persistent Chroma database."""
@@ -107,23 +113,25 @@ def create_or_load_db(pages):
 
     return vector_index
 
+
 def create_chroma_db(text):
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
         chunk_overlap=200
     )
     texts = text_splitter.split_text(text)
-    
+
     embeddings = GoogleGenerativeAIEmbeddings(
         model="models/embedding-001",
         google_api_key=API_KEY
     )
-    
+
     return Chroma.from_texts(
         texts,
         embeddings,
         persist_directory=DB_PATH
     )
+
 
 def get_chroma_context(query, k=3):
     embeddings = GoogleGenerativeAIEmbeddings(
@@ -136,19 +144,20 @@ def get_chroma_context(query, k=3):
     )
     return db.similarity_search(query, k=k)
 
+
 def evaluate_answer(question, answer, context):
     try:
         prompt = f"""Evaluate the answer strictly based on the context. Follow these rules:
         1. Score 0-10 (10=exact match, 7-9=mostly correct, 5-6=partial, 0-4=wrong)
         2. Consider spelling and technical terms
         3. Return ONLY the score as a float
-        
+
         Question: {question}
         Answer: {answer}
         Context: {context[:1500]}  # Limit context length
-        
+
         Score: """
-        
+
         response = SCORING_MODEL.generate_content(prompt)
         score = min(10, max(0, float(response.text.strip())))
         return round(score, 1)
@@ -216,7 +225,8 @@ def upload_file():
     except json.JSONDecodeError as e:
         return jsonify({"error": f"Invalid JSON format: {str(e)}"}), 500
     except Exception as e:
-        return jsonify({"error": f"Server error: {str(e)}"}),500
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
 
 # Routes
 @app.route('/get_student_score', methods=['POST'])
@@ -247,9 +257,9 @@ def evaluate_answers():
             try:
                 context = [doc.page_content for doc in get_chroma_context(q)]
                 score = evaluate_answer(q, a, "\n".join(context))
-                
+
                 results.append({
-                    "question_no": idx+1,
+                    "question_no": idx + 1,
                     "question": q,
                     "answer": a,
                     "context": context,
@@ -257,9 +267,9 @@ def evaluate_answers():
                     "max_score": 10.0
                 })
             except Exception as e:
-                print(f"Error processing Q{idx+1}: {str(e)}")
+                print(f"Error processing Q{idx + 1}: {str(e)}")
                 results.append({
-                    "question_no": idx+1,
+                    "question_no": idx + 1,
                     "error": "Evaluation failed"
                 })
         # print(results)
@@ -267,13 +277,14 @@ def evaluate_answers():
         print(results)
         return jsonify({
             "total_score": sum(r.get('score', 0) for r in results),
-            
+
             "results": results
         })
 
     except Exception as e:
         return jsonify({"error": f"System error: {str(e)}"}), 500
-    
+
+
 @app.route("/upload", methods=["POST"])
 def upload_pdf():
     """API endpoint to upload a PDF and store its embeddings."""
@@ -295,12 +306,13 @@ def upload_pdf():
     # Load PDF and store embeddings
     try:
         pages = load_pdf(pdf_path)  # Ensure this function works correctly
-        create_or_load_db(pages)    # Ensure this function is correctly handling the DB
+        create_or_load_db(pages)  # Ensure this function is correctly handling the DB
     except Exception as e:
         print(f"Error processing PDF: {e}")  # Debugging log
         return jsonify({"error": str(e)}), 500
 
     return jsonify({"message": "PDF uploaded and stored in ChromaDB"}), 200
+
 
 @app.route("/detect_ai", methods=["POST"])
 def detect_ai():
@@ -340,7 +352,8 @@ def detect_ai():
 
         return jsonify(response.json()), response.status_code
     except Exception as e:
-        return jsonify({"error":str(e)}),500
+        return jsonify({"error": str(e)}), 500
+
 
 def ask_gemini_internal(prompt, api_key):
     """
@@ -366,6 +379,7 @@ def ask_gemini_internal(prompt, api_key):
     structured_response = clean_ai_response(response.text)
 
     return structured_response
+
 
 def clean_ai_response(ai_response):
     """
@@ -425,13 +439,13 @@ def generate_feedback():
         - feedback: Constructive feedback to improve the response.
 
         eg - 
-        
+
             question - What were the major causes of World War I?
             context -  World War I was caused by a combination of political tensions, military buildup, and nationalistic sentiments.
             answer - World War I started because of political tensions between nations and various alliances.
             evaluation - Partial answer: Needs more depth.
             feedback - You've identified alliances as a cause, which is a good start! However, your response could be more detailed. Try elaborating on specific alliances and other contributing factors like militarism, imperialism, and nationalism.
-        
+
         Ensure the JSON output follows this structure:
         {{
           "question": "{question}",

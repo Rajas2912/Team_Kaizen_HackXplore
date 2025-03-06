@@ -30,7 +30,6 @@ export const createAssignment = async (req, res) => {
   }
 }
 
-// Get assignments by class ID
 export const getAssignmentsByClass = async (req, res) => {
   try {
     const { classId } = req.params
@@ -45,15 +44,20 @@ export const getAssignmentsByClass = async (req, res) => {
   }
 }
 
-// Submit an answer for an assignment
 export const submitAnswer = async (req, res) => {
   try {
-    const { assignmentId, studentId } = req.body
-    const answerFile = req.file.path
+    const { assignmentId, studentId, results, total_score, plagiarismScore } =
+      req.body
+    const answerFile = req.file?.filename // Use filename instead of fileName
 
     const submission = {
       studentId: new mongoose.Types.ObjectId(studentId),
       answerFile,
+      result: {
+        results,
+        total_score,
+      },
+      plagiarismScore,
     }
 
     const assignment = await Assignment.findById(assignmentId)
@@ -146,7 +150,8 @@ export const deleteAssignment = async (req, res) => {
 // Update the result for a submission
 export const updateSubmissionResult = async (req, res) => {
   try {
-    const { assignmentId, studentId, results, total_score } = req.body
+    const { assignmentId, studentId, results, total_score, plagiarismScore } =
+      req.body
 
     const assignment = await Assignment.findById(assignmentId)
     if (!assignment) {
@@ -160,17 +165,15 @@ export const updateSubmissionResult = async (req, res) => {
       return res.status(404).json({ message: 'Submission not found' })
     }
 
-    submission.result = { results, total_score }
+    submission.result = { results, total_score, plagiarismScore }
     await assignment.save()
 
     res.status(200).json(assignment)
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: 'Error updating submission result',
-        error: error.message,
-      })
+    res.status(500).json({
+      message: 'Error updating submission result',
+      error: error.message,
+    })
   }
 }
 
@@ -185,12 +188,10 @@ export const getAssignmentsWithSubmissions = async (req, res) => {
 
     res.status(200).json(assignments)
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: 'Error fetching assignments with submissions',
-        error: error.message,
-      })
+    res.status(500).json({
+      message: 'Error fetching assignments with submissions',
+      error: error.message,
+    })
   }
 }
 
@@ -209,11 +210,9 @@ export const getAssignmentsWithSubmissionsByAssignmentId = async (req, res) => {
 
     res.status(200).json(assignment)
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: 'Error fetching assignment with submissions',
-        error: error.message,
-      })
+    res.status(500).json({
+      message: 'Error fetching assignment with submissions',
+      error: error.message,
+    })
   }
 }

@@ -94,3 +94,45 @@ a {
 .classCardWrapper:hover {
   transform: translateY(-5px);
 }
+/* AllTeaching.css */
+.sectionHeading {
+  margin-bottom: 16px; /* Add spacing below the heading */
+  font-weight: bold; /* Make the heading bold */
+}
+
+.classGrid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(300px, 1fr)
+  ); /* Responsive grid layout */
+  gap: 16px; /* Add spacing between cards */
+}
+
+.classCardWrapper {
+  cursor: pointer; /* Add pointer cursor for clickable cards */
+}
+
+.classCard {
+  height: 100%; /* Ensure cards take full height */
+  display: flex;
+  flex-direction: column;
+}
+
+.classHeader {
+  background-color: #f5f5f5; /* Light background for the header */
+  padding: 16px;
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.classContent {
+  flex-grow: 1; /* Ensure content takes remaining space */
+  padding: 16px;
+}
+
+.classCode,
+.teacherInfo,
+.studentCount {
+  margin-bottom: 8px; /* Add spacing between text elements */
+}

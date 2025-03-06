@@ -11,6 +11,7 @@ import MicIcon from '@mui/icons-material/Mic'
 import LibraryBooksIcon from '@mui/icons-material/LibraryBooks'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
+import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import InsightsIcon from '@mui/icons-material/Insights'
@@ -40,6 +41,7 @@ import ClassPage from '../pagesKM/Pages/ClassPage'
 import UsersPage from '../pagesKM/Pages/UsersPage'
 import TimetableGeneratorPage from '../pagesKM/Pages/TimetableGeneratorPage'
 import TimetablePage from '../pagesKM/Pages/TimetablePage'
+import Temp from '../Component/Temp';
 
 const demoTheme = extendTheme({
   colorSchemes: { light: true },
@@ -150,6 +152,11 @@ export default function Main(props) {
           : [], // Default to an empty array if invalid
     },
     {
+      segment: 'mentor-mentee',
+      title: 'Mentor-Mentee',
+      icon: <SupervisorAccountIcon />,
+    },
+    {
       segment: 'timetable',
       title: 'Timetable Generator',
       icon: <CalendarMonthIcon />,
@@ -162,9 +169,40 @@ export default function Main(props) {
     {
       kind: 'divider',
     },
-    
-   
-    
+    {
+      kind: 'divider',
+    },
+    {
+      kind: 'header',
+      title: 'User Management',
+    },
+    {
+      segment: 'students',
+      title: 'Students',
+      icon: <SchoolIcon />,
+    },
+    {
+      kind: 'divider',
+    },
+    {
+      kind: 'header',
+      title: 'Settings',
+    },
+    {
+      segment: 'settings',
+      title: 'Settings',
+      icon: <SettingsIcon />,
+    },
+    {
+      segment: 'security',
+      title: 'Security & Privacy',
+      icon: <LockIcon />,
+    },
+    {
+      segment: 'theme',
+      title: 'Theme & UI',
+      icon: <PaletteIcon />,
+    },
   ]
 
   const { window } = props
@@ -225,7 +263,8 @@ export default function Main(props) {
           {router.pathname == '/createClass' && <CreateClass />}
           {router.pathname == '/quizzes' && <AllTeaching />}
           {router.pathname == '/viva' && <AllTeaching />}
-          {router.pathname == '/progress-tracking' && <AllTeaching />}
+          {router.pathname == '/attendance' && <AllTeaching />}
+          {/* {router.pathname == '/progress-tracking' && <Temp />} */}
           {router.pathname == '/students' && <UsersPage />}
           {router.pathname == '/timetable' && <TimetablePage />}
           {router.pathname?.startsWith('/class/') && (

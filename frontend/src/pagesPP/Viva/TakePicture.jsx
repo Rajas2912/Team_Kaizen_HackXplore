@@ -71,42 +71,43 @@ console.log(userInfo._id)
 
   // Process Image by sending as a File instead of Base64 URL
   const processImage = async () => {
-    const stdid = '67b4e81b9decbdf7991bc76f'
-    if (!imageFile) {
-      alert("No image captured.");
-      return;
-    }
+    navigate(`/give-viva/${vivaId}`);
+    // const stdid = '67b4e81b9decbdf7991bc76f'
+    // if (!imageFile) {
+    //   alert("No image captured.");
+    //   return;
+    // }
   
-    setLoading(true); // Show loading spinner
+    // setLoading(true); // Show loading spinner
   
-    try {
-      const formData = new FormData();
-      // console.log(imageFile)
+    // try {
+    //   const formData = new FormData();
+    //   // console.log(imageFile)
 
-      console.log(userInfo._id)
-      formData.append('image', imageFile);
-      formData.append('student_id', stdid); // Pass student ID
-      console.log(formData)
-      console.log('Sending formData:', formData);
+    //   console.log(userInfo._id)
+    //   formData.append('image', imageFile);
+    //   formData.append('student_id', stdid); // Pass student ID
+    //   console.log(formData)
+    //   console.log('Sending formData:', formData);
   
-      const response = await axios.post(`${URL}/recognize_face`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+    //   const response = await axios.post(`${URL}/recognize_face`, formData, {
+    //     headers: { 'Content-Type': 'multipart/form-data' },
+    //   });
   
-      console.log('Response:', response);
+    //   console.log('Response:', response);
   
-      if (response.status === 200) {
-        alert('User Authenticated');
-        navigate(`/give-viva/${vivaId}`);
-      } else {
-        alert('Failed to authenticate');
-      }
-    } catch (error) {
-      console.error('Error processing image:', error);
-      alert('Error processing image');
-    } finally {
-      setLoading(false); // Hide loading spinner
-    }
+    //   if (response.status === 200) {
+    //     alert('User Authenticated');
+    //     navigate(`/give-viva/${vivaId}`);
+    //   } else {
+    //     alert('Failed to authenticate');
+    //   }
+    // } catch (error) {
+    //   console.error('Error processing image:', error);
+    //   alert('Error processing image');
+    // } finally {
+    //   setLoading(false); // Hide loading spinner
+    // }
     // if (imageFile) {
     //   setLoading(true); // Show loading spinner
     //   try {
