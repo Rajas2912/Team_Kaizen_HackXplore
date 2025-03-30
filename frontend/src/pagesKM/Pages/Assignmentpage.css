@@ -1,0 +1,9 @@
+.main23 {
+    margin-top: 0vh;
+    margin-bottom: 20vh;
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Adjust spacing between cards */
+    height: 100vh; /* Ensure the container has a height */
+    overflow-y: auto; /* Enable vertical scrolling */
+  }

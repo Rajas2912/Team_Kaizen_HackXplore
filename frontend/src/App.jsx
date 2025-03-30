@@ -1,5 +1,7 @@
+
 import './App.css'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import Main from './common/Main.jsx'
 import Home from './pagesKM/Home/Home.jsx'
 import Login from './pagesPP/login.jsx'
@@ -21,13 +23,31 @@ import Studentreport2 from './pages_rajas/Studentreport2.jsx'
 import HomePage from './pagesPP/VideoCall/VideoMetting.jsx'
 import VideoMeeting from './pagesPP/VideoCall/VideoMetting.jsx'
 import RoomMeet from './pagesPP/VideoCall/RoomMeet.jsx'
+import Studentreport3 from './pages_rajas/Student_report3.jsx'
+import FeedbackPro from './pages_rajas/FeedbackPro.jsx'
+import Main_Banner from './New_pages/Main_Banner.jsx'
+import AudioConferenceTest from './Conference/AudioConferenceTest.jsx'
+import FaceCapture from './pagesKM/Pages/RegisterFace.jsx'
+import GitHubViewer from './New_pages/GithubRepo.jsx'
+import CollaborativeProjectReport from './pagesKM/Pages/CollaborativeProjectReport.jsx'
+import TeacherProjectPage from './pagesKM/Pages/TeacherProjectPage.jsx'
+import StudentProjectPage from './pagesKM/Pages/StudentProjectPage.jsx'
+import ProjectDocViewer from './pagesKM/Pages/ProjectDocViewer.jsx'
+import Research from './Research Papers/Research.jsx';
+
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<RegisterForm />} />
+        <Route path="/audio" element={<AudioConferenceTest></AudioConferenceTest>} />
         <Route path="/" element={<Home />} />
+        <Route path="/3d" element={<Main_Banner></Main_Banner>} />
+        <Route path="/paper" element={<Research></Research>} />
+        <Route path="/git" element={<GitHubViewer></GitHubViewer>} />
+        <Route path="/docteacher" element={<TeacherProjectPage></TeacherProjectPage>} />
+        <Route path="/docstudent" element={<StudentProjectPage></StudentProjectPage>} />
         <Route path="" element={<PrivateRoute />}>
           <Route path="/main" element={<Main />} />
           <Route path="/home" element={<Home />} />
@@ -37,15 +57,17 @@ function App() {
           <Route path="/give-viva/:vivaId" element={<GiveViva />} />
           <Route path="/takepicture/:vivaId" element={<TakePicture />} />
           <Route path="/give-viva/:vivaId" element={<GiveViva />} />
+          <Route path="/project-doc/:docId" element={<ProjectDocViewer></ProjectDocViewer>} />
           {/* <Route path="/room" element={<VideoMeeting />} />{} */}
           <Route path="/room/:classId/:roomId" element={<RoomMeet />} />
           <Route path="/class/:id" element={<ClassPage />} />
           <Route path="/lecture/:id" element={<LecturePage />} />
           <Route path="/temp" element={<temp/>}/>
-
+          <Route path="/studentreport/:assignmentId" element={<Studentreport2/>}/>
+          <Route path="/facecapture" element={<FaceCapture></FaceCapture>}/>
           <Route path="/mindmap" element={<Mindmap></Mindmap>} />
-          <Route path="/report" element={<Studentreport2></Studentreport2>} />
-          <Route path="/feedback" element={<FeedbackPage></FeedbackPage>} />
+          <Route path="/report" element={<Studentreport3></Studentreport3>} />
+          <Route path="/feedback" element={<FeedbackPro></FeedbackPro>} />
           <Route
             path="/personalized"
             element={<PersonalizedFeedback></PersonalizedFeedback>}

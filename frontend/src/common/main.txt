@@ -1,0 +1,191 @@
+import React, { useMemo, useState } from 'react';
+import { extendTheme } from '@mui/material/styles';
+import PropTypes from 'prop-types';
+import { Typography, Box, Stack } from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import HomeIcon from '@mui/icons-material/Home';
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
+import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import SchoolIcon from '@mui/icons-material/School';
+import SettingsIcon from '@mui/icons-material/Settings';
+import LockIcon from '@mui/icons-material/Lock';
+import PaletteIcon from '@mui/icons-material/Palette';
+import { AppProvider } from '@toolpad/core/AppProvider';
+import { DashboardLayout } from '@toolpad/core/DashboardLayout';
+import { useDispatch, useSelector } from 'react-redux';
+import axios from 'axios';
+import { logout } from '../redux/features/auth/authSlice';
+import { useGetAllClassesQuery } from '../redux/api/classApiSlice';
+import DashboardPage from '../pagesKM/Pages/DashboardPage';
+import AllTeaching from '../pagesKM/Pages/AllTeaching';
+import CreateClass from '../pagesKM/Pages/CreateClass';
+import UsersPage from '../pagesKM/Pages/UsersPage';
+import TimetablePage from '../pagesKM/Pages/TimetablePage';
+import ClassPage from '../pagesKM/Pages/ClassPage';
+import Dock_Reactbits from '../ReactBits/Dock_Reactbits';
+
+const API = import.meta.env.VITE_BACKEND_URL;
+
+const demoTheme = extendTheme({
+  colorSchemes: { light: true },
+  colorSchemeSelector: 'class',
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 600,
+      lg: 1200,
+      xl: 1536,
+    },
+  },
+});
+
+function useDemoRouter(initialPath) {
+  const [pathname, setPathname] = React.useState(initialPath);
+  const router = React.useMemo(() => {
+    return {
+      pathname,
+      searchParams: new URLSearchParams(),
+      navigate: (path) => setPathname(String(path)),
+    };
+  }, [pathname]);
+
+  return router;
+}
+
+function CustomAppTitle() {
+  return (
+    <Stack direction="row" alignItems="center" spacing={2}>
+      <Typography
+        variant="h6"
+        fontWeight={'bold'}
+        color="black"
+        fontFamily={'Montserrat-regular'}
+      >
+        Kaizen.Edu
+      </Typography>
+    </Stack>
+  );
+}
+
+export default function Main(props) {
+  const { userInfo } = useSelector((state) => state.user);
+  const { data, isLoading, error } = useGetAllClassesQuery(userInfo._id);
+  const dispatch = useDispatch();
+
+  const NAVIGATION = [
+    {
+      kind: 'header',
+      title: 'Main',
+    },
+    {
+      segment: 'dashboard',
+      title: 'Dashboard',
+      icon: <DashboardIcon />,
+    },
+    {
+      segment: 'class',
+      title: 'Home',
+      icon: <HomeIcon />,
+    },
+    {
+      kind: 'divider',
+    },
+    {
+      kind: 'header',
+      title: 'Teaching & Scheduling',
+    },
+    {
+      segment: 'class',
+      title: 'Teaching',
+      icon: <LibraryBooksIcon />,
+      children:
+        !isLoading && Array.isArray(data?.classes)
+          ? data.classes.map((classItem) => ({
+              segment: classItem._id,
+              title: classItem.name,
+            }))
+          : [],
+    },
+
+    {
+      segment: 'students',
+      title: 'Students',
+      icon: <SchoolIcon />,
+    },
+  ];
+
+  const router = useDemoRouter('/dashboard');
+  const [session, setSession] = useState({
+    user: {
+      name: userInfo.name,
+      email: userInfo.email,
+      image: userInfo.profile_pic,
+    },
+  });
+
+  const authentication = useMemo(() => {
+    return {
+      signIn: () => {
+        setSession({
+          user: {
+            name: userInfo.name,
+            email: userInfo.email,
+            image: userInfo.profile_pic,
+          },
+        });
+      },
+      signOut: async () => {
+        const URL = `${API}/user/logout-user`;
+        const response = await axios.get(URL, {
+          withCredentials: true,
+        });
+        dispatch(logout());
+      },
+    };
+  }, []);
+
+  const dockItems = NAVIGATION.filter(item => item.kind !== 'header' && item.kind !== 'divider').map(item => ({
+    icon: item.icon,
+    label: item.title,
+    onClick: () => router.navigate(`/${item.segment}`),
+  }));
+
+  return (
+    <>
+      <AppProvider
+        session={session}
+        authentication={authentication}
+        navigation={NAVIGATION}
+        router={router}
+        theme={demoTheme}
+      >
+        <DashboardLayout
+          sidebarExpandedWidth={0} // Disable sidebar
+          slots={{
+            appTitle: CustomAppTitle,
+          }}
+        >
+          <Box sx={{ flexGrow: 1, overflow: 'auto', pb: 10 }}> {/* Add padding to avoid overlap with Dock */}
+            {router.pathname === '/dashboard' && <DashboardPage />}
+            {router.pathname === '/class' && <AllTeaching navigate={router.navigate} />} {/* Pass navigate prop */}
+            {router.pathname === '/createClass' && <CreateClass />}
+            {router.pathname === '/students' && <UsersPage />}
+            {router.pathname === '/timetable' && <TimetablePage />}
+            {router.pathname?.startsWith('/class/') && (
+              <ClassPage classId={router.pathname.split('/')[2]} />
+            )}
+          </Box>
+          <Dock_Reactbits 
+            items={dockItems}
+            panelHeight={140}
+            baseItemSize={100}
+            magnification={80}
+          />
+        </DashboardLayout>
+      </AppProvider>
+    </>
+  );
+}

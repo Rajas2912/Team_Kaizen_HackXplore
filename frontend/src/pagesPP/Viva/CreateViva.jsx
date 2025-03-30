@@ -9,66 +9,81 @@ import {
   IconButton,
   CircularProgress,
   Paper,
-} from '@mui/material'
-import { Upload as UploadIcon, Close as CloseIcon } from '@mui/icons-material'
+  Card,
+  CardContent,
+  Divider,
+  Chip,
+  Alert,
+  useTheme,
+  InputAdornment
+} from '@mui/material';
+import {
+  Upload as UploadIcon,
+  Close as CloseIcon,
+  Quiz as QuizIcon,
+  Schedule as ScheduleIcon,
+  Timer as TimerIcon,
+  InsertDriveFile as FileIcon
+} from '@mui/icons-material';
 
 const API = import.meta.env.VITE_BACKEND_URL
 
 const CreateViva = ({ onClose, classId }) => {
-  const [vivaName, setVivaName] = useState('')
-  const [timeOfThinking, setTimeOfThinking] = useState('')
-  const [dueDate, setDueDate] = useState('')
-  const [questionAnswerSet, setQuestionAnswerSet] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [selectedFile, setSelectedFile] = useState(null)
-  const [numberOfQuestionsToAsk, setNumberOfQuestionsToAsk] = useState('')
-  const [totalQuestions, setTotalQuestions] = useState(0)
+  const theme = useTheme();
+  const [vivaName, setVivaName] = useState('');
+  const [timeOfThinking, setTimeOfThinking] = useState('');
+  const [dueDate, setDueDate] = useState('');
+  const [questionAnswerSet, setQuestionAnswerSet] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [numberOfQuestionsToAsk, setNumberOfQuestionsToAsk] = useState('');
+  const [totalQuestions, setTotalQuestions] = useState(0);
 
   const handleFileUpload = (event) => {
-    const file = event.target.files[0]
-    if (!file) return
-    setSelectedFile(file.name)
+    const file = event.target.files[0];
+    if (!file) return;
+    setSelectedFile(file.name);
 
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onload = (e) => {
-      const binaryString = e.target.result
-      const workbook = XLSX.read(binaryString, { type: 'binary' })
-      const sheetName = workbook.SheetNames[0]
-      const sheet = workbook.Sheets[sheetName]
-      const parsedData = XLSX.utils.sheet_to_json(sheet)
+      const binaryString = e.target.result;
+      const workbook = XLSX.read(binaryString, { type: 'binary' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const parsedData = XLSX.utils.sheet_to_json(sheet);
 
       const formattedData = parsedData
         .map((row) => ({
           questionText: row.Question || row['question'],
           answer: row.Answer || row['answer'],
         }))
-        .filter((q) => q.questionText && q.answer)
+        .filter((q) => q.questionText && q.answer);
 
-      setQuestionAnswerSet(formattedData)
-      setTotalQuestions(formattedData.length)
-    }
-    reader.readAsBinaryString(file)
-  }
+      setQuestionAnswerSet(formattedData);
+      setTotalQuestions(formattedData.length);
+    };
+    reader.readAsBinaryString(file);
+  };
 
   const handleRemoveFile = () => {
-    setSelectedFile(null)
-    setQuestionAnswerSet([])
-    setTotalQuestions(0)
-    document.getElementById('fileInput').value = ''
-  }
+    setSelectedFile(null);
+    setQuestionAnswerSet([]);
+    setTotalQuestions(0);
+    document.getElementById('fileInput').value = '';
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError(null)
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
 
     if (numberOfQuestionsToAsk > totalQuestions) {
       setError(
         `Number of questions to ask (${numberOfQuestionsToAsk}) cannot be greater than total questions (${totalQuestions}).`
-      )
-      setIsLoading(false)
-      return
+      );
+      setIsLoading(false);
+      return;
     }
 
     try {
@@ -79,137 +94,227 @@ const CreateViva = ({ onClose, classId }) => {
         duedate: dueDate,
         questionAnswerSet,
         numberOfQuestionsToAsk: Number(numberOfQuestionsToAsk),
-      })
-      setVivaName('')
-      setTimeOfThinking('')
-      setDueDate('')
-      setQuestionAnswerSet([])
-      setSelectedFile(null)
-      setNumberOfQuestionsToAsk('')
-      setTotalQuestions(0)
-      onClose()
+      });
+      onClose();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create viva')
+      setError(err.response?.data?.message || 'Failed to create viva');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
+
 
   return (
-    <Paper
-      sx={{
-        maxWidth: 500,
-        margin: 'auto',
-        padding: 3,
-        backgroundColor: '#f9f9f9',
-        borderRadius: 2,
-        boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.1)',
-      }}
-    >
-      <Typography variant="h5" align="center" gutterBottom>
-        Create Viva
-      </Typography>
-      <Box component="form" onSubmit={handleSubmit}>
-        <TextField
-          fullWidth
-          label="Viva Name"
-          value={vivaName}
-          onChange={(e) => setVivaName(e.target.value)}
-          required
-          sx={{ mb: 2 }}
-        />
-        <TextField
-          fullWidth
-          label="Time of Thinking (seconds)"
-          type="number"
-          value={timeOfThinking}
-          onChange={(e) => setTimeOfThinking(e.target.value)}
-          required
-          sx={{ mb: 2 }}
-        />
-        <TextField
-          fullWidth
-          label="Due Date"
-          type="date"
-          value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
-          required
-          InputLabelProps={{ shrink: true }}
-          sx={{ mb: 2 }}
-        />
-        <TextField
-          fullWidth
-          label="Number of Questions to Ask"
-          type="number"
-          value={numberOfQuestionsToAsk}
-          onChange={(e) => setNumberOfQuestionsToAsk(e.target.value)}
-          required
-          inputProps={{ min: 1, max: totalQuestions }}
-          sx={{ mb: 2 }}
-        />
-        <Typography variant="body2" sx={{ mb: 2 }}>
-          Total Questions in Uploaded File: {totalQuestions}
-        </Typography>
-
-        {/* File Upload Section */}
-        <Box
-          sx={{
+    <Box sx={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '100vh',
+      p: 3,
+      backgroundColor: theme.palette.grey[100]
+    }}>
+      <Card elevation={4} sx={{
+        width: '100%',
+        maxWidth: 600,
+        p: 4,
+        borderRadius: 4,
+        backgroundColor: theme.palette.background.paper
+      }}>
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3
+        }}>
+          <Typography variant="h4" fontWeight="bold" sx={{
             display: 'flex',
-            flexDirection: 'column',
             alignItems: 'center',
-            mb: 2,
-          }}
-        >
-          <input
-            type="file"
-            accept=".xlsx, .xls, .csv"
-            onChange={handleFileUpload}
-            id="fileInput"
-            hidden
-          />
-          <Button
-            variant="contained"
-            component="label"
-            startIcon={<UploadIcon />}
-            disabled={!!selectedFile}
-            sx={{ width: 200, height: 50 }}
-          >
-            Upload File
-            <input type="file" hidden onChange={handleFileUpload} />
-          </Button>
-          {selectedFile && (
-            <Box sx={{ mt: 1, display: 'flex', alignItems: 'center' }}>
-              <Typography variant="body2" sx={{ mr: 1 }}>
-                📁 {selectedFile}
-              </Typography>
-              <IconButton size="small" onClick={handleRemoveFile}>
-                <CloseIcon fontSize="small" />
-              </IconButton>
-            </Box>
-          )}
+            gap: 1,
+            color: theme.palette.primary.main
+          }}>
+            <QuizIcon fontSize="large" />
+            Create New Viva
+          </Typography>
+          <IconButton onClick={onClose} size="large">
+            <CloseIcon />
+          </IconButton>
         </Box>
 
-        {/* Submit Button */}
-        <Button
-          type="submit"
-          fullWidth
-          variant="contained"
-          color="primary"
-          disabled={isLoading}
-          sx={{ mt: 2 }}
-        >
-          {isLoading ? <CircularProgress size={24} /> : 'Create Viva'}
-        </Button>
-
-        {/* Error Message */}
         {error && (
-          <Typography color="error" align="center" sx={{ mt: 2 }}>
-            Error: {error}
-          </Typography>
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
         )}
-      </Box>
-    </Paper>
-  )
-}
 
-export default CreateViva
+        <Box component="form" onSubmit={handleSubmit}>
+          <Box sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+            gap: 3,
+            mb: 3
+          }}>
+            <TextField
+              label="Viva Name"
+              variant="outlined"
+              fullWidth
+              value={vivaName}
+              onChange={(e) => setVivaName(e.target.value)}
+              required
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <QuizIcon color="action" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            <TextField
+              label="Thinking Time (seconds)"
+              variant="outlined"
+              type="number"
+              fullWidth
+              value={timeOfThinking}
+              onChange={(e) => setTimeOfThinking(e.target.value)}
+              required
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <TimerIcon color="action" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            <TextField
+              label="Due Date"
+              variant="outlined"
+              type="date"
+              fullWidth
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              required
+              InputLabelProps={{ shrink: true }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <ScheduleIcon color="action" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            <TextField
+              label="Questions to Ask"
+              variant="outlined"
+              type="number"
+              fullWidth
+              value={numberOfQuestionsToAsk}
+              onChange={(e) => setNumberOfQuestionsToAsk(e.target.value)}
+              required
+              inputProps={{ min: 1, max: totalQuestions }}
+            />
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          {/* File Upload Section */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
+              Upload Questions
+            </Typography>
+            
+            <input
+              type="file"
+              accept=".xlsx, .xls, .csv"
+              onChange={handleFileUpload}
+              id="fileInput"
+              hidden
+            />
+            
+            <Button
+              variant="outlined"
+              component="label"
+              startIcon={<UploadIcon />}
+              fullWidth
+              sx={{
+                height: 56,
+                borderStyle: 'dashed',
+                borderWidth: 2,
+                backgroundColor: selectedFile ? theme.palette.success.light : 'transparent'
+              }}
+            >
+              {selectedFile ? 'File Uploaded' : 'Select Excel/CSV File'}
+              <input type="file" hidden onChange={handleFileUpload} />
+            </Button>
+
+            {selectedFile && (
+              <Box sx={{
+                mt: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                p: 2,
+                backgroundColor: theme.palette.grey[100],
+                borderRadius: 1
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <FileIcon color="primary" />
+                  <Typography variant="body1">{selectedFile}</Typography>
+                </Box>
+                <IconButton onClick={handleRemoveFile} color="error">
+                  <CloseIcon />
+                </IconButton>
+              </Box>
+            )}
+
+            <Box sx={{
+              mt: 2,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <Typography variant="body2" color="text.secondary">
+                File should contain 'Question' and 'Answer' columns
+              </Typography>
+              <Chip 
+                label={`${totalQuestions} questions found`} 
+                color={totalQuestions > 0 ? "success" : "default"} 
+                variant="outlined"
+              />
+            </Box>
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          <Box sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 2
+          }}>
+            <Button
+              variant="outlined"
+              onClick={onClose}
+              disabled={isLoading}
+              sx={{ width: 120 }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              disabled={isLoading || totalQuestions === 0}
+              sx={{ width: 180 }}
+              startIcon={isLoading ? <CircularProgress size={20} /> : null}
+            >
+              {isLoading ? "Creating..." : "Create Viva"}
+            </Button>
+          </Box>
+        </Box>
+      </Card>
+    </Box>
+  );
+};
+
+export default CreateViva;

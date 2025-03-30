@@ -18,6 +18,7 @@ import quizRoute from './route/quiz.route.js'
 import QuizResult from './route/quizresult.route.js'
 import Dashbaord from './route/dashboard.route.js'
 import MeetLink from './route/meetlink.route.js'
+import projectRoutes from './route/projectRoutes.js' 
 const Frontend_URL = process.env.Frontend_URL
 
 
@@ -48,7 +49,7 @@ app.use('/quiz',quizRoute)
 app.use('/quizresult',QuizResult);
 app.use('/dashboard',Dashbaord)
 app.use('/meetlink',MeetLink);
-
+app.use('/api/projects', projectRoutes)
 app.listen(PORT, () => {
   console.log(`server run on port ${PORT}`)
 })

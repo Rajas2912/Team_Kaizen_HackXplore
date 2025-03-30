@@ -15,18 +15,30 @@ import {
   Typography,
   Modal,
   TextField,
-  Select,
-  MenuItem,
-  Radio,
-  RadioGroup,
-  FormControlLabel,
+  Chip,
+  Avatar,
+  Card,
+  CardContent,
+  Divider,
+  CircularProgress,
+  Alert,
+  Tooltip,
+  Badge,
+  useTheme,
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import EditIcon from "@mui/icons-material/Edit";
-import SaveIcon from "@mui/icons-material/Save";
-import CloseIcon from "@mui/icons-material/Close";
+import {
+  Add as AddIcon,
+  KeyboardArrowDown as KeyboardArrowDownIcon,
+  KeyboardArrowUp as KeyboardArrowUpIcon,
+  Edit as EditIcon,
+  Save as SaveIcon,
+  Close as CloseIcon,
+  PlayArrow as StartIcon,
+  Person as PersonIcon,
+  Description as DescriptionIcon,
+  Event as EventIcon,
+  Quiz as QuizIcon
+} from "@mui/icons-material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
@@ -53,35 +65,39 @@ const API = import.meta.env.VITE_BACKEND_URL;
 
 
 const QuizManagement = ({ classId }) => {
+  const theme = useTheme();
   const [quizzes, setQuizzes] = useState([]);
   const [openRows, setOpenRows] = useState({});
   const [students, setStudents] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(null);
   const [editedData, setEditedData] = useState({});
-  const [role, setRole] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
   const [isQuestionModalOpen, setIsQuestionModalOpen] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const { userInfo } = useSelector((state) => state.user);
-  console.log(userInfo);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (userInfo?.role) {
-      setRole(userInfo.role);
-    }
-  }, [userInfo?.role]);
+  // useEffect(() => {
+  //   if (userInfo?.role) {
+  //     setRole(userInfo.role);
+  //   }
+  // }, [userInfo?.role]);
 
   useEffect(() => {
     const fetchAllQuizzes = async () => {
       try {
+        setLoading(true);
         const response = await axios.get(`${API}/quiz/getquizbyid/${classId}`);
-        console.log(response.data);
         setQuizzes(response.data);
       } catch (error) {
+        setError("Failed to fetch quizzes");
         console.error("Error fetching quizzes:", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchAllQuizzes();
@@ -347,267 +363,366 @@ const QuizManagement = ({ classId }) => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Top Header */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 2,
-        }}
-      >
-        <Typography variant="h5" fontWeight="bold">
-          All Quizzes
+    <Box sx={{ p: 3, maxWidth: '1800px', mx: 'auto' }}>
+      {/* Header Section */}
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        mb: 4,
+        flexWrap: 'wrap',
+        gap: 2
+      }}>
+        <Typography variant="h4" sx={{ 
+          fontWeight: 'bold',
+          color: 'black',
+          fontFamily:'Montserrat-Regular',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}>
+          <QuizIcon fontSize="large" />
+          Quiz Management
         </Typography>
-        {role === "teacher" && (
+        
+        {userInfo?.role === "teacher" && (
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setIsModalOpen(true)}
+            sx={{
+              backgroundColor: '#58545B',
+              '&:hover': {
+                backgroundColor: '#B7A7AE'
+              }
+            }}
           >
             Create Quiz
           </Button>
         )}
       </Box>
 
-      {/* Quiz Table */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              {role !== "student" && <TableCell />}
-              <TableCell>Quiz Name</TableCell>
-              <TableCell>Questions</TableCell>
-              <TableCell>Due Date</TableCell>
-              <TableCell>Start Time</TableCell>
-              <TableCell>Duration (min)</TableCell>
-              {role === "student" ? (
-                <TableCell>Start Quiz</TableCell>
-              ) : (
-                <TableCell>Actions</TableCell>
-              )}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {quizzes.map((quiz, index) => (
-              <React.Fragment key={quiz._id}>
-                <TableRow>
-                  {role !== "student" && (
-                    <TableCell>
-                      <IconButton
-                        onClick={() => handleRowClick(index, quiz._id)}
-                      >
-                        {openRows[index] ? (
-                          <KeyboardArrowUpIcon />
-                        ) : (
-                          <KeyboardArrowDownIcon />
-                        )}
-                      </IconButton>
-                    </TableCell>
-                  )}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
 
-                  <TableCell>
-                    {editMode === quiz._id ? (
-                      <TextField
-                        size="small"
-                        value={editedData.quizname}
-                        onChange={(e) =>
-                          setEditedData({
-                            ...editedData,
-                            quizname: e.target.value,
-                          })
-                        }
-                      />
-                    ) : (
-                      quiz.quizname
-                    )}
-                  </TableCell>
-
-                  <TableCell>
-                    {role==='teacher'?<Button onClick={() => handleQuestionModalOpen(quiz)}>
-                      {quiz.questionAnswerSet.length}
-                    </Button>:
-                    <Button >
-                      {quiz.questionAnswerSet.length}
-                    </Button>}
-                  </TableCell>
-
-                  <TableCell>
-                    {editMode === quiz._id ? (
-                      <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <DateTimePicker
-                          label="Due Date"
-                          value={editedData.duedate}
-                          onChange={(newValue) =>
-                            setEditedData({
-                              ...editedData,
-                              duedate: newValue,
-                            })
-                          }
-                          slotProps={{ textField: { size: 'small' } }} // Updated prop
-                        />
-                      </LocalizationProvider>
-                    ) : (
-                      new Date(quiz.duedate).toLocaleString()
-                    )}
-                  </TableCell>
-
-                  <TableCell>
-                    {editMode === quiz._id ? (
-                      <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <DateTimePicker
-                          label="Start Time"
-                          value={editedData.startTime}
-                          onChange={(newValue) =>
-                            setEditedData({
-                              ...editedData,
-                              startTime: newValue,
-                            })
-                          }
-                          slotProps={{ textField: { size: 'small' } }} // Updated prop
-                        />
-                      </LocalizationProvider>
-                    ) : (
-                      new Date(quiz.startTime).toLocaleString()
-                    )}
-                  </TableCell>
-
-                  <TableCell>
-                    {editMode === quiz._id ? (
-                      <TextField
-                        size="small"
-                        type="number"
-                        value={editedData.duration}
-                        onChange={(e) =>
-                          setEditedData({
-                            ...editedData,
-                            duration: e.target.value,
-                          })
-                        }
-                      />
-                    ) : (
-                      quiz.duration
-                    )}
-                  </TableCell>
-
-                  {role === "student" ? (
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={() => handleStartQuiz(quiz._id)}
-                      >
-                        Start Quiz
-                      </Button>
-                    </TableCell>
-                  ) : (
-                    <TableCell>
-                      {editMode === quiz._id ? (
-                        <>
-                          <IconButton onClick={() => handleSave(quiz._id)}>
-                            <SaveIcon />
-                          </IconButton>
-                          <IconButton onClick={handleCancel}>
-                            <CloseIcon />
-                          </IconButton>
-                        </>
-                      ) : (
-                        <IconButton onClick={() => handleEdit(quiz)}>
-                          <EditIcon />
-                        </IconButton>
-                      )}
-                    </TableCell>
-                  )}
-                </TableRow>
-                {role !== "student" && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={6}
-                      sx={{ paddingBottom: 0, paddingTop: 0 }}
-                    >
-                      <Collapse
-                        in={openRows[index]}
-                        timeout="auto"
-                        unmountOnExit
-                      >
-                        <Box sx={{ margin: 1 }}>
-                          <Typography variant="h6" gutterBottom component="div">
-                            Registered Students:{" "}
-                            {students[quiz._id]
-                              ? students[quiz._id].length
-                              : 0}
-                          </Typography>
-
-                          {students[quiz._id] ? (
-                            <Table size="small">
-                              <TableHead>
-                                <TableRow>
-                                  <TableCell>Name</TableCell>
-                                  <TableCell>Total Questions</TableCell>
-                                  <TableCell>Questions Attempted</TableCell>
-                                  <TableCell>Date/Time</TableCell>
-                                  <TableCell>Score</TableCell>
-                                  <TableCell>Details</TableCell>
-                                </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {students[quiz._id].map((student) => (
-                                  <TableRow key={student._id}>
-                                    <TableCell>{student.studentName}</TableCell>
-                                    <TableCell>{student.totalQuestions}</TableCell>
-                                    <TableCell>
-                                      {student.questionAnswerSet.length}
-                                    </TableCell>
-                                    <TableCell>
-                                      {new Date(student.dateofquiz).toLocaleString()}
-                                    </TableCell>
-                                    <TableCell>{student.overallMark}</TableCell>
-                                    <TableCell>
-                                      <Button
-                                        variant="contained"
-                                        color="primary"
-                                        onClick={() => {
-                                          setSelectedStudent(student);
-                                          setIsStudentModalOpen(true);
-                                        }}
-                                      >
-                                        Details
-                                      </Button>
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          ) : (
-                            <Typography>No students registered yet.</Typography>
-                          )}
-                        </Box>
-                      </Collapse>
-                    </TableCell>
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <CircularProgress size={60} />
+        </Box>
+      ) : (
+        <Card elevation={3} sx={{ mb: 4 }}>
+          <CardContent sx={{ p: 0 }}>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: theme.palette.grey[100] }}>
+                    {userInfo?.role !== "student" && <TableCell width="50px" />}
+                    <TableCell><Typography variant="subtitle1" fontWeight="bold">Quiz Name</Typography></TableCell>
+                    <TableCell align="center"><Typography variant="subtitle1" fontWeight="bold">Questions</Typography></TableCell>
+                    <TableCell align="center"><Typography variant="subtitle1" fontWeight="bold">Due Date</Typography></TableCell>
+                    <TableCell align="center"><Typography variant="subtitle1" fontWeight="bold">Start Time</Typography></TableCell>
+                    <TableCell align="center"><Typography variant="subtitle1" fontWeight="bold">Duration</Typography></TableCell>
+                    <TableCell align="center"><Typography variant="subtitle1" fontWeight="bold">Actions</Typography></TableCell>
                   </TableRow>
-                )}
-              </React.Fragment>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {quizzes.map((quiz, index) => (
+                    <React.Fragment key={quiz._id}>
+                      <TableRow hover>
+                        {userInfo?.role !== "student" && (
+                          <TableCell>
+                            <IconButton
+                              onClick={() => handleRowClick(index, quiz._id)}
+                              size="small"
+                            >
+                              {openRows[index] ? (
+                                <KeyboardArrowUpIcon />
+                              ) : (
+                                <KeyboardArrowDownIcon />
+                              )}
+                            </IconButton>
+                          </TableCell>
+                        )}
 
-      {/* Create Quiz Modal */}
+                        <TableCell>
+                          {editMode === quiz._id ? (
+                            <TextField
+                              size="small"
+                              fullWidth
+                              value={editedData.quizname}
+                              onChange={(e) =>
+                                setEditedData({
+                                  ...editedData,
+                                  quizname: e.target.value,
+                                })
+                              }
+                            />
+                          ) : (
+                            <Typography fontWeight="medium">{quiz.quizname}</Typography>
+                          )}
+                        </TableCell>
+
+                        <TableCell align="center">
+                          {userInfo?.role === "teacher" ? (
+                            <Button 
+                              onClick={() => handleQuestionModalOpen(quiz)}
+                              variant="outlined"
+                              size="small"
+                            >
+                              {quiz.questionAnswerSet.length}
+                            </Button>
+                          ) : (
+                            <Chip 
+                              label={quiz.questionAnswerSet.length} 
+                              color="primary" 
+                              size="small"
+                            />
+                          )}
+                        </TableCell>
+
+                        <TableCell align="center">
+                          {editMode === quiz._id ? (
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                              <DateTimePicker
+                                value={editedData.duedate}
+                                onChange={(newValue) =>
+                                  setEditedData({
+                                    ...editedData,
+                                    duedate: newValue,
+                                  })
+                                }
+                                renderInput={(params) => (
+                                  <TextField
+                                    {...params}
+                                    size="small"
+                                    sx={{ width: 180 }}
+                                  />
+                                )}
+                              />
+                            </LocalizationProvider>
+                          ) : (
+                            dayjs(quiz.duedate).format('MMM D, YYYY h:mm A')
+                          )}
+                        </TableCell>
+
+                        <TableCell align="center">
+                          {editMode === quiz._id ? (
+                            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                              <DateTimePicker
+                                value={editedData.startTime}
+                                onChange={(newValue) =>
+                                  setEditedData({
+                                    ...editedData,
+                                    startTime: newValue,
+                                  })
+                                }
+                                renderInput={(params) => (
+                                  <TextField
+                                    {...params}
+                                    size="small"
+                                    sx={{ width: 180 }}
+                                  />
+                                )}
+                              />
+                            </LocalizationProvider>
+                          ) : (
+                            dayjs(quiz.startTime).format('MMM D, YYYY h:mm A')
+                          )}
+                        </TableCell>
+
+                        <TableCell align="center">
+                          {editMode === quiz._id ? (
+                            <TextField
+                              size="small"
+                              type="number"
+                              sx={{ width: 80 }}
+                              value={editedData.duration}
+                              onChange={(e) =>
+                                setEditedData({
+                                  ...editedData,
+                                  duration: e.target.value,
+                                })
+                              }
+                            />
+                          ) : (
+                            `${quiz.duration} min`
+                          )}
+                        </TableCell>
+
+                        <TableCell align="center">
+                          {userInfo?.role === "student" ? (
+                            <Button
+                              variant="contained"
+                              startIcon={<StartIcon />}
+                              onClick={() => handleStartQuiz(quiz._id)}
+                              size="small"
+                              sx={{
+                                backgroundColor: theme.palette.success.main,
+                                '&:hover': {
+                                  backgroundColor: theme.palette.success.dark
+                                }
+                              }}
+                            >
+                              Start
+                            </Button>
+                          ) : editMode === quiz._id ? (
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <Tooltip title="Save">
+                                <IconButton 
+                                  onClick={() => handleSave(quiz._id)}
+                                  color="primary"
+                                >
+                                  <SaveIcon />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Cancel">
+                                <IconButton 
+                                  onClick={handleCancel}
+                                  color="error"
+                                >
+                                  <CloseIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          ) : (
+                            <Tooltip title="Edit">
+                              <IconButton 
+                                onClick={() => handleEdit(quiz)}
+                                color="primary"
+                              >
+                                <EditIcon />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </TableCell>
+                      </TableRow>
+
+                      {/* Expanded Student Details */}
+                      {userInfo?.role !== "student" && (
+                        <TableRow>
+                          <TableCell colSpan={7} sx={{ p: 0 }}>
+                            <Collapse in={openRows[index]} timeout="auto" unmountOnExit>
+                              <Box sx={{ p: 3, backgroundColor: theme.palette.grey[50] }}>
+                                <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+                                  Student Submissions: {students[quiz._id]?.length || 0}
+                                </Typography>
+
+                                {students[quiz._id]?.length > 0 ? (
+                                  <TableContainer component={Paper} elevation={0}>
+                                    <Table size="small">
+                                      <TableHead>
+                                        <TableRow>
+                                          <TableCell>Student</TableCell>
+                                          <TableCell align="center">Questions</TableCell>
+                                          <TableCell align="center">Attempted</TableCell>
+                                          <TableCell align="center">Date/Time</TableCell>
+                                          <TableCell align="center">Score</TableCell>
+                                          <TableCell align="center">Actions</TableCell>
+                                        </TableRow>
+                                      </TableHead>
+                                      <TableBody>
+                                        {students[quiz._id].map((student) => (
+                                          <TableRow key={student._id} hover>
+                                            <TableCell>
+                                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                                <Avatar sx={{ width: 32, height: 32 }}>
+                                                  <PersonIcon fontSize="small" />
+                                                </Avatar>
+                                                <Typography>{student.studentName}</Typography>
+                                              </Box>
+                                            </TableCell>
+                                            <TableCell align="center">{student.totalQuestions}</TableCell>
+                                            <TableCell align="center">{student.questionAnswerSet.length}</TableCell>
+                                            <TableCell align="center">
+                                              {dayjs(student.dateofquiz).format('MMM D, YYYY h:mm A')}
+                                            </TableCell>
+                                            <TableCell align="center">
+                                              <Chip 
+                                                label={student.overallMark} 
+                                                color="primary" 
+                                                size="small"
+                                              />
+                                            </TableCell>
+                                            <TableCell align="center">
+                                              <Button
+                                                variant="outlined"
+                                                startIcon={<DescriptionIcon />}
+                                                onClick={() => {
+                                                  setSelectedStudent(student);
+                                                  setIsStudentModalOpen(true);
+                                                }}
+                                                size="small"
+                                              >
+                                                Details
+                                              </Button>
+                                            </TableCell>
+                                          </TableRow>
+                                        ))}
+                                      </TableBody>
+                                    </Table>
+                                  </TableContainer>
+                                ) : (
+                                  <Typography variant="body2" color="text.secondary">
+                                    No students have taken this quiz yet.
+                                  </Typography>
+                                )}
+                              </Box>
+                            </Collapse>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty State */}
+      {quizzes.length === 0 && !loading && (
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          p: 4,
+          textAlign: 'center'
+        }}>
+          <QuizIcon sx={{ fontSize: 60, color: theme.palette.grey[400], mb: 2 }} />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No quizzes found for this class
+          </Typography>
+          {userInfo?.role === "teacher" && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setIsModalOpen(true)}
+              sx={{ mt: 2 }}
+            >
+              Create Your First Quiz
+            </Button>
+          )}
+        </Box>
+      )}
+
+      {/* Modals */}
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <Box sx={modalStyle}>
           <CreateQuiz onClose={() => setIsModalOpen(false)} classId={classId} />
         </Box>
       </Modal>
 
-      {/* Student Details Modal */}
       <StudentDetailsModal
         student={selectedStudent}
         open={isStudentModalOpen}
         onClose={() => setIsStudentModalOpen(false)}
       />
 
-      {/* Question Details Modal */}
       <QuestionDetailsModal
         quiz={selectedQuiz}
         open={isQuestionModalOpen}
@@ -617,20 +732,19 @@ const QuizManagement = ({ classId }) => {
   );
 };
 
-// Modal style
 const modalStyle = {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  width: "80%",
-  maxWidth: "800px",
-  bgcolor: "background.paper",
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  width: '80%',
+  maxWidth: '1000px',
+  bgcolor: 'background.paper',
   boxShadow: 24,
   p: 4,
-  borderRadius: 2,
-  maxHeight: "90vh",
-  overflowY: "auto",
+  borderRadius: 4,
+  maxHeight: '90vh',
+  overflowY: 'auto',
 };
 
 export default QuizManagement;

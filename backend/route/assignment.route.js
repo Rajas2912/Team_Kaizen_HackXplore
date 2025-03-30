@@ -9,6 +9,10 @@ import {
   updateSubmissionResult,
   getAssignmentsWithSubmissions,
   getAssignmentsWithSubmissionsByAssignmentId,
+  getAssignmentsByStudentId,getStudentAssignmentResult,
+  getSubmissionResult,
+  storeFeedback,
+  getSubmissionFeedback
 } from '../controler/assignment.controler.js'
 import upload from '../middlewares/upload.js'
 import multer from 'multer'
@@ -23,6 +27,8 @@ router.post(
   createAssignment
 )
 
+router.get('/result/:assignmentId/:studentId', getSubmissionResult);
+
 // Get assignments by class ID
 router.get('/class/:classId', getAssignmentsByClass)
 
@@ -36,6 +42,8 @@ const storage = multer.diskStorage({
   },
 })
 
+
+
 // Initialize Multer with the storage engine
 const upload2 = multer({ storage: storage })
 
@@ -48,6 +56,15 @@ router.post(
 
 // Get submissions for an assignment
 router.get('/submissions/:assignmentId', getSubmissions)
+
+router.get('/getStudentAssignmentResult', getStudentAssignmentResult)
+
+
+router.post('/store-feedback', storeFeedback);
+
+// Get feedback for a specific submission
+router.get('/feedback/:assignmentId/:studentId', getSubmissionFeedback);
+
 
 // Update an assignment (with file uploads)
 router.put(
@@ -70,5 +87,10 @@ router.get(
   '/teacher/assignment/:assignmentId',
   getAssignmentsWithSubmissionsByAssignmentId
 )
+
+// get result of assignement using studentid 
+router.get('/:studentId',getAssignmentsByStudentId);
+
+
 
 export default router

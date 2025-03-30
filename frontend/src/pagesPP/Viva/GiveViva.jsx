@@ -31,6 +31,8 @@ const Interview = () => {
   const [isVivaEnded, setIsVivaEnded] = useState(false);
   const [reportReady, setReportReady] = useState(false); // New state to track report readiness
   const [report, setReport] = useState(null);
+  const[askQuestion,setAskQuestion]=useState(0);
+  const [questionsAsked, setQuestionsAsked] = useState(0); // Track the number of questions asked
 
   const { vivaId } = useParams();
   const { userInfo } = useSelector((state) => state.user); // Access user role from Redux
@@ -43,8 +45,6 @@ const Interview = () => {
   // Speech synthesis function with audio recording
   const speakText = async (text, rate = 0.95) => {
     try {
-     
-  
       // Make a POST request to the backend API
       const response = await fetch("http://127.0.0.1:5000/generate_speech", {
         method: "POST",
@@ -68,9 +68,6 @@ const Interview = () => {
         for (let i = 0; i < byteCharacters.length; i++) {
           byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
-        setCurrentQuestion(text); // Now safe to access
-        setQuestionload(false);
-        setStarted(true);
         const byteArray = new Uint8Array(byteNumbers);
         const audioBlob = new Blob([byteArray], { type: "audio/mp3" });
   
@@ -81,7 +78,7 @@ const Interview = () => {
         const audio = new Audio(audioUrl);
         audio.play();
   
-        // Optional: Handle audio events (e.g., when playback ends)
+        // Handle audio events (e.g., when playback ends)
         audio.addEventListener("ended", () => {
           setTimer(timeofthinking * 60);
           setMicOn(true);
@@ -89,15 +86,25 @@ const Interview = () => {
           console.log("Audio playback finished.");
           URL.revokeObjectURL(audioUrl); // Clean up the object URL
         });
-      } else {
-        const synth = window.speechSynthesis;
-        synth.cancel(); // Cancel any ongoing speech
-        setCurrentQuestion(text); // Now safe to access
+  
+        // Update state
+        setCurrentQuestion(text);
+        setQuestionload(false);
         setStarted(true);
+      } else {
+        throw new Error("No speech data received from the API");
+      }
+    } catch (error) {
+      console.error("Error with API call or speech synthesis:", error);
+  
+      // Fallback to browser's speech synthesis
+      const synth = window.speechSynthesis;
+      if (synth) {
+        synth.cancel(); // Cancel any ongoing speech
   
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = "hi-IN";
-        utterance.rate = rate; // Ensure `rate` is defined (see below)
+        utterance.rate = rate;
   
         utterance.onend = () => {
           setTimer(timeofthinking * 60);
@@ -109,60 +116,20 @@ const Interview = () => {
           console.error("Speech synthesis error:", event);
           setMicOn(false);
         };
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      const synth = window.speechSynthesis;
-      synth.cancel(); // Cancel any ongoing speech
-      setCurrentQuestion(text); // Now safe to access
-      setStarted(true);
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "hi-IN";
-      utterance.rate = rate; // Ensure `rate` is defined (see below)
   
-      utterance.onend = () => {
-        setTimer(timeofthinking * 60);
-        setMicOn(true);
-        startAudioRecording();
-      };
+        synth.speak(utterance);
   
-      utterance.onerror = (event) => {
-        console.error("Speech synthesis error:", event);
+        // Update state
+        setCurrentQuestion(text);
+        setQuestionload(false);
+        setStarted(true);
+      } else {
+        console.error("Speech synthesis is not supported in this browser.");
         setMicOn(false);
-      };
-    }
-    finally{
-      text="";
+      }
     }
   };
 
-  // // Speech synthesis function with audio recording
-  // const speakText = (text, rate = 0.95) => {
-  //   const synth = window.speechSynthesis;
-  //   synth.cancel(); // Cancel any ongoing speech
-
-  //   const utterance = new SpeechSynthesisUtterance(text);
-  //   utterance.lang = "hi-IN";
-  //   utterance.rate = rate;
-
-  //   utterance.onend = () => {
-  //     setTimer(timeofthinking*60);
-  //     setMicOn(true);
-  //     startAudioRecording();
-  //   };
-
-  //   utterance.onerror = (event) => {
-  //     console.error("Speech synthesis error:", event);
-  //     setMicOn(false);
-  //   };
-
-  //   try {
-  //     synth.speak(utterance);
-  //   } catch (error) {
-  //     console.error("Failed to start speech synthesis:", error);
-  //     setMicOn(false);
-  //   }
-  // };
 
   // Start audio recording
   const startAudioRecording = () => {
@@ -235,9 +202,11 @@ const Interview = () => {
   const fetchQuestionSet = async () => {
     try {
       const response = await axios.get(`${API}/viva/getOneViva/${vivaId}`);
+      console.log(response.data)
       setQuestionSet(response.data.questionAnswerSet);
       setRemainingQuestions(response.data.questionAnswerSet); // Initialize remaining questions
       setTimeOfThinking(response.data.timeofthinking);
+      setAskQuestion(response.data.numberOfQuestionsToAsk);
     } catch (error) {
       console.error("Error Fetching viva:", error);
     }
@@ -254,14 +223,16 @@ const Interview = () => {
 
   // Select a random question from remaining questions
   const selectNextQuestion = () => {
-    if (isVivaEnded) {
-      return; // Do not fetch new questions if the viva has ended
-    }
+      if (isVivaEnded || questionsAsked >= askQuestion) {
+        handleAgree(); // End the viva if the limit is reached
+        return;
+      }
 
-    if (remainingQuestions.length === 0) {
-      handleAgree();
-      return;
-    }
+
+  if (remainingQuestions.length === 0) {
+    handleAgree(); // End the viva if no more questions are left
+    return;
+  }
     
     const randomIndex = Math.floor(Math.random() * remainingQuestions.length);
     const selectedQuestion = remainingQuestions[randomIndex];
@@ -340,27 +311,6 @@ const Interview = () => {
     speechSynthesis.cancel();
     setCurrentQuestion("Successfully completed Viva!");
     setIsVivaEnded(true); // Mark the viva as ended
-
-    // // Save viva results to the database
-    // try {
-    //   const response = await axios.post(`${API}/vivaresult/addvivaresult`, {
-    //     vivaId,
-    //     studentId: userInfo?._id,
-    //     studentName: userInfo?.name,
-    //     totalQuestions: questionSet?.length,
-    //     questionAnswerSet:qHistory, // All Gemini API responses
-    //     dateOfViva: Date.now(),
-    //     proctoredFeedback: report?.allDetectedObjects,
-    //   });
-
-    //   if (response.status === 200) {
-    //     navigate("/viva-end", { state: { qHistory } }); // Pass qHistory to the end screen
-    //   } else {
-    //     console.error("Failed to save viva results:", response.data);
-    //   }
-    // } catch (error) {
-    //   console.error("Error saving viva results:", error);
-    // }
   };
 
   // Effect to save results once the report is ready
@@ -427,32 +377,61 @@ const Interview = () => {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        height: "100vh",
-        padding: 2,
+        minHeight: "100vh",
+        padding: 3,
+        backgroundColor: "#f5f7fa",
       }}
     >
       <Paper
         sx={{
-          backgroundColor: "primary.light",
-          borderRadius: 2,
-          padding: 2,
+          backgroundColor: "white",
+          borderRadius: "12px",
+          padding: 3,
           width: "100%",
-          maxWidth: "1200px",
+          maxWidth: "1400px",
+          boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.08)",
         }}
       >
-        <Box sx={{ display: "flex", justifyContent: "flex-end", padding: 1 }}>
+        {/* Header with End Viva Button */}
+        <Box sx={{ 
+          display: "flex", 
+          justifyContent: "flex-end", 
+          mb: 2,
+          position: "relative",
+          "&:after": {
+            content: '""',
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: "1px",
+            backgroundColor: "#e0e0e0"
+          }
+        }}>
           {started && (
             <Button
               variant="contained"
               color="error"
               endIcon={<CallEndIcon />}
               onClick={endViva}
-              sx={{ fontSize: "12px", padding: "7px 7px" }}
+              sx={{ 
+                fontSize: "14px", 
+                padding: "8px 16px",
+                borderRadius: "8px",
+                textTransform: "none",
+                fontWeight: 500,
+                boxShadow: "none",
+                "&:hover": {
+                  boxShadow: "none",
+                  backgroundColor: "#d32f2f"
+                }
+              }}
             >
               End Viva
             </Button>
           )}
         </Box>
+  
         <AlertAgreeDisagree
           open={openDialog}
           title="End Viva Confirmation"
@@ -462,11 +441,14 @@ const Interview = () => {
           onConfirm={handleAgree}
           onCancel={handleDisagree}
         />
+  
+        {/* Main Content Grid */}
         <Box
           sx={{
             display: "grid",
-            gridTemplateColumns: { xs: "1fr", sm: "45% 55%", md: "35% 65%" },
-            gap: 2,
+            gridTemplateColumns: { xs: "1fr", sm: "1fr", md: "40% 60%" },
+            gap: 3,
+            mt: 2
           }}
         >
           {/* Video Column */}
@@ -475,19 +457,23 @@ const Interview = () => {
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              backgroundColor: "white",
-              borderRadius: 2,
-              boxShadow: 3,
+              backgroundColor: "#f8f9fa",
+              borderRadius: "12px",
+              boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
+              padding: 2,
+              minHeight: "400px",
+              border: "1px solid #e9ecef"
             }}
           >
             <Video_analysis
               endVideo={endVideo}
               onAnalysisComplete={(report) => {
                 setReport(report);
-                setReportReady(true); // Set report as ready
+                setReportReady(true);
               }}
             />
           </Box>
+  
           {/* Content Column */}
           <Box
             sx={{
@@ -495,55 +481,88 @@ const Interview = () => {
               flexDirection: "column",
               justifyContent: "space-between",
               backgroundColor: "white",
-              borderRadius: 2,
-              padding: 2,
-              border: "1px solid",
-              borderColor: "primary.main",
+              borderRadius: "12px",
+              padding: 3,
+              border: "1px solid #e9ecef",
+              boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)"
             }}
           >
             {/* Question Display */}
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
-                Question Displayed here:
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  fontWeight: 600, 
+                  mb: 2,
+                  color: "#212121",
+                  fontSize: "1.1rem"
+                }}
+              >
+                Current Question
               </Typography>
               <Box
                 sx={{
-                  backgroundColor: "grey.100",
-                  borderRadius: 1,
-                  padding: 1,
-                  maxHeight: "200px",
+                  backgroundColor: "#f8f9fa",
+                  borderRadius: "8px",
+                  padding: 2,
+                  minHeight: "200px",
+                  maxHeight: "250px",
                   overflowY: "auto",
+                  border: "1px solid #e0e0e0"
                 }}
               >
                 {questionload ? (
                   <Box>
-                    <Skeleton animation="wave" height={22} variant="text" />
-                    <Skeleton animation="wave" height={22} width="90%" />
-                    <Skeleton animation="wave" height={22} width="80%" />
+                    <Skeleton animation="wave" height={24} variant="text" width="95%" />
+                    <Skeleton animation="wave" height={24} variant="text" width="85%" />
+                    <Skeleton animation="wave" height={24} variant="text" width="90%" />
                   </Box>
                 ) : (
-                  <Typography variant="body1" sx={{ color: "black" }}>
-                    {c_question || "Click on start button to start viva"}
+                  <Typography 
+                    variant="body1" 
+                    sx={{ 
+                      color: "#424242",
+                      lineHeight: 1.6,
+                      fontSize: "1rem"
+                    }}
+                  >
+                    {c_question || "Click the Start Viva button to begin your session"}
                   </Typography>
                 )}
               </Box>
             </Box>
+  
             {/* Buttons and Timer */}
             {!loadendViva && (
-              <Box sx={{ mt: 2 }}>
+              <Box sx={{ mt: 3 }}>
                 <Box
                   sx={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: 2
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                     {!started ? (
                       <Button
                         variant="contained"
-                        color="success"
                         onClick={startViva}
+                        sx={{
+                          backgroundColor: "#1976d2",
+                          color: "white",
+                          borderRadius: "8px",
+                          padding: "10px 24px",
+                          textTransform: "none",
+                          fontWeight: 500,
+                          fontSize: "0.9rem",
+                          boxShadow: "none",
+                          "&:hover": {
+                            backgroundColor: "#1565c0",
+                            boxShadow: "none"
+                          }
+                        }}
                       >
                         Start Viva
                       </Button>
@@ -553,50 +572,68 @@ const Interview = () => {
                           onClick={handleNextQuestion}
                           endIcon={<MicIcon />}
                           variant="contained"
-                          color={micOn ? "secondary" : "primary"}
-                          sx={{ fontSize: "12px", padding: "7px 7px" }}
+                          color="primary"
+                          sx={{ 
+                            fontSize: "0.9rem", 
+                            padding: "10px 16px",
+                            borderRadius: "8px",
+                            textTransform: "none",
+                            fontWeight: 500,
+                            boxShadow: "none",
+                            "&:hover": {
+                              boxShadow: "none"
+                            }
+                          }}
                         >
                           Next Question
                         </Button>
                       )
                     )}
                   </Box>
+  
                   {/* Timer */}
                   {started && (
-                    <Box sx={{ display: "flex", gap: 1 }}>
+                    <Box sx={{ 
+                      display: "flex", 
+                      gap: 1,
+                      backgroundColor: "#263238",
+                      borderRadius: "8px",
+                      padding: "8px 12px"
+                    }}>
                       <Box
                         sx={{
                           display: "flex",
                           flexDirection: "column",
                           alignItems: "center",
-                          backgroundColor: "grey.800",
                           color: "white",
-                          borderRadius: 1,
-                          padding: 1,
+                          minWidth: "50px"
                         }}
                       >
-                        <Typography variant="h6">
-                          {Math.floor(timer / 60)
-                            .toString()
-                            .padStart(2, "0")}
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                          {Math.floor(timer / 60).toString().padStart(2, "0")}
                         </Typography>
-                        <Typography variant="caption">min</Typography>
+                        <Typography variant="caption" sx={{ color: "#b0bec5" }}>
+                          min
+                        </Typography>
                       </Box>
+                      <Typography variant="h6" sx={{ color: "white", alignSelf: "center" }}>
+                        :
+                      </Typography>
                       <Box
                         sx={{
                           display: "flex",
                           flexDirection: "column",
                           alignItems: "center",
-                          backgroundColor: "grey.800",
                           color: "white",
-                          borderRadius: 1,
-                          padding: 1,
+                          minWidth: "50px"
                         }}
                       >
-                        <Typography variant="h6">
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
                           {(timer % 60).toString().padStart(2, "0")}
                         </Typography>
-                        <Typography variant="caption">sec</Typography>
+                        <Typography variant="caption" sx={{ color: "#b0bec5" }}>
+                          sec
+                        </Typography>
                       </Box>
                     </Box>
                   )}

@@ -1,0 +1,682 @@
+import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import {
+  Box,
+  Typography,
+  Chip,
+  Button,
+  Avatar,
+  Paper,
+  Divider,
+  Snackbar,
+  Alert,
+  CircularProgress,
+  TextField,
+  IconButton,
+  Tooltip,
+  Grid,
+  Tabs,
+  Tab,
+  Badge,
+  Card,
+  CardContent,
+  CardActions,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText
+} from '@mui/material';
+import {
+  AddCircleOutline,
+  CheckCircle,
+  Save,
+  AutoAwesome,
+  Close,
+  Add,
+  Search,
+  HelpOutline,
+  Person,
+  ListAlt,
+  HourglassEmpty,
+  Done,
+  Clear,
+  Mail,
+  Chat,
+  GitHub
+} from '@mui/icons-material';
+
+const API_BASE_URL = 'http://localhost:4001/api';
+
+const PREDEFINED_EXPERTISE = [
+  'Machine Learning',
+  'Artificial Intelligence',
+  'Web Development',
+  'Data Science',
+  'JavaScript',
+  'Python',
+  'React',
+  'Node.js',
+  'Deep Learning',
+  'Cloud Computing',
+  'Computer Vision',
+  'Natural Language Processing',
+  'Cybersecurity',
+  'DevOps',
+  'Mobile Development'
+].sort();
+
+const TeacherExpertisePage = () => {
+  const { userInfo } = useSelector((state) => state.user);
+  const [savedExpertise, setSavedExpertise] = useState([]);
+  const [selectedExpertise, setSelectedExpertise] = useState([]);
+  const [customExpertise, setCustomExpertise] = useState('');
+  const [loading, setLoading] = useState({ 
+    fetch: false, 
+    save: false,
+    profile: false,
+    requests: false
+  });
+  const [snackbar, setSnackbar] = useState({ 
+    open: false, 
+    message: '', 
+    severity: 'success' 
+  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState(0);
+  const [requests, setRequests] = useState([]);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
+  const [teacherFeedback, setTeacherFeedback] = useState('');
+
+  // Ensure teacher profile exists
+  const ensureTeacherProfile = async () => {
+    if (!userInfo?._id) return;
+    
+    try {
+      setLoading(prev => ({ ...prev, profile: true }));
+      
+      const response = await fetch(`${API_BASE_URL}/teacher/profile`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ userId: userInfo._id })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to verify teacher profile');
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Profile error:', error);
+      showSnackbar(error.message, 'error');
+      return null;
+    } finally {
+      setLoading(prev => ({ ...prev, profile: false }));
+    }
+  };
+
+  // Fetch existing expertise
+  const fetchExpertise = async () => {
+    try {
+      setLoading(prev => ({ ...prev, fetch: true }));
+      
+      const profileData = await ensureTeacherProfile();
+      if (!profileData) return;
+      
+      const response = await fetch(`${API_BASE_URL}/teacher/expertise`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to load expertise');
+      }
+      
+      const data = await response.json();
+      setSavedExpertise(data.expertise || []);
+      setSelectedExpertise(data.expertise || []);
+    } catch (error) {
+      console.error('Fetch error:', error);
+      showSnackbar(error.message, 'error');
+    } finally {
+      setLoading(prev => ({ ...prev, fetch: false }));
+    }
+  };
+
+  // Fetch project requests for teacher
+  const fetchProjectRequests = async () => {
+    try {
+      setLoading(prev => ({ ...prev, requests: true }));
+      
+      const response = await fetch(`${API_BASE_URL}/project-requests/teacher`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to load requests');
+      }
+      
+      const data = await response.json();
+      setRequests(data.data || []);
+    } catch (error) {
+      console.error('Error fetching requests:', error);
+      showSnackbar(error.message, 'error');
+    } finally {
+      setLoading(prev => ({ ...prev, requests: false }));
+    }
+  };
+
+  useEffect(() => {
+    fetchExpertise();
+  }, [userInfo?._id]);
+
+  useEffect(() => {
+    if (activeTab === 1) {
+      fetchProjectRequests();
+    }
+  }, [activeTab]);
+
+  const showSnackbar = (message, severity = 'error') => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
+  const handleExpertiseToggle = (expertise) => {
+    setSelectedExpertise(prev => 
+      prev.includes(expertise)
+        ? prev.filter(item => item !== expertise)
+        : [...prev, expertise]
+    );
+  };
+
+  const handleAddCustomExpertise = () => {
+    const trimmedExpertise = customExpertise.trim();
+    if (trimmedExpertise && !selectedExpertise.includes(trimmedExpertise)) {
+      setSelectedExpertise(prev => [...prev, trimmedExpertise]);
+      setCustomExpertise('');
+      showSnackbar(`${trimmedExpertise} added to your expertise`, 'success');
+    }
+  };
+
+  const handleRemoveExpertise = (expertise) => {
+    setSelectedExpertise(prev => prev.filter(item => item !== expertise));
+    showSnackbar(`${expertise} removed from your expertise`, 'info');
+  };
+
+  const handleSave = async () => {
+    try {
+      setLoading(prev => ({ ...prev, save: true }));
+      
+      const response = await fetch(`${API_BASE_URL}/teacher/expertise`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ expertise: selectedExpertise }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save expertise');
+      }
+      
+      const data = await response.json();
+      setSavedExpertise(data.expertise || []);
+      showSnackbar('Expertise updated successfully!', 'success');
+    } catch (error) {
+      console.error('Save failed:', error);
+      showSnackbar(error.message, 'error');
+      setSelectedExpertise(savedExpertise);
+    } finally {
+      setLoading(prev => ({ ...prev, save: false }));
+    }
+  };
+
+  const handleRequestAction = async (status) => {
+    try {
+      setLoading(prev => ({ ...prev, save: true }));
+      
+      const response = await fetch(`${API_BASE_URL}/project-requests/${selectedRequest._id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ 
+          status,
+          feedback: teacherFeedback 
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update request');
+      }
+      
+      const data = await response.json();
+      setRequests(prev => prev.map(req => 
+        req._id === selectedRequest._id ? data.data : req
+      ));
+      showSnackbar(`Request ${status} successfully!`, 'success');
+      setFeedbackDialogOpen(false);
+      setTeacherFeedback('');
+    } catch (error) {
+      console.error('Update failed:', error);
+      showSnackbar(error.message, 'error');
+    } finally {
+      setLoading(prev => ({ ...prev, save: false }));
+    }
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'pending':
+        return <Chip label="Pending" color="warning" icon={<HourglassEmpty />} />;
+      case 'accepted':
+        return <Chip label="Accepted" color="success" icon={<Done />} />;
+      case 'rejected':
+        return <Chip label="Rejected" color="error" icon={<Clear />} />;
+      default:
+        return <Chip label={status} />;
+    }
+  };
+
+  const hasChanges = 
+    savedExpertise.length !== selectedExpertise.length || 
+    !savedExpertise.every(item => selectedExpertise.includes(item)) ||
+    !selectedExpertise.every(item => savedExpertise.includes(item));
+
+  const filteredExpertise = PREDEFINED_EXPERTISE.filter(item =>
+    item.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const pendingRequestsCount = requests.filter(r => r.status === 'pending').length;
+
+  if (loading.profile) {
+    return (
+      <Box className="min-h-screen flex items-center justify-center">
+        <CircularProgress size={60} />
+      </Box>
+    );
+  }
+
+  return (
+    <Box className="min-h-screen bg-gray-50 py-8">
+      <Box className="container mx-auto px-4 max-w-6xl">
+        <Paper elevation={2} className="p-6 rounded-xl">
+          {/* Header Section */}
+          <Box className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <Box className="flex items-center">
+              <AutoAwesome className="text-indigo-600 mr-3" fontSize="large" />
+              <Box>
+                <Typography variant="h4" className="text-gray-900 font-bold">
+                  Teacher Dashboard
+                </Typography>
+                <Typography className="text-gray-600">
+                  Manage your expertise and student requests
+                </Typography>
+              </Box>
+            </Box>
+            <Button
+              variant="contained"
+              startIcon={<Save />}
+              onClick={handleSave}
+              disabled={!hasChanges || loading.save}
+              className="bg-indigo-600 hover:bg-indigo-700 shadow-lg transition-all"
+              sx={{
+                minWidth: 150,
+                '&:disabled': {
+                  backgroundColor: 'rgb(224, 231, 255)',
+                  color: 'rgb(99, 102, 241)'
+                }
+              }}
+            >
+              {loading.save ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Save Changes'
+              )}
+            </Button>
+          </Box>
+
+          <Tabs 
+            value={activeTab} 
+            onChange={(e, newValue) => setActiveTab(newValue)}
+            className="mb-6"
+          >
+            <Tab label="Expertise Management" icon={<AutoAwesome />} />
+            <Tab label={
+              <Badge badgeContent={pendingRequestsCount} color="primary">
+                <span>Student Requests</span>
+              </Badge>
+            } icon={<Mail />} />
+          </Tabs>
+
+          {activeTab === 0 ? (
+            <Grid container spacing={4}>
+              {/* Current Expertise Section */}
+              <Grid item xs={12} md={6}>
+                <Box className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 h-full">
+                  <Box className="flex items-center justify-between mb-4">
+                    <Typography variant="h6" className="text-gray-800 font-medium">
+                      Your Expertise Areas
+                    </Typography>
+                    <Tooltip title="These will be visible to students">
+                      <HelpOutline className="text-gray-400" />
+                    </Tooltip>
+                  </Box>
+                  
+                  {loading.fetch ? (
+                    <Box className="flex justify-center py-8">
+                      <CircularProgress />
+                    </Box>
+                  ) : selectedExpertise.length === 0 ? (
+                    <Box className="text-center py-6">
+                      <Typography className="text-gray-400 italic mb-2">
+                        No expertise selected yet
+                      </Typography>
+                      <Typography className="text-gray-500 text-sm">
+                        Add your expertise below to get started
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box className="flex flex-wrap gap-2">
+                      {selectedExpertise.map((item) => (
+                        <Chip
+                          key={item}
+                          label={item}
+                          onDelete={() => handleRemoveExpertise(item)}
+                          className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-all"
+                          deleteIcon={
+                            <Tooltip title="Remove">
+                              <Close className="text-indigo-500 hover:text-indigo-700" fontSize="small" />
+                            </Tooltip>
+                          }
+                          avatar={
+                            <Avatar className="bg-indigo-100 w-6 h-6">
+                              <CheckCircle className="text-indigo-500" fontSize="small" />
+                            </Avatar>
+                          }
+                        />
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+              </Grid>
+
+              {/* Add Expertise Section */}
+              <Grid item xs={12} md={6}>
+                <Box className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 h-full">
+                  <Typography variant="h6" className="text-gray-800 font-medium mb-4">
+                    Add New Expertise
+                  </Typography>
+                  
+                  {/* Custom Expertise Input */}
+                  <Box className="mb-6">
+                    <Typography className="text-gray-600 mb-2">
+                      Add custom expertise
+                    </Typography>
+                    <Box className="flex gap-2 items-center">
+                      <TextField
+                        fullWidth
+                        variant="outlined"
+                        size="small"
+                        placeholder="e.g., Computer Vision"
+                        value={customExpertise}
+                        onChange={(e) => setCustomExpertise(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleAddCustomExpertise()}
+                        className="flex-1"
+                      />
+                      <Button
+                        variant="contained"
+                        startIcon={<Add />}
+                        onClick={handleAddCustomExpertise}
+                        disabled={!customExpertise.trim()}
+                        className="bg-indigo-600 hover:bg-indigo-700"
+                        size="small"
+                      >
+                        Add
+                      </Button>
+                    </Box>
+                  </Box>
+
+                  {/* Suggested Expertise */}
+                  <Box>
+                    <Box className="flex items-center justify-between mb-3">
+                      <Typography className="text-gray-600">
+                        Suggested expertise areas
+                      </Typography>
+                      <TextField
+                        variant="outlined"
+                        size="small"
+                        placeholder="Search..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        InputProps={{
+                          startAdornment: <Search className="text-gray-400 mr-1" />,
+                          sx: { borderRadius: 2 }
+                        }}
+                        sx={{ width: 200 }}
+                      />
+                    </Box>
+                    
+                    {filteredExpertise.length === 0 ? (
+                      <Typography className="text-gray-400 italic text-center py-4">
+                        No matching expertise found
+                      </Typography>
+                    ) : (
+                      <Box className="flex flex-wrap gap-2 max-h-64 overflow-y-auto p-2">
+                        {filteredExpertise.map((item) => (
+                          <Chip
+                            key={item}
+                            label={item}
+                            onClick={() => handleExpertiseToggle(item)}
+                            className={`transition-all cursor-pointer ${
+                              selectedExpertise.includes(item)
+                                ? 'bg-indigo-100 text-indigo-700'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                            avatar={
+                              <Avatar className={
+                                selectedExpertise.includes(item)
+                                  ? 'bg-indigo-200'
+                                  : 'bg-gray-200'
+                              }>
+                                {selectedExpertise.includes(item)
+                                  ? <CheckCircle className="text-indigo-600" fontSize="small" />
+                                  : <AddCircleOutline className="text-gray-500" fontSize="small" />
+                                }
+                              </Avatar>
+                            }
+                          />
+                        ))}
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+              </Grid>
+            </Grid>
+          ) : (
+            <Box>
+              <Typography variant="h6" className="text-gray-800 mb-4">
+                Student Project Requests
+              </Typography>
+              
+              {loading.requests ? (
+                <Box className="flex justify-center py-12">
+                  <CircularProgress size={60} />
+                </Box>
+              ) : requests.length === 0 ? (
+                <Box className="text-center py-8">
+                  <Typography className="text-gray-500">
+                    No project requests found
+                  </Typography>
+                </Box>
+              ) : (
+                <Grid container spacing={3}>
+                  {requests.map((request) => (
+                    <Grid item xs={12} key={request._id}>
+                      <Card className="hover:shadow-lg transition-shadow">
+                        <CardContent>
+                          <Box className="flex justify-between items-start">
+                            <Box>
+                              <Typography variant="h6" className="font-medium">
+                                {request.subject}
+                              </Typography>
+                              <Typography variant="body2" className="text-gray-600 mb-2">
+                                From: {request.student?.name || 'Unknown Student'}
+                              </Typography>
+                              {request.githubRepo && (
+                                <Button
+                                  size="small"
+                                  startIcon={<GitHub />}
+                                  href={request.githubRepo}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="mb-2"
+                                >
+                                  View Repository
+                                </Button>
+                              )}
+                              {request.studentMessage && (
+                                <Typography variant="body2" className="text-gray-700 mb-2">
+                                  {request.studentMessage}
+                                </Typography>
+                              )}
+                            </Box>
+                            <Box>
+                              {getStatusBadge(request.status)}
+                            </Box>
+                          </Box>
+                        </CardContent>
+                        <CardActions className="justify-end">
+                          {request.status === 'pending' && (
+                            <>
+                              <Button
+                                size="small"
+                                color="success"
+                                startIcon={<CheckCircle />}
+                                onClick={() => {
+                                  setSelectedRequest(request);
+                                  setFeedbackDialogOpen(true);
+                                }}
+                              >
+                                Accept
+                              </Button>
+                              <Button
+                                size="small"
+                                color="error"
+                                startIcon={<Clear />}
+                                onClick={() => {
+                                  setSelectedRequest(request);
+                                  setFeedbackDialogOpen(true);
+                                }}
+                              >
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                          {request.status !== 'pending' && request.teacherFeedback && (
+                            <Typography variant="body2" className="text-gray-700">
+                              <strong>Your feedback:</strong> {request.teacherFeedback}
+                            </Typography>
+                          )}
+                        </CardActions>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </Box>
+          )}
+        </Paper>
+      </Box>
+
+      {/* Feedback Dialog */}
+      <Dialog
+        open={feedbackDialogOpen}
+        onClose={() => setFeedbackDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>
+          {selectedRequest?.status === 'pending' ? 'Respond to Request' : 'Request Feedback'}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText className="mb-4">
+            {selectedRequest?.status === 'pending' 
+              ? `Please provide feedback for ${selectedRequest?.student?.name}'s project request.`
+              : `Update your feedback for ${selectedRequest?.student?.name}'s project.`}
+          </DialogContentText>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Your Feedback"
+            type="text"
+            fullWidth
+            variant="outlined"
+            multiline
+            rows={4}
+            value={teacherFeedback}
+            onChange={(e) => setTeacherFeedback(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setFeedbackDialogOpen(false)}>Cancel</Button>
+          {selectedRequest?.status === 'pending' && (
+            <>
+              <Button 
+                onClick={() => handleRequestAction('rejected')}
+                color="error"
+                disabled={loading.save}
+              >
+                {loading.save ? <CircularProgress size={24} /> : 'Reject'}
+              </Button>
+              <Button 
+                onClick={() => handleRequestAction('accepted')}
+                color="success"
+                disabled={loading.save}
+              >
+                {loading.save ? <CircularProgress size={24} /> : 'Accept'}
+              </Button>
+            </>
+          )}
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+          elevation={6}
+          variant="filled"
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
+};
+
+export default TeacherExpertisePage;

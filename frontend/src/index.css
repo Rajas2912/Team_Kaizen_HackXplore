@@ -25,3 +25,46 @@
 .css-10egq61 {
   width: 100%;
 }
+@font-face {
+  font-family: "SuissenIntl";
+  src: local("SuissenIntl-Regular"),
+    url("./assets/Fonts/SuisseIntl-Regular.ttf") format("truetype");
+  font-weight: normal;
+}
+
+@font-face {
+  font-family: "Akira";
+  src: local("AkiraExpanded"),
+    url("./assets/Fonts/AkiraExpanded.otf") format("opentype");
+  font-weight: normal;
+}
+@font-face {
+  font-family: "Montserrat-bold";
+  src: local("Montserrat-Bold"),
+    url("./assets/Fonts/Montserrat-Bold.ttf") format("truetype");
+  font-weight: normal;
+}
+@font-face {
+  font-family: "Montserrat-Regular";
+  src: local("Montserrat-Regular"),
+    url("./assets/Fonts/Montserrat-Regular.ttf") format("truetype");
+  font-weight: normal;
+}
+
+@layer components {
+  .doc-button {
+    @apply transition-all duration-300 hover:shadow-lg;
+  }
+  .doc-iframe-container {
+    @apply rounded-lg shadow-xl overflow-hidden border border-gray-200;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

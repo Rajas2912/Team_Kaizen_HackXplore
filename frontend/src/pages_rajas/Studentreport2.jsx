@@ -1,5 +1,8 @@
 import React from 'react';
+import { useState } from "react";
 import { Bar, Pie } from 'react-chartjs-2';
+import { useEffect } from 'react';
+import { BASE_URL } from '../redux/constants';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -9,8 +12,9 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-import { useLocation } from 'react-router-dom';
-
+import { useLocation, useParams } from 'react-router-dom';
+import { useGetSubmissionResultQuery } from '../redux/api/assignmentSlice';
+import { useSelector } from 'react-redux';
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -21,41 +25,84 @@ ChartJS.register(
 );
 
 const Studentreport2 = () => {
-  const location = useLocation();
-  const {
-    results = [], // Default to an empty array
-    totalScore = 0,
-    assignmentTitle = 'Evaluation Report',
-  } = location.state || {};
+  const {assignmentId} = useParams()
+ const location = useLocation();
+  const { studentId } = location.state || {}; // Extract student ID from location state
+const {userInfo} = useSelector(state=>state.user)
+  const [reportData, setReportData] = useState({
+    results: [],
+    totalScore: 0,
+    assignmentTitle: 'Evaluation Report',
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  console.log('Location State:', location.state);
+  useEffect(() => {
+    const fetchReportData = async () => {
+      try {
+        const response = await fetch(`${BASE_URL}/assignments/${studentId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch report data');
+        }
+        const data = await response.json();
+        console.log(data);
 
-  // Ensure results is an array
-  if (!Array.isArray(results)) {
+        // Assuming the backend returns an array of assignments with submissions
+        // Find the specific assignment and extract the results
+        const assignment = data.find((assignment) =>
+          assignment.submissions.some((submission) => submission.studentId === studentId)
+        );
+
+        if (!assignment) {
+          throw new Error('No assignment found for the student');
+        }
+
+        const submission = assignment.submissions.find(
+          (sub) => sub.studentId === studentId
+        );
+
+        if (!submission) {
+          throw new Error('No submission found for the student');
+        }
+
+        setReportData({
+          results: submission.result.results,
+          totalScore: submission.result.total_score,
+          assignmentTitle: assignment.title,
+        });
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (studentId) {
+      fetchReportData();
+    } else {
+      setError('No student ID provided');
+      setLoading(false);
+    }
+  }, [studentId]);
+
+  if (loading) {
     return (
       <div className="mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-lg">
-        <h1 className="text-center text-3xl font-bold text-gray-800">
-          Invalid Report Data
-        </h1>
-        <p className="mt-4 text-center text-gray-600">
-          The report data is not in the expected format.
-        </p>
+        <h1 className="text-center text-3xl font-bold text-gray-800">Loading...</h1>
       </div>
     );
   }
 
-  if (results.length === 0) {
+  if (error) {
     return (
       <div className="mx-auto max-w-4xl rounded-lg bg-white p-6 shadow-lg">
-        <h1 className="text-center text-3xl font-bold text-gray-800">
-          No Report Data Available
-        </h1>
-        <p className="mt-4 text-center text-gray-600">
-          Please complete an assignment to view your report
-        </p>
+        <h1 className="text-center text-3xl font-bold text-gray-800">Error</h1>
+        <p className="mt-4 text-center text-gray-600">{error}</p>
       </div>
     );
   }
+
+  const { results, totalScore, assignmentTitle } = reportData;
 
   // Calculate derived values
   const maxMarks = results.length * 10;
@@ -183,6 +230,10 @@ const Studentreport2 = () => {
                     Student Answer:
                   </span>{' '}
                   {result.answer || 'No answer provided'}
+                </p>
+                <p className="text-sm">
+                  <span className="font-medium text-green-600">Context:</span>{' '}
+                  {result.context?.join(' ') || 'No context available'}
                 </p>
               </div>
             </div>

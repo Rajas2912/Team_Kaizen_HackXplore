@@ -47,8 +47,8 @@ export const getAssignmentsByClass = async (req, res) => {
 export const submitAnswer = async (req, res) => {
   try {
     const { assignmentId, studentId, results, total_score, plagiarismScore } =
-      req.body
-    const answerFile = req.file?.filename // Use filename instead of fileName
+      req.body;
+    const answerFile = req.file?.filename;
 
     const submission = {
       studentId: new mongoose.Types.ObjectId(studentId),
@@ -58,41 +58,51 @@ export const submitAnswer = async (req, res) => {
         total_score,
       },
       plagiarismScore,
-    }
+      feedback: null, // Initialize feedback fields
+      feedbackGeneratedAt: null
+    };
 
-    const assignment = await Assignment.findById(assignmentId)
+    const assignment = await Assignment.findById(assignmentId);
     if (!assignment) {
-      return res.status(404).json({ message: 'Assignment not found' })
+      return res.status(404).json({ message: 'Assignment not found' });
     }
 
-    assignment.submissions.push(submission)
-    await assignment.save()
-    res.status(201).json(assignment)
+    assignment.submissions.push(submission);
+    await assignment.save();
+    res.status(201).json(assignment);
   } catch (error) {
     res
       .status(500)
-      .json({ message: 'Error submitting answer', error: error.message })
+      .json({ message: 'Error submitting answer', error: error.message });
   }
-}
+};
 
 // Get submissions for an assignment
 export const getSubmissions = async (req, res) => {
   try {
-    const { assignmentId } = req.params
+    const { assignmentId } = req.params;
     const assignment = await Assignment.findById(assignmentId).populate(
       'submissions.studentId',
       'name email'
-    )
+    );
     if (!assignment) {
-      return res.status(404).json({ message: 'Assignment not found' })
+      return res.status(404).json({ message: 'Assignment not found' });
     }
-    res.status(200).json(assignment.submissions)
+    
+    // Map submissions to include feedback information
+    const submissionsWithFeedback = assignment.submissions.map(sub => ({
+      ...sub.toObject(),
+      hasFeedback: sub.feedback !== null,
+      feedbackGeneratedAt: sub.feedbackGeneratedAt
+    }));
+    
+    res.status(200).json(submissionsWithFeedback);
   } catch (error) {
     res
       .status(500)
-      .json({ message: 'Error fetching submissions', error: error.message })
+      .json({ message: 'Error fetching submissions', error: error.message });
   }
-}
+};
 
 // Update an assignment
 export const updateAssignment = async (req, res) => {
@@ -216,3 +226,207 @@ export const getAssignmentsWithSubmissionsByAssignmentId = async (req, res) => {
     })
   }
 }
+
+export const getStudentAssignmentResult = async (req, res) => {
+  try {
+    const { studentId, assignmentId } = req.body;
+
+    // Step 1: Find the assignment by assignmentId
+    const assignment = await Assignment.findById(assignmentId);
+
+    if (!assignment) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+
+    // Step 2: Find the submission for the specific student in the assignment
+    const submission = assignment.submissions.find(
+      (sub) => sub.studentId.toString() === studentId
+    );
+
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found for the student' });
+    }
+
+    // Step 3: Return the result of the submission
+    res.status(200).json({
+      assignmentId: assignment._id,
+      studentId: submission.studentId,
+      result: submission.result,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error fetching student assignment result',
+      error: error.message,
+    });
+  }
+};
+
+export const getAssignmentsByStudentId = async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    console.log(studentId)
+    // Step 1: Find all assignments where the submissions array contains the studentId
+    const assignments = await Assignment.find({
+      'submissions.studentId': studentId,
+    });
+
+    if (!assignments || assignments.length === 0) {
+      return res.status(404).json({ message: 'No assignments found for the student' });
+    }
+
+    // Step 2: Fetch class details for each assignment and combine the results
+    const assignmentsWithClassDetails = await Promise.all(
+      assignments.map(async (assignment) => {
+        const classDetails = await Class.findById(assignment.classId); // Fetch class details using classId
+        return {
+          ...assignment.toObject(), // Convert Mongoose document to plain object
+          classDetails: classDetails || null, // Include class details
+        };
+      })
+    );
+
+    res.status(200).json(assignmentsWithClassDetails);
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error fetching assignments with submissions and class details',
+      error: error.message,
+    });
+  }
+};
+export const getSubmissionResult = async (req, res) => {
+  try {
+    const { assignmentId, studentId } = req.params;
+
+    const assignment = await Assignment.findById(assignmentId);
+
+    if (!assignment) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+
+    const submission = assignment.submissions.find(
+      (sub) => sub.studentId.toString() === studentId
+    );
+
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found for the student' });
+    }
+
+    res.status(200).json({
+      assignmentId: assignment._id,
+      studentId: submission.studentId,
+      result: submission.result,
+      assignmentTitle: assignment.title,
+      feedback: submission.feedback, // Include feedback in response
+      feedbackGeneratedAt: submission.feedbackGeneratedAt // Include feedback timestamp
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error fetching submission result',
+      error: error.message,
+    });
+  }
+};
+
+export const storeFeedback = async (req, res) => {
+  try {
+    const { assignmentId, studentId, feedbackData } = req.body;
+
+    const assignment = await Assignment.findOneAndUpdate(
+      {
+        _id: assignmentId,
+        'submissions.studentId': studentId
+      },
+      {
+        $set: {
+          'submissions.$.feedback': feedbackData,
+          'submissions.$.feedbackGeneratedAt': new Date()
+        }
+      },
+      { new: true }
+    );
+
+    if (!assignment) {
+      return res.status(404).json({ message: 'Assignment or submission not found' });
+    }
+
+    res.status(200).json({ 
+      message: 'Feedback stored successfully', 
+      assignment 
+    });
+  } catch (error) {
+    console.error('Error storing feedback:', error);
+    res.status(500).json({ 
+      message: 'Failed to store feedback', 
+      error: error.message 
+    });
+  }
+};
+export const getSubmissionFeedback = async (req, res) => {
+  try {
+    const { assignmentId, studentId } = req.params;
+    
+    // Find the assignment with the matching submission
+    const assignment = await Assignment.findOne({
+      _id: assignmentId,
+      'submissions.studentId': studentId
+    });
+
+    if (!assignment) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+
+    // Manually find the submission
+    const submission = assignment.submissions.find(
+      sub => sub.studentId.toString() === studentId
+    );
+
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' });
+    }
+
+    // Check if results exist in the submission
+    if (!submission.result || !submission.result.results) {
+      return res.status(404).json({ 
+        message: 'No result data found for this submission',
+        results: null
+      });
+    }
+
+    // Handle both stringified JSON and direct object cases
+    let resultsData;
+    if (typeof submission.result.results === 'string') {
+      try {
+        // Parse the outer JSON string
+        const parsedResults = JSON.parse(submission.result.results);
+        // Some results are stored as stringified JSON within the results array
+        resultsData = Array.isArray(parsedResults.results) 
+          ? parsedResults.results 
+          : parsedResults;
+      } catch (parseError) {
+        console.error('Error parsing results:', parseError);
+        return res.status(500).json({
+          message: 'Error parsing result data',
+          error: parseError.message
+        });
+      }
+    } else {
+      resultsData = submission.result.results;
+    }
+
+    // Ensure we're returning the actual results array
+    const finalResults = Array.isArray(resultsData) ? resultsData : [resultsData];
+
+    res.status(200).json({
+      message: 'Results retrieved successfully',
+      results: finalResults,
+      totalScore: submission.result.total_score
+    });
+
+  } catch (error) {
+    console.error('Error in getSubmissionFeedback:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch submission results', 
+      error: error.message 
+    });
+  }
+};

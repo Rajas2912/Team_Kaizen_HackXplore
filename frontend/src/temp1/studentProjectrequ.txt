@@ -1,0 +1,495 @@
+import React, { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Avatar,
+  Chip,
+  Grid,
+  Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Divider,
+  CircularProgress,
+  Snackbar,
+  Alert,
+  Paper,
+  Tabs,
+  Tab,
+  Badge,
+  List
+} from '@mui/material';
+import {
+  School,
+  Send,
+  Cancel,
+  CheckCircle,
+  GitHub,
+  Search,
+  Person,
+  ListAlt,
+  HourglassEmpty,
+  Done,
+  Close,
+  CalendarToday,
+  Message
+} from '@mui/icons-material';
+
+const API_BASE_URL = 'http://localhost:4001/api';
+
+const StudentProjectRequestPage = () => {
+  const { userInfo } = useSelector((state) => state.user);
+  const [teachers, setTeachers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedTeacher, setSelectedTeacher] = useState(null);
+  const [requestDialogOpen, setRequestDialogOpen] = useState(false);
+  const [projectSubject, setProjectSubject] = useState('');
+  const [description, setDescription] = useState('');
+  const [githubRepo, setGithubRepo] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
+  const [myRequests, setMyRequests] = useState([]);
+  const [requestsLoading, setRequestsLoading] = useState(false);
+
+  // Fetch all teachers (no auth required)
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`${API_BASE_URL}/teachers`);
+        const data = await response.json();
+        if (data.success) {
+          setTeachers(data.teachers);
+        } else {
+          throw new Error(data.message || 'Failed to load teachers');
+        }
+      } catch (error) {
+        console.error('Error fetching teachers:', error);
+        showSnackbar(error.message || 'Failed to load teachers', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTeachers();
+  }, []);
+
+  // Fetch student's project requests when tab changes
+  useEffect(() => {
+    if (activeTab === 1 && userInfo?._id) {
+      fetchMyRequests();
+    }
+  }, [activeTab, userInfo]);
+
+  const fetchMyRequests = async () => {
+    try {
+      setRequestsLoading(true);
+      const response = await fetch(`${API_BASE_URL}/project-requests/student/${userInfo._id}`);
+      const data = await response.json();
+      if (data.success) {
+        setMyRequests(data.data);
+      } else {
+        throw new Error(data.message || 'Failed to load requests');
+      }
+    } catch (error) {
+      console.error('Error fetching requests:', error);
+      showSnackbar(error.message || 'Failed to load requests', 'error');
+    } finally {
+      setRequestsLoading(false);
+    }
+  };
+
+  const showSnackbar = (message, severity = 'error') => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
+
+  const handleRequestClick = (teacher) => {
+    setSelectedTeacher(teacher);
+    setRequestDialogOpen(true);
+  };
+
+  const handleSubmitRequest = async () => {
+    try {
+      setSubmitting(true);
+      
+      if (!projectSubject.trim()) {
+        showSnackbar('Project subject is required', 'error');
+        return;
+      }
+
+      if (!description.trim()) {
+        showSnackbar('Please describe your project', 'error');
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/project-requests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId: userInfo._id,
+          teacherId: selectedTeacher._id,
+          subject: projectSubject,
+          description,
+          githubRepo: githubRepo.trim() || undefined
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to submit request');
+      }
+
+      showSnackbar('Project request sent successfully!', 'success');
+      setRequestDialogOpen(false);
+      setProjectSubject('');
+      setDescription('');
+      setGithubRepo('');
+      fetchMyRequests();
+    } catch (error) {
+      console.error('Error submitting request:', error);
+      showSnackbar(error.message || 'Failed to submit request', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const filteredTeachers = teachers.filter(teacher => {
+    const matchesSearch = teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (teacher.expertise && teacher.expertise.some(e => e.toLowerCase().includes(searchTerm.toLowerCase())));
+    
+    return matchesSearch;
+  });
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'pending': return <HourglassEmpty color="warning" />;
+      case 'accepted': return <Done color="success" />;
+      case 'rejected': return <Close color="error" />;
+      default: return <HourglassEmpty />;
+    }
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Not scheduled';
+    return new Date(dateString).toLocaleString();
+  };
+
+  return (
+    <Box className="min-h-screen bg-gray-50 py-8 px-4">
+      <Box className="max-w-6xl mx-auto">
+        <Paper elevation={2} className="p-6 rounded-xl mb-8">
+          <Typography variant="h4" className="font-bold text-gray-800 mb-2">
+            Project Guidance System
+          </Typography>
+          
+          <Tabs value={activeTab} onChange={handleTabChange} className="mb-6">
+            <Tab label="Find Mentors" icon={<Person />} />
+            <Tab label={
+              <Badge badgeContent={myRequests.filter(r => r.status === 'pending').length} color="primary">
+                <span>My Requests</span>
+              </Badge>
+            } icon={<ListAlt />} />
+          </Tabs>
+
+          {activeTab === 0 ? (
+            <>
+              <Typography className="text-gray-600 mb-6">
+                Browse teachers by their expertise and request guidance for your project
+              </Typography>
+
+              <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="Search teachers or expertise..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: <Search className="text-gray-400 mr-2" />,
+                  sx: { borderRadius: 2 }
+                }}
+                className="mb-6"
+              />
+
+              {loading ? (
+                <Box className="flex justify-center py-12">
+                  <CircularProgress size={60} />
+                </Box>
+              ) : filteredTeachers.length === 0 ? (
+                <Box className="text-center py-8">
+                  <Typography className="text-gray-500">
+                    {searchTerm ? 'No matching teachers found' : 'No teachers available'}
+                  </Typography>
+                </Box>
+              ) : (
+                <Grid container spacing={3}>
+                  {filteredTeachers.map((teacher) => (
+                    <Grid item xs={12} sm={6} md={4} key={teacher._id}>
+                      <Card className="h-full flex flex-col hover:shadow-lg transition-shadow">
+                        <CardContent className="flex-grow">
+                          <Box className="flex items-center mb-4">
+                            <Avatar
+                              src={teacher.profile_pic}
+                              alt={teacher.name}
+                              sx={{ width: 56, height: 56 }}
+                              className="mr-3"
+                            />
+                            <Box>
+                              <Typography variant="h6" className="font-medium">
+                                {teacher.name}
+                              </Typography>
+                              <Typography variant="body2" className="text-gray-500">
+                                {teacher.department || 'Computer Science'}
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          <Divider className="my-3" />
+
+                          <Typography variant="subtitle2" className="mb-2 text-gray-700">
+                            Areas of Expertise:
+                          </Typography>
+                          <Box className="flex flex-wrap gap-2 mb-4">
+                            {teacher.expertise?.slice(0, 5).map((expertise) => (
+                              <Chip
+                                key={expertise}
+                                label={expertise}
+                                size="small"
+                                className="bg-blue-50 text-blue-700"
+                                icon={<School fontSize="small" className="text-blue-500" />}
+                              />
+                            ))}
+                            {teacher.expertise?.length > 5 && (
+                              <Chip
+                                label={`+${teacher.expertise.length - 5} more`}
+                                size="small"
+                                className="bg-gray-100"
+                              />
+                            )}
+                          </Box>
+                        </CardContent>
+                        <Box className="p-3 bg-gray-50">
+                          <Button
+                            fullWidth
+                            variant="contained"
+                            startIcon={<Send />}
+                            onClick={() => handleRequestClick(teacher)}
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            Request Guidance
+                          </Button>
+                        </Box>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </>
+          ) : (
+            <>
+              <Typography className="text-gray-600 mb-6">
+                View the status of your project guidance requests
+              </Typography>
+
+              {requestsLoading ? (
+                <Box className="flex justify-center py-12">
+                  <CircularProgress size={60} />
+                </Box>
+              ) : myRequests.length === 0 ? (
+                <Box className="text-center py-8">
+                  <Typography className="text-gray-500">
+                    You haven't made any requests yet
+                  </Typography>
+                </Box>
+              ) : (
+                <List>
+                  {myRequests.map((request) => (
+                    <Card key={request._id} className="mb-4">
+                      <CardContent>
+                        <Box className="flex justify-between items-start">
+                          <Box>
+                            <Typography variant="h6" className="font-medium">
+                              {request.subject}
+                            </Typography>
+                            <Typography variant="body2" className="text-gray-600">
+                              Mentor: {request.teacher?.name || 'Unknown'}
+                            </Typography>
+                            <Typography variant="body2" className="text-gray-600 mt-1">
+                              Status: 
+                              <Box component="span" className={`ml-2 capitalize 
+                                ${request.status === 'accepted' ? 'text-green-600' : 
+                                  request.status === 'rejected' ? 'text-red-600' : 'text-amber-600'}`}>
+                                {request.status}
+                              </Box>
+                            </Typography>
+                          </Box>
+                          <Box className="flex items-center">
+                            {getStatusIcon(request.status)}
+                          </Box>
+                        </Box>
+
+                        {request.description && (
+                          <Box className="mt-3 p-3 bg-gray-50 rounded">
+                            <Typography variant="subtitle2">Project Description:</Typography>
+                            <Typography>{request.description}</Typography>
+                          </Box>
+                        )}
+
+                        {request.githubRepo && (
+                          <Box className="mt-2">
+                            <Button
+                              size="small"
+                              startIcon={<GitHub />}
+                              href={request.githubRepo}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              View Repository
+                            </Button>
+                          </Box>
+                        )}
+
+                        {request.meetingSchedule && (
+                          <Box className="mt-3 p-3 bg-blue-50 rounded">
+                            <Typography variant="subtitle2" className="flex items-center">
+                              <CalendarToday fontSize="small" className="mr-1" />
+                              Scheduled Meeting:
+                            </Typography>
+                            <Typography>{formatDate(request.meetingSchedule)}</Typography>
+                          </Box>
+                        )}
+
+                        {request.teacherFeedback && (
+                          <Box className="mt-3 p-3 bg-gray-50 rounded">
+                            <Typography variant="subtitle2" className="flex items-center">
+                              <Message fontSize="small" className="mr-1" />
+                              Mentor Feedback:
+                            </Typography>
+                            <Typography>{request.teacherFeedback}</Typography>
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </List>
+              )}
+            </>
+          )}
+        </Paper>
+      </Box>
+
+      <Dialog
+        open={requestDialogOpen}
+        onClose={() => setRequestDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle className="flex items-center">
+          <Avatar src={selectedTeacher?.profile_pic} className="mr-2" />
+          <span>Request Project Guidance</span>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body1" className="mb-4">
+            You're requesting guidance from <strong>{selectedTeacher?.name}</strong>
+          </Typography>
+
+          <TextField
+            fullWidth
+            label="Project Subject *"
+            variant="outlined"
+            value={projectSubject}
+            onChange={(e) => setProjectSubject(e.target.value)}
+            placeholder="e.g., Machine Learning Model for Image Recognition"
+            className="mb-4"
+            required
+          />
+
+          <TextField
+            fullWidth
+            label="Project Description *"
+            variant="outlined"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Describe your project in detail..."
+            className="mb-4"
+            multiline
+            rows={4}
+            required
+          />
+
+          <TextField
+            fullWidth
+            label="GitHub Repository (Optional)"
+            variant="outlined"
+            value={githubRepo}
+            onChange={(e) => setGithubRepo(e.target.value)}
+            placeholder="https://github.com/username/project-repo"
+            className="mb-2"
+            InputProps={{
+              startAdornment: <GitHub className="text-gray-400 mr-2" />
+            }}
+          />
+
+          <Typography variant="body2" className="text-gray-500">
+            You can add the GitHub link later after your request is accepted
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setRequestDialogOpen(false)}
+            startIcon={<Cancel />}
+            className="text-gray-600"
+            disabled={submitting}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmitRequest}
+            startIcon={submitting ? <CircularProgress size={20} /> : <CheckCircle />}
+            variant="contained"
+            className="bg-blue-600 hover:bg-blue-700"
+            disabled={submitting || !projectSubject.trim() || !description.trim()}
+          >
+            {submitting ? 'Sending...' : 'Send Request'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
+};
+
+export default StudentProjectRequestPage;
