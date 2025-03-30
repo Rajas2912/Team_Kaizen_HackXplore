@@ -11,6 +11,7 @@ import {
   AppBar,
   Toolbar
 } from '@mui/material';
+import { Person } from '@mui/icons-material';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import { AutoAwesome } from '@mui/icons-material';
 import { Code } from '@mui/icons-material';
@@ -232,7 +233,21 @@ export default function Main(props) {
             >
               Projects
             </Button>
-
+              
+            <Button
+              startIcon={<Person></Person>}
+              onClick={() => router.navigate('/3d')}
+              sx={{
+                color: 'white',
+                backgroundColor: '#1a1a1a',
+                borderRadius: '10px',
+                px: 3,
+                py: 1,
+                '&:hover': { backgroundColor: '#2a2a2a' },
+              }}
+            >
+              Doubt Support
+            </Button>
             {userInfo?.role === 'teacher' && (
               <Button
                 startIcon={<AutoAwesome />}

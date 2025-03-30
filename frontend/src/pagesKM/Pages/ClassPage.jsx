@@ -52,6 +52,8 @@ import VideoMetting from '../../pagesPP/VideoCall/VideoMetting';
 import SelfStudy from './SelfStudy';
 import { motion } from 'framer-motion';
 import FaceCapture from './RegisterFace';
+import Course from '../../pages_rajas/Course';
+import Mindmap from '../../pages_rajas/Mindmap';
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
 
@@ -99,21 +101,25 @@ const SlideTabs = ({ value, setValue }) => {
         Assignments
       </Tab>
       <Tab setPosition={setPosition} onClick={() => setValue(2)} isActive={value === 2}>
-        Quizzes
+Course Recommendation
       </Tab>
       <Tab setPosition={setPosition} onClick={() => setValue(3)} isActive={value === 3}>
-        Viva Assignment
+Self Study
       </Tab>
       <Tab setPosition={setPosition} onClick={() => setValue(4)} isActive={value === 4}>
-        Community
+        Quizzes
       </Tab>
       <Tab setPosition={setPosition} onClick={() => setValue(5)} isActive={value === 5}>
+        Viva Assignment
+      </Tab>
+      <Tab setPosition={setPosition} onClick={() => setValue(6)} isActive={value === 6}>
+        Community
+      </Tab>
+      <Tab setPosition={setPosition} onClick={() => setValue(7)} isActive={value === 7}>
         Live Meeting
       </Tab>
       {/* Add new Register Face tab */}
-      <Tab setPosition={setPosition} onClick={() => setValue(6)} isActive={value === 6}>
-        Register Face
-      </Tab>
+
       <Cursor position={position} />
     </ul>
   );
@@ -457,27 +463,30 @@ const ClassPage = ({ classId }) => {
       <CustomTabPanel value={value} index={1}>
   <AssignmentPage classId={classId} />
 </CustomTabPanel>
-
 <CustomTabPanel value={value} index={2}>
-  <HomeQuiz classId={classId} />
+          <Course classId={classId}></Course>
 </CustomTabPanel>
 
 <CustomTabPanel value={value} index={3}>
-  <ShowAllViva classId={classId} />
+<SelfStudy></SelfStudy>
 </CustomTabPanel>
 
 <CustomTabPanel value={value} index={4}>
-  <CommunityPage classId={classId} />
+  <HomeQuiz classId={classId} />
 </CustomTabPanel>
 
 <CustomTabPanel value={value} index={5}>
+  <ShowAllViva classId={classId} />
+</CustomTabPanel>
+
+<CustomTabPanel value={value} index={6}>
+  <CommunityPage classId={classId} />
+</CustomTabPanel>
+
+<CustomTabPanel value={value} index={7}>
   <VideoMetting classId={classId} role={userInfo.role} />
 </CustomTabPanel>
 
-{/* Add new Register Face tab panel */}
-<CustomTabPanel value={value} index={6}>
-  <FaceCapture />
-</CustomTabPanel>
 
 {userInfo?.role === 'student' && (
   <CustomTabPanel value={value} index={7}>

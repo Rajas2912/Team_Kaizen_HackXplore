@@ -351,7 +351,7 @@ export const storeFeedback = async (req, res) => {
 
     res.status(200).json({ 
       message: 'Feedback stored successfully', 
-      assignment 
+      feedback:feedbackData 
     });
   } catch (error) {
     console.error('Error storing feedback:', error);
@@ -361,6 +361,49 @@ export const storeFeedback = async (req, res) => {
     });
   }
 };
+
+export const getFeedback = async (req, res) => {
+  try {
+    const { assignmentId, studentId } = req.params;
+    
+    const assignment = await Assignment.findOne({
+      _id: assignmentId
+    }).lean(); // Using lean() for better performance
+
+    if (!assignment) {
+      return res.status(404).json({ message: 'Assignment not found' });
+    }
+
+    // Find the specific submission
+    const submission = assignment.submissions.find(
+      sub => sub.studentId.toString() === studentId
+    );
+
+    if (!submission) {
+      return res.status(404).json({ message: 'Submission not found' });
+    }
+
+    if (!submission.feedback) {
+      return res.status(404).json({ 
+        message: 'No feedback found for this submission',
+        feedback: null
+      });
+    }
+
+    res.status(200).json({
+      message: 'Feedback retrieved successfully',
+      feedback: submission.feedback
+    });
+
+  } catch (error) {
+    console.error('Error getting feedback:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch feedback', 
+      error: error.message 
+    });
+  }
+};
+
 export const getSubmissionFeedback = async (req, res) => {
   try {
     const { assignmentId, studentId } = req.params;
@@ -392,29 +435,41 @@ export const getSubmissionFeedback = async (req, res) => {
       });
     }
 
-    // Handle both stringified JSON and direct object cases
-    let resultsData;
-    if (typeof submission.result.results === 'string') {
-      try {
-        // Parse the outer JSON string
-        const parsedResults = JSON.parse(submission.result.results);
-        // Some results are stored as stringified JSON within the results array
-        resultsData = Array.isArray(parsedResults.results) 
-          ? parsedResults.results 
-          : parsedResults;
-      } catch (parseError) {
-        console.error('Error parsing results:', parseError);
-        return res.status(500).json({
-          message: 'Error parsing result data',
-          error: parseError.message
-        });
-      }
-    } else {
-      resultsData = submission.result.results;
+    let resultsArray;
+    
+    // First parse the outer JSON string if it exists
+    const initialParse = typeof submission.result.results === 'string' 
+      ? JSON.parse(submission.result.results) 
+      : submission.result.results;
+
+    // Then check if the parsed result contains another stringified array
+    if (typeof initialParse.results === 'string') {
+      resultsArray = JSON.parse(initialParse.results);
+    } 
+    // Or if it's already the array we want
+    else if (Array.isArray(initialParse.results)) {
+      resultsArray = initialParse.results;
+    }
+    // Or if it's just a direct array
+    else if (Array.isArray(initialParse)) {
+      resultsArray = initialParse;
+    }
+    // Otherwise use whatever we have
+    else {
+      resultsArray = [initialParse];
     }
 
-    // Ensure we're returning the actual results array
-    const finalResults = Array.isArray(resultsData) ? resultsData : [resultsData];
+    // Ensure all elements in the array are properly parsed
+    const finalResults = resultsArray.map(item => {
+      if (typeof item === 'string') {
+        try {
+          return JSON.parse(item);
+        } catch {
+          return item;
+        }
+      }
+      return item;
+    });
 
     res.status(200).json({
       message: 'Results retrieved successfully',

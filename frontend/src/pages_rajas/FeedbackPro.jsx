@@ -50,11 +50,13 @@ const FeedbackPro = () => {
   const checkForStoredFeedback = async () => {
     try {
       const response = await fetch(`http://localhost:4001/assignment/feedback/${assignmentId}/${studentId}`);
-      // console.log(response);
+      
       if (!response.ok) {
         throw new Error('Failed to fetch stored feedback');
       }
+      
       const data = await response.json();
+      
       if (data.feedback) {
         setStoredFeedback(data.feedback);
         setFeedbackData(data.feedback);
@@ -77,15 +79,15 @@ const FeedbackPro = () => {
         },
         body: new URLSearchParams({ input_string: resultsString }),
       });
-
+  
       if (!parseResponse.ok) {
         const errorText = await parseResponse.text();
         throw new Error(`Failed to parse results: ${errorText}`);
       }
-
+  
       const parsedData = await parseResponse.json();
       const resultsArray = parsedData.results;
-
+  
       setFeedbackLoading(true);
       const feedbackResponse = await fetch('http://localhost:5000/generate-feedback', {
         method: 'POST',
@@ -94,15 +96,14 @@ const FeedbackPro = () => {
         },
         body: JSON.stringify({ results: resultsArray }),
       });
-      console.log(feedbackResponse);
+  
       if (!feedbackResponse.ok) {
         const errorText = await feedbackResponse.text();
         throw new Error(`Failed to fetch feedback: ${errorText}`);
       }
-      console.log(feedbackData);
+  
       const feedbackData = await feedbackResponse.json();
-      
-      // setFeedbackData(feedbackData);
+      console.log(feedbackData);
       return feedbackData;
     } catch (err) {
       console.error("Error in fetchAndParseResults:", err);
@@ -114,7 +115,6 @@ const FeedbackPro = () => {
 
   const storeFeedbackToBackend = async (feedback) => {
     try {
-      console.log(feedbackData);
       const response = await fetch('http://localhost:4001/assignment/store-feedback', {
         method: 'POST',
         headers: {
@@ -132,7 +132,7 @@ const FeedbackPro = () => {
       }
 
       const data = await response.json();
-      setStoredFeedback(feedback);
+      setStoredFeedback(data.feedback);
       setSnackbar({
         open: true,
         message: 'Feedback saved successfully!',
@@ -179,12 +179,14 @@ const FeedbackPro = () => {
         // If no stored feedback, proceed with generating new feedback
         if (resultData) {
           const resultsString = resultData.result?.results;
+          
           if (!resultsString) {
             throw new Error('No results data found.');
           }
           
           const feedback = await fetchAndParseResults(resultsString);
           await storeFeedbackToBackend(feedback);
+          setFeedbackData(feedback);
         } else if (resultError) {
           throw resultError;
         }

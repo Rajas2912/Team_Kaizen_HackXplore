@@ -34,6 +34,7 @@ import TeacherProjectPage from './pagesKM/Pages/TeacherProjectPage.jsx'
 import StudentProjectPage from './pagesKM/Pages/StudentProjectPage.jsx'
 import ProjectDocViewer from './pagesKM/Pages/ProjectDocViewer.jsx'
 import Research from './Research Papers/Research.jsx';
+import LandingPage from './New_pages/Landing.jsx';
 
 function App() {
   return (
@@ -43,7 +44,8 @@ function App() {
         <Route path="/register" element={<RegisterForm />} />
         <Route path="/audio" element={<AudioConferenceTest></AudioConferenceTest>} />
         <Route path="/" element={<Home />} />
-        <Route path="/3d" element={<Main_Banner></Main_Banner>} />
+        {/* <Route path="/3d" element={<Main_Banner></Main_Banner>} /> */}
+        <Route path="/landing" element={<LandingPage></LandingPage>} />
         <Route path="/paper" element={<Research></Research>} />
         <Route path="/git" element={<GitHubViewer></GitHubViewer>} />
         <Route path="/docteacher" element={<TeacherProjectPage></TeacherProjectPage>} />

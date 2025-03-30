@@ -2,8 +2,10 @@ import fitz
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from io import BytesIO
+from googleapiclient.discovery import build
 import google.generativeai as genai
 import base64
+from collections import Counter
 import io
 import cv2
 import numpy as np
@@ -25,7 +27,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Configure APIs
-EDENAI_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZDE3YjgwYzAtNzg5ZS00YmZkLWIwOTUtMWViZGE0YjNjMjY0IiwidHlwZSI6ImFwaV90b2tlbiJ9.X6hlGB842uLh2-CWDGgmt60ucJE6gYF-pS8BS0_lvXs"
+EDENAI_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjg4ZWRmMjYtOTkyYS00YjY1LWJjYTAtNGY5YTVlODdjNDJhIiwidHlwZSI6ImFwaV90b2tlbiJ9.EeXY9ylV5DbsT5-HO7hpmisWegdV9OgHBf8gI5XUIS8"
 API_KEY = "AIzaSyC1bnVlj3c5Ob56gXWgglUkM7xZI76SKsQ"
 genai.configure(api_key=API_KEY)
 
@@ -517,62 +519,60 @@ def generate_feedback():
         if not isinstance(results, list):
             return jsonify({"error": "Results must be an array"}), 400
 
-        feedback_responses = [
-            [{'question': 'What is the significance of Greek mythology in Western civilization?', 'context': 'Greek mythology has been instrumental in the development of Western civilization. It has had an impact on literature, art, philosophy, and culture. The myths of gods, heroes, and rituals formed the basis of most literary pieces, such as epics like The Iliad and The Odyssey. Greek myths have taught moral lessons, accounted for natural phenomena, and inspired artistic works over centuries.', 'answer': "Greek mythology significantly influenced Western civilization's literature, art, philosophy, and culture by providing moral lessons, explanations for natural events, and inspiration for artistic creations.", 'evaluation': 'Good answer: Covers key areas but could be more specific.', 'feedback': "Your answer effectively summarizes the broad influence of Greek mythology. To strengthen it further, provide specific examples.  For instance, mention how specific myths influenced philosophical concepts or how they're reflected in particular artworks.  You could also discuss the impact of specific gods or heroes on cultural values."}, {'question': '.What are the primary literary sources of Greek mythology?', 'context': "The principal literary sources of Greek mythology are: Homer's Iliad and The Odyssey, which tell of the Trojan War and the journey of Odysseus. Hesiod's Theogony and Works and Days, which recount the creation of the gods and offer practical information on living. The Homeric Hymns, which recount the myths of different gods. Tragic dramas by Aeschylus, Sophocles, and Euripides that retain different myths.", 'answer': "The main sources for Greek myths are Homer's epics (Iliad and Odyssey), Hesiod's works (Theogony and Works and Days), the Homeric Hymns, and plays by Aeschylus, Sophocles, and Euripides.", 'evaluation': 'Good answer: Covers the key sources.', 'feedback': "Your answer is comprehensive and effectively summarizes the primary literary sources.  To further strengthen it, you might consider briefly explaining the specific focus of each source (e.g., Homer's focus on heroes, Hesiod's on the origins of the gods, the tragedians' exploration of moral and philosophical themes through myths).  This added context would provide a richer understanding of the variety and depth within Greek mythological literature."}, {'question': 'How did Greek mythology explain the creation of the world?', 'context': "The world, as per Hesiod's Theogony, started with Chaos, and then Gaea (Earth), Tartarus (the Abyss), and Eros (Love) appeared. Gaea bore Uranus (Heaven), who was her consort. Their offspring were the Titans, the Cyclopes, and other gods. The division of Gaea and Uranus by their son Cronus initiated divine succession and power struggles.", 'answer': "Greek mythology explains the world's creation as starting from Chaos, followed by Earth (Gaea), the Abyss (Tartarus), and Love (Eros). Gaea and Uranus (Heaven) then gave birth to the Titans, Cyclopes, and other gods, leading to power struggles and divine succession.", 'evaluation': 'Good overview: Captures the main points.', 'feedback': "Your summary provides a good overview of the creation myth.  To make it even stronger, you could briefly mention the significance of Cronus's actions in overthrowing Uranus. This act of rebellion is key to understanding the subsequent power struggles among the gods.  Consider also mentioning the Muses, as they are often invoked in Greek mythology as the source of inspiration for poets and storytellers recounting these creation myths."}, {'question': '.What role did Zeus play in Greek mythology?', 'context': 'Zeus was the king of gods and lord of Mount Olympus. He was the sky god, god of thunder, and god of justice. Zeus became the ruler of gods after defeating his father Cronus. Zeus imposed order among gods. Zeus was involved in most of the myths, such as punishing Prometheus, his relationships with mortal women, and acting as an arbiter between other gods.', 'answer': 'Zeus was the king of the Greek gods, ruling from Mount Olympus. He oversaw the sky, thunder, and justice. He overthrew his father, Cronus, to become ruler and established order among the gods. He played a central role in many myths.', 'evaluation': 'Good overview, but lacks specific examples.', 'feedback': "Your answer provides a good general overview of Zeus's role.  To make it stronger, include specific examples of his influence in Greek mythology, such as his punishment of Prometheus for giving fire to humans, or his intervention in the Trojan War.  Mentioning these details will demonstrate a deeper understanding of his importance and impact."}, {'question': '.What are the different types of myths in Greek culture?', 'context': "Greek myths are divided into three broad categories: Religious Myths: Describing the origin of gods and rituals (e.g., Zeus's dominance). Legends: Half-historical accounts of heroes such as Heracles and Perseus. Folktales: Common stories with moral teachings, e.g., the exploits of Odysseus.", 'answer': 'Greek myths are categorized into Religious Myths (origin of gods and rituals), Legends (stories of heroes), and Folktales (moral stories).', 'evaluation': 'Accurate and complete.', 'feedback': 'Your answer is concise and accurately covers the main categories of Greek myths.  To further enhance your answer, you could provide a brief explanation of the key differences between legends and folktales.  For example, you could mention that legends often involve interaction with the divine while folktales are more grounded in everyday human experience. You could also provide additional examples for each category to illustrate their defining features.'}, {'question': '.How did the Greeks perceive their gods?', 'context': 'The Greeks considered their gods to be anthropomorphic (human form and feelings). The Greeks believed the gods shared both divine abilities and human weakness, like jealousy, anger, and love. The gods communicated with humans frequently, helping or punishing them in accordance with their deeds.', 'answer': 'The Greeks saw their gods as human-like in form and emotion, possessing both great power and human flaws.  They believed the gods interacted with humans, rewarding or punishing them based on their actions.', 'evaluation': 'Good answer: Accurately summarizes the key aspects.', 'feedback': 'This is a good summary of the Greek perception of gods. To further enhance your answer, you could provide specific examples of gods and their associated traits or stories that illustrate these characteristics. You could also discuss the role of oracles and temples in facilitating communication between gods and humans.'}, {'question': '.What was the myth of Prometheus, and what does it symbolize?', 'context': 'Prometheus was a Titan who went against Zeus by stealing fire from the gods and presenting it to humankind. Zeus punished him by tying him to a rock where his liver was consumed daily by an eagle. The myth represents human progress, seeking knowledge, and punishment for challenging godly power.', 'answer': "Prometheus stole fire from the gods for humans and was punished eternally by Zeus. This symbolizes humanity's pursuit of knowledge and the consequences of defying divine authority.", 'evaluation': 'Good answer: Accurately summarizes the myth and its symbolism.', 'feedback': "Your answer is concise and captures the key elements of the myth.  To further enhance it, you could mention the specific type of knowledge fire represents (technology, enlightenment) and perhaps elaborate slightly on the nature of Prometheus's defiance  it wasn't simply disobedience, but an act of compassion for humanity.  Overall, a solid response!"}, {'question': 'How did Greek myths explain natural phenomena?', 'context': "Greek myths tended to attribute natural phenomena to gods and heroes. For instance:Helios's chariot ride across the sky accounted for the sun's daily path. Persephone's stay in the underworld symbolized the seasons.Zeus's thunderbolts were thought to bring storms.", 'answer': "Greek myths explained natural events by attributing them to the actions of gods and goddesses, such as Helios's sun chariot, Persephone's descent to the underworld, and Zeus's thunderbolts.", 'evaluation': 'Good answer: Covers key examples and the general principle.', 'feedback': 'Your answer effectively summarizes the explanation and provides strong examples.  To further enhance it, you could consider mentioning a wider variety of natural phenomena covered by Greek myths, like the creation of the world or the origin of certain plants or animals.  Exploring the cultural significance of these explanations could also add depth.'}, {'question': 'What is the significance of the Trojan War in Greek mythology?', 'context': 'The Trojan War, as portrayed in The Iliad, was a significant mythological event. It was brought about by the kidnapping of Helen by Paris and saw a host of popular heroes such as Achilles, Hector, and Odysseus. The war was representative of the battle between fate and free will and engaged in issues of honor, heroism, and divine intervention.', 'answer': "The Trojan War, a key event in Greek mythology, stemmed from Helen's abduction by Paris, showcasing heroes like Achilles and Odysseus, and exploring themes of fate, free will, honor, and divine influence.", 'evaluation': 'Good overview, but could be more specific.', 'feedback': "This is a good summary of the Trojan War's significance.  To improve, consider providing specific examples of how the war demonstrated these themes. For example, you could mention Achilles' struggle with fate or Odysseus's reliance on his wit to overcome obstacles.  Briefly mentioning the war's impact on later Greek literature and thought would also strengthen your answer."}, {'question': '.What lessons did Greek mythology teach about human nature and morality?', 'context': 'Greek myths taught significant moral lessons, including: The risks of hubris (excessive pride), as illustrated in the myths of Icarus and Niobe. The value of hospitality, as illustrated in the myth of Baucis and Philemon. The repercussions of disobeying the gods, as illustrated by Prometheus and Pandora.', 'answer': 'Greek mythology taught lessons about the dangers of hubris (excessive pride), the importance of hospitality, and the consequences of disobeying the gods.', 'evaluation': 'Good answer: Covers key themes with supporting examples.', 'feedback': "Your answer effectively summarizes the key moral lessons from Greek mythology and provides relevant examples.  To further strengthen your response, you could briefly explain how the examples illustrate the lessons. For example, you could mention how Icarus's defiance of his father and the limitations of his wax wings led to his downfall, demonstrating the danger of hubris. Similarly, explaining how Zeus punished Prometheus for giving fire to humans would illustrate the consequences of disobeying the gods."}]
-        ]
+        feedback_responses = []
 
-        # for result in results:
-        #     if not isinstance(result, dict):
-        #         continue
+        for result in results:
+            if not isinstance(result, dict):
+                continue
 
-        #     question = result.get("question")
-        #     student_response = result.get("answer")
+            question = result.get("question")
+            student_response = result.get("answer")
 
-        #     if not question or not student_response:
-        #         continue
+            if not question or not student_response:
+                continue
 
-        #     # Construct prompt for AI
-        #     prompt = f"""
-        #     You are an AI that generates structured JSON responses for a personalized feedback system. 
-        #     Given the student's response to a question, provide the following details in JSON format:
+            # Construct prompt for AI
+            prompt = f"""
+            You are an AI that generates structured JSON responses for a personalized feedback system. 
+            Given the student's response to a question, provide the following details in JSON format:
 
-        #     - question: The question being answered.
-        #     - context: The original response provided by the student.
-        #     - answer: A simplified version of the response.
-        #     - evaluation: A short assessment of the answer's accuracy and completeness.
-        #     - feedback: Constructive feedback to improve the response.
+            - question: The question being answered.
+            - context: The original response provided by the student.
+            - answer: A simplified version of the response.
+            - evaluation: A short assessment of the answer's accuracy and completeness.
+            - feedback: Constructive feedback to improve the response.
 
-        #     eg - 
+            eg - 
 
-        #         question - What were the major causes of World War I?
-        #         context -  World War I was caused by a combination of political tensions, military buildup, and nationalistic sentiments.
-        #         answer - World War I started because of political tensions between nations and various alliances.
-        #         evaluation - Partial answer: Needs more depth.
-        #         feedback - You've identified alliances as a cause, which is a good start! However, your response could be more detailed. Try elaborating on specific alliances and other contributing factors like militarism, imperialism, and nationalism.
+                question - What were the major causes of World War I?
+                context -  World War I was caused by a combination of political tensions, military buildup, and nationalistic sentiments.
+                answer - World War I started because of political tensions between nations and various alliances.
+                evaluation - Partial answer: Needs more depth.
+                feedback - You've identified alliances as a cause, which is a good start! However, your response could be more detailed. Try elaborating on specific alliances and other contributing factors like militarism, imperialism, and nationalism.
 
-        #     Ensure the JSON output follows this structure:
-        #     {{
-        #       "question": "{question}",
-        #       "context": "{student_response}",
-        #       "answer": "Provide a simplified version of the response here.",
-        #       "evaluation": "Provide a short assessment here.",
-        #       "feedback": "Provide constructive feedback here."
-        #     }}
-        #     """
+            Ensure the JSON output follows this structure:
+            {{
+              "question": "{question}",
+              "context": "{student_response}",
+              "answer": "Provide a simplified version of the response here.",
+              "evaluation": "Provide a short assessment here.",
+              "feedback": "Provide constructive feedback here."
+            }}
+            """
 
-        #     # Get feedback from Gemini
-        #     feedback = ask_gemini_internal(prompt, API_KEY)
-        #     # print("Raw AI response:", feedback)  # Debugging log
-        #     time.sleep(8)
-        #     # Check for errors in the AI response
-        #     if "error" in feedback:
-        #         feedback_responses.append(feedback)
-        #     else:
-        #         feedback_responses.append(feedback)
+            # Get feedback from Gemini
+            feedback = ask_gemini_internal(prompt, API_KEY)
+            # print("Raw AI response:", feedback)  # Debugging log
+            time.sleep(8)
+            # Check for errors in the AI response
+            if "error" in feedback:
+                feedback_responses.append(feedback)
+            else:
+                feedback_responses.append(feedback)
 
-        #     # Add a delay between API calls (e.g., 5 seconds)
+            # Add a delay between API calls (e.g., 5 seconds)
 
-        #     time.sleep(10)
+            time.sleep(10)
         print(feedback_responses)
         return jsonify(feedback_responses)
     except Exception as e:
@@ -792,6 +792,225 @@ def get_research_details():
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+
+YOUTUBE_API_KEY = "AIzaSyAqr-VrhelfGtzWl51if3-WMNb5fF9enJ8"
+
+# Initialize Gemini
+genai.configure(api_key=API_KEY)
+coursemodel = genai.GenerativeModel('gemini-1.5-pro')
+
+
+
+
+def get_text_resources(feedback_data):
+    """Use Gemini to suggest relevant blogs, articles, and papers"""
+    prompt = """
+    I need you to recommend high-quality educational resources (blogs, articles, research papers) 
+    based on student feedback. For each recommendation, provide:
+
+    - Title
+    - 1-2 sentence description
+    - URL (must be real and working)
+    - Type (blog/article/paper)
+
+    Format as a JSON array with these keys: title, description, url, type
+
+    Focus on authoritative sources like:
+    - University websites (.edu)
+    - Government sites (.gov)
+    - Reputable organizations
+    - Academic publishers
+
+    Feedback Data:
+    {}
+    """.format("\n".join([
+        f"Question: {q['question']}\nAnswer: {q.get('answer', '')}\nFeedback: {q.get('feedback', '')}"
+        for q in feedback_data
+    ]))
+
+    try:
+        # Use more specific generation config
+        response = coursemodel.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.3,
+                top_p=0.95,
+                max_output_tokens=2000
+            )
+        )
+
+        # Improved parsing
+        if response.text:
+            try:
+                # Clean the response text
+                cleaned_text = response.text.strip()
+                if cleaned_text.startswith("```json"):
+                    cleaned_text = cleaned_text[7:-3].strip()
+
+                resources = json.loads(cleaned_text)
+                if isinstance(resources, list):
+                    # Validate URLs
+                    valid_resources = []
+                    for resource in resources:
+                        if all(key in resource for key in ['title', 'description', 'url', 'type']):
+                            if resource['url'].startswith(('http://', 'https://')):
+                                valid_resources.append(resource)
+                    return valid_resources
+            except json.JSONDecodeError:
+                return parse_text_response(response.text)
+
+        return []  # Fallback if parsing fails
+
+    except Exception as e:
+        print(f"Gemini API error: {e}")
+        return []
+
+
+def parse_text_response(text):
+    """Fallback parser for text responses"""
+    resources = []
+    current = {}
+
+    for line in text.split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+
+        if line.lower().startswith('title:'):
+            current['title'] = line[6:].strip()
+        elif line.lower().startswith('description:'):
+            current['description'] = line[12:].strip()
+        elif line.lower().startswith(('url:', 'link:')):
+            url = line.split(':', 1)[1].strip()
+            if url.startswith(('http://', 'https://')):
+                current['url'] = url
+        elif line.lower().startswith('type:'):
+            current['type'] = line[5:].strip().lower()
+            if all(key in current for key in ['title', 'description', 'url', 'type']):
+                resources.append(current)
+                current = {}
+
+    return resources
+
+
+@app.route('/get-text-resources', methods=['POST'])
+def text_resources():
+    """Endpoint for getting blogs, articles, and papers"""
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 400
+
+    try:
+        feedback_data = request.json
+        if not isinstance(feedback_data, list):
+            return jsonify({"error": "Input must be an array"}), 400
+
+        # Get text resources with improved implementation
+        resources = get_text_resources(feedback_data)
+
+        return jsonify({
+            "status": "success",
+            "count": len(resources),
+            "resources": resources
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+#[Keep all your existing YouTube-related functions and endpoints]
+def get_youtube_service():
+    """Initialize YouTube API service"""
+    return build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
+
+
+def generate_search_terms(questions_with_context):
+    """Use Gemini to generate optimal search terms"""
+    prompt = """
+    Analyze these educational questions and contexts to generate 3-5 optimal search terms
+    for finding relevant YouTube videos. Focus on key concepts and avoid generic terms.
+    Make search terms little detailed too but very relevent to the topics from the context, not just 1 word
+    Questions and Contexts:
+    {}
+
+    Respond with only the comma-separated search terms, nothing else.
+    """.format("\n".join([f"Q: {q['question']}\nC: {q.get('context', '')}" for q in questions_with_context]))
+
+    try:
+        response = coursemodel.generate_content(prompt)
+        terms = response.text.split(",")
+        return [term.strip() for term in terms if term.strip()]
+    except Exception as e:
+        print(f"Gemini API error: {e}")
+        return extract_fallback_terms(questions_with_context)
+
+
+def extract_fallback_terms(questions_with_context):
+    """Fallback term extraction if Gemini fails"""
+    all_text = " ".join([q['question'] + " " + q.get('context', '') for q in questions_with_context])
+    words = [word.lower() for word in all_text.split() if len(word) > 3]
+    word_counts = Counter(words)
+    return [word for word, count in word_counts.most_common(5)]
+
+
+def search_educational_videos(search_terms):
+    """Search YouTube using generated terms"""
+    youtube = get_youtube_service()
+    query = " ".join(search_terms[:3])  # Use top 3 terms
+
+    response = youtube.search().list(
+        q=query,
+        part="snippet",
+        maxResults=5,
+        type="video",
+        videoDuration="medium",
+        videoCaption="closedCaption",
+        safeSearch="strict",
+        order="relevance"
+    ).execute()
+
+    return [{
+        "title": item["snippet"]["title"],
+        "video_id": item["id"]["videoId"],
+        "url": f"https://youtube.com/watch?v={item['id']['videoId']}",
+        "thumbnail": item["snippet"]["thumbnails"]["high"]["url"],
+        "channel": item["snippet"]["channelTitle"],
+        "description": item["snippet"]["description"]
+    } for item in response.get("items", [])]
+
+
+@app.route('/recommend-videos', methods=['POST'])
+def process_feedback():
+    """Main recommendation endpoint"""
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 400
+
+    try:
+        feedback_data = request.json
+        if not isinstance(feedback_data, list):
+            return jsonify({"error": "Input must be an array"}), 400
+
+        # Generate optimal search terms
+        search_terms = generate_search_terms(feedback_data)
+
+        # Get videos
+        videos = search_educational_videos(search_terms)
+
+        return jsonify({
+            "status": "success",
+            "search_terms": search_terms,
+            "videos": videos
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+
+
+
 
 
 

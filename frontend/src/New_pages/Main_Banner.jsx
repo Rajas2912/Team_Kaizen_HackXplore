@@ -7,7 +7,7 @@ import { useEffect, useRef } from "react";
 import Lenis from "lenis";
 import Rotating_Text from "../ReactBits/Rotating_Text";
 import SpotlightCard from "../ReactBits/SpotlightCard";
-import TeacherFace from "../3DModels/TeacherFace";
+
 
 function Main_Banner() {
   useEffect(() => {
@@ -121,8 +121,7 @@ function Main_Banner() {
                 through projects and workshops.
               </p>
             </div>
-            <div className="colModel" style={{ padding: "3%" }}>
-              <TeacherFace></TeacherFace> {/* Add the TeacherFace component here */}
+            <div className="colModel" style={{ padding: "3%" }}> {/* Add the TeacherFace component here */}
             </div>
           </div>
         </div>

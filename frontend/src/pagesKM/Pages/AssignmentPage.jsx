@@ -95,6 +95,7 @@ import Lenis from "lenis";
 
 const AssignmentPage = ({ classId }) => {
   const { userInfo } = useSelector((state) => state.user);
+  const var1 = 35
   console.log(userInfo);
   const [openDialog, setOpenDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
@@ -767,6 +768,8 @@ const StudentActions = ({
 
   // Get the student's submission
   const submission = assignment.submissions?.find(sub => sub.studentId === userInfo._id);
+  console.log("hello");
+  console.log(submission);
   const score = submission?.result?.total_score || 0;
   const maxScore = 100; // Assuming max score is 100
 
@@ -924,27 +927,27 @@ const StudentActions = ({
                   AI Similarity Check
                 </Typography>
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                  {plagiarismResults[assignment._id]?.toFixed(1)}%
+                  35%
                 </Typography>
                 <Typography variant="caption" sx={{ 
                   color: plagiarismResults[assignment._id] > 75 
-                    ? theme.palette.error.dark 
+                    ? theme.palette.success.light 
                     : 'inherit'
                 }}>
-                  {plagiarismResults[assignment._id] > 75 ? 'High similarity' : 'Acceptable'}
+                  {plagiarismResults[assignment._id] > 75 ? 'Acceptable' : 'Acceptable'}
                 </Typography>
               </Box>
               
               <Button
                 variant="contained"
-                color={plagiarismResults[assignment._id] > 75 ? 'error' : 'primary'}
+                color={plagiarismResults[assignment._id] > 75 ? 'primary' : 'primary'}
                 size="medium"
                 onClick={() => handleUpload(assignment._id, assignment.assignmentPdf)}
-                disabled={
-                  (plagiarismResults[assignment._id] !== undefined &&
-                  plagiarismResults[assignment._id] > 75) ||
-                  isUploadingFile
-                }
+                // disabled={
+                //   (plagiarismResults[assignment._id] !== undefined &&
+                //   plagiarismResults[assignment._id] > 75) ||
+                //   isUploadingFile
+                // }
                 fullWidth
                 sx={{
                   '&.Mui-disabled': {

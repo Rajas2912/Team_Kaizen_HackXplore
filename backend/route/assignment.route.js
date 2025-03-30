@@ -12,6 +12,7 @@ import {
   getAssignmentsByStudentId,getStudentAssignmentResult,
   getSubmissionResult,
   storeFeedback,
+  getFeedback,
   getSubmissionFeedback
 } from '../controler/assignment.controler.js'
 import upload from '../middlewares/upload.js'
@@ -62,8 +63,21 @@ router.get('/getStudentAssignmentResult', getStudentAssignmentResult)
 
 router.post('/store-feedback', storeFeedback);
 
-// Get feedback for a specific submission
-router.get('/feedback/:assignmentId/:studentId', getSubmissionFeedback);
+// Backend route to check if feedback exists
+router.get('/feedback/:assignmentId/:studentId', getFeedback);
+router.get('/feedback-exists/:assignmentId/:studentId', async (req, res) => {
+  try {
+    const assignment = await Assignment.findOne({
+      _id: req.params.assignmentId,
+      'submissions.studentId': req.params.studentId,
+      'submissions.feedback': { $ne: null }
+    });
+    
+    res.json({ exists: !!assignment });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 
 // Update an assignment (with file uploads)
