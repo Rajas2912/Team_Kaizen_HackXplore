@@ -234,7 +234,7 @@ export default function Main(props) {
               Projects
             </Button>
               
-            <Button
+            {/* <Button
               startIcon={<Person></Person>}
               onClick={() => router.navigate('/3d')}
               sx={{
@@ -247,23 +247,8 @@ export default function Main(props) {
               }}
             >
               Doubt Support
-            </Button>
-            {userInfo?.role === 'teacher' && (
-              <Button
-                startIcon={<AutoAwesome />}
-                onClick={() => router.navigate('/expertise')}
-                sx={{
-                  color: 'white',
-                  backgroundColor: '#1a1a1a',
-                  borderRadius: '10px',
-                  px: 3,
-                  py: 1,
-                  '&:hover': { backgroundColor: '#2a2a2a' },
-                }}
-              >
-                My Expertise
-              </Button>
-            )}
+            </Button> */}
+
           </Box>
 
           {/* Right Side - User Profile and Sign Out */}

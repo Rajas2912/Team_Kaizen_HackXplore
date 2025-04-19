@@ -5,11 +5,6 @@ const classSchema = mongoose.Schema(
     name: { type: String, required: true },
     description: { type: String },
     subject: { type: String },
-    teacher: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
     classCode: { type: String }, // Unique class code
     isPublic: { type: Boolean, default: false }, // Public or private class
     students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],

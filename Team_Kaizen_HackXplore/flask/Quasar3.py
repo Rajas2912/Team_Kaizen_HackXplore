@@ -1008,6 +1008,78 @@ def process_feedback():
 
 
 
+def clean_ai_response_quiz(ai_response):
+    """
+    Cleans and extracts a valid JSON object from AI-generated text.
+
+    Args:
+        ai_response (str): The raw response from AI (which might contain code blocks or extra formatting).
+
+    Returns:
+        dict: A properly formatted JSON object.
+    """
+    try:
+        # Remove code block markers (json ... )
+        cleaned_text = re.sub(r"json\n|\n", "", ai_response).strip()
+
+        # Parse the cleaned JSON string into a dictionary
+        quiz_data = json.loads(cleaned_text)
+
+        return quiz_data  # Return as proper JSON
+    except json.JSONDecodeError:
+        return {"error": "Invalid JSON format received from AI"}
+
+
+
+
+@app.route('/generate_quiz', methods=['POST'])
+def generate_quiz():
+    """Generates a quiz based on an uploaded PDF."""
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
+
+        file = request.files['file']
+        num_questions = int(request.form.get('num_questions', 5))
+        difficulty = request.form.get('difficulty', 'medium')
+
+        poppler_path = 'C:/Program Files (x86)/poppler-24.08.0/Library/bin'  # Adjust if necessary
+        images = convert_from_bytes(file.read(), poppler_path=poppler_path)
+        extracted_text = " ".join(extract_text_from_image(img) for img in images)
+
+        prompt = f"""
+        Using the following extracted text as context, generate {num_questions} quiz questions of {difficulty} difficulty.
+        Each question should have four multiple-choice options, and the correct answer number should also be provided.
+
+        Context:
+        {extracted_text}
+
+        Response format:
+        {{
+            "quiz": [
+                {{
+                    "question": "Question 1",
+                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "correct_option": 2
+                }},
+                ...
+            ]
+        }}
+        """
+
+        # Configure API
+        genai.configure(api_key=API_KEY)
+        model = genai.GenerativeModel("gemini-1.5-pro")
+        response = model.generate_content(prompt)
+        print(response)
+    
+        # Process AI response using clean_ai_response
+        quiz_data = clean_ai_response_quiz(response.text)
+        print(quiz_data)
+        return jsonify(quiz_data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 
 

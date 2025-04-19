@@ -10,10 +10,6 @@ const userScheam = mongoose.Schema(
       required: [true, 'Provide email'],
       unique: true,
     },
-    password: {
-      type: String,
-      required: [true, 'Provide password'],
-    },
     role: {
       type: String,
       enum: ['teacher', 'student'], // Restricting role values

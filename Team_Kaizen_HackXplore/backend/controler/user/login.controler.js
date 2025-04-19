@@ -4,8 +4,8 @@ import jwt from "jsonwebtoken";
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
+    const { email, passwords } = req.body;
+    if (!email || !passwords) {
       return res.status(400).json({
         message: "required email and password",
         error: true,
@@ -19,19 +19,13 @@ export const login = async (req, res) => {
       });
     }
 
-    const verifiedPassword = await bcrypt.compare(password,checkEmail.password);
+    const verifiedPassword = await bcrypt.compare(passwords,checkEmail.password);
     if (!verifiedPassword) {
       return res.status(401).json({
         message: "Invalid password",
         error: true,
       });
     }
-    // create token using id and email with secrete key 
-    const tokenData = {
-      id: checkEmail._id,
-      email: checkEmail.email,
-    };
-
     // create token =tokendata+secreatekey 
     const token = await jwt.sign(tokenData, process.env.JWT_SECRET_KEY, {
       expiresIn: "1d",
