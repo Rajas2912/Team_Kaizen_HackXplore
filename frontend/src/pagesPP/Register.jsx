@@ -62,7 +62,7 @@ const RegisterForm = () => {
   const handleRoleChange = (e) => {
     setRegistrationData((prev) => ({
       ...prev,
-      role: e.target.value,
+      role: student,
     }));
   };
 
@@ -267,13 +267,13 @@ const RegisterForm = () => {
                 </InputAdornment>
               }
             >
-              <MenuItem value="student">
+              <MenuItem value="Students">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <StudentIcon fontSize="small" />
                   Student
                 </Box>
               </MenuItem>
-              <MenuItem value="teacher">
+              <MenuItem value="Teachers">
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <TeacherIcon fontSize="small" />
                   Teacher

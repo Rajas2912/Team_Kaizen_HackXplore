@@ -231,200 +231,206 @@ const AllTeaching = ({ navigate }) => {
         </DialogActions>
       </Dialog>
 
-      {/* Private Classes Section */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" sx={{ 
-          fontWeight: 600,
-          mb: 3,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1
-        }}>
-          <FaLock />
-          Private Classes
-        </Typography>
-        
-        {privateClasses?.length > 0 ? (
-          <Grid container spacing={3}>
-            {privateClasses.map((classItem) => (
-              <Grid item xs={12} sm={6} md={4} key={classItem._id}>
-                <Card
-                  onClick={() => navigate(`/class/${classItem._id}`)}
-                  sx={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    borderRadius: 2,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: '0 6px 16px rgba(0,0,0,0.1)',
-                      cursor: 'pointer'
-                    }
-                  }}
-                >
-                  <Box sx={{
-                    p: 2,
-                    backgroundColor: '#B7A7AE',
-                    color: 'white',
-                    borderTopLeftRadius: 8,
-                    borderTopRightRadius: 8
+{/* Private Classes Section */}
+<Box sx={{ mb: 4 }}>
+  <Typography variant="h5" sx={{ 
+    fontWeight: 600,
+    mb: 3,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 1
+  }}>
+    <FaLock />
+    Private Classes
+  </Typography>
+  
+  {privateClasses?.length > 0 ? (
+    <Grid container spacing={3}>
+      {privateClasses
+        .filter(classItem => classItem && classItem._id) // Filter out invalid items
+        .map((classItem) => (
+          <Grid item xs={12} sm={6} md={4} key={classItem._id}>
+            <Card
+              onClick={() => navigate(`/class/${classItem._id}`)}
+              sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: 2,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 6px 16px rgba(0,0,0,0.1)',
+                  cursor: 'pointer'
+                }
+              }}
+            >
+              <Box sx={{
+                p: 2,
+                backgroundColor: '#B7A7AE',
+                color: 'white',
+                borderTopLeftRadius: 8,
+                borderTopRightRadius: 8
+              }}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  {classItem?.name || 'Unnamed Class'}
+                </Typography>
+              </Box>
+              <CardContent sx={{ flexGrow: 1 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  gap: 1,
+                  mb: 1.5
+                }}>
+                  <FaUserGraduate size={16} />
+                  <Typography variant="body2">
+                    {classItem.teacher?.name || 'Teacher'} ({classItem.teacher?.email || 'No email'})
+                  </Typography>
+                </Box>
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  gap: 1,
+                  mb: 1.5
+                }}>
+                  <FaUsers size={16} />
+                  <Typography variant="body2">
+                    {classItem.students?.length || 0} students
+                  </Typography>
+                </Box>
+                {classItem.classCode && (
+                  <Chip
+                    label={`Code: ${classItem.classCode}`}
+                    size="small"
+                    sx={{ 
+                      mt: 1,
+                      backgroundColor: `#E1D5D9`,
+                      color: 'black'
+                    }}
+                  />
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+    </Grid>
+  ) : (
+    <Paper sx={{ 
+      p: 3, 
+      textAlign: 'center',
+      borderRadius: 2,
+      backgroundColor: theme.palette.background.paper
+    }}>
+      <Typography variant="body1" sx={{ color: theme.palette.text.secondary }}>
+        No private classes available
+      </Typography>
+    </Paper>
+  )}
+</Box>
+
+{/* Public Classes Section */}
+{userInfo.role === 'student' && (
+  <Box sx={{ mb: 4 }}>
+    <Typography variant="h5" sx={{ 
+      fontWeight: 600,
+      mb: 3,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 1
+    }}>
+      <FaGlobe />
+      Available Public Classes
+    </Typography>
+    
+    {publicClasses?.length > 0 ? (
+      <Grid container spacing={3}>
+        {publicClasses
+          .filter(classItem => classItem && classItem._id) // Filter out invalid items
+          .map((classItem) => (
+            <Grid item xs={12} sm={6} md={4} key={classItem._id}>
+              <Card sx={{
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: 2,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                border: `1px solid ${theme.palette.divider}`
+              }}>
+                <Box sx={{
+                  p: 2,
+                  backgroundColor: '#ADA9BA',
+                  color: 'white',
+                  borderTopLeftRadius: 8,
+                  borderTopRightRadius: 8
+                }}>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    {classItem?.name || 'Unnamed Class'}
+                  </Typography>
+                </Box>
+                <CardContent sx={{ flexGrow: 1 }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: 1,
+                    mb: 1.5
                   }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      {classItem.name}
+                    <FaUserGraduate size={16} />
+                    <Typography variant="body2">
+                      {classItem.teacher?.name || 'Teacher'} ({classItem.teacher?.email || 'No email'})
                     </Typography>
                   </Box>
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center',
-                      gap: 1,
-                      mb: 1.5
-                    }}>
-                      <FaUserGraduate size={16} />
-                      <Typography variant="body2">
-                        {classItem.teacher.name} ({classItem.teacher.email})
-                      </Typography>
-                    </Box>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center',
-                      gap: 1,
-                      mb: 1.5
-                    }}>
-                      <FaUsers size={16} />
-                      <Typography variant="body2">
-                        {classItem.students.length} students
-                      </Typography>
-                    </Box>
-                    <Chip
-                      label={`Code: ${classItem.classCode}`}
-                      size="small"
-                      sx={{ 
-                        mt: 1,
-                        backgroundColor: `#E1D5D9`,
-                        color: 'black'
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        ) : (
-          <Paper sx={{ 
-            p: 3, 
-            textAlign: 'center',
-            borderRadius: 2,
-            backgroundColor: theme.palette.background.paper
-          }}>
-            <Typography variant="body1" sx={{ color: theme.palette.text.secondary }}>
-              No private classes available
-            </Typography>
-          </Paper>
-        )}
-      </Box>
-
-      {/* Public Classes Section */}
-      {userInfo.role === 'student' && (
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h5" sx={{ 
-            fontWeight: 600,
-            mb: 3,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1
-          }}>
-            <FaGlobe />
-            Available Public Classes
-          </Typography>
-          
-          {publicClasses?.length > 0 ? (
-            <Grid container spacing={3}>
-              {publicClasses.map((classItem) => (
-                <Grid item xs={12} sm={6} md={4} key={classItem._id}>
-                  <Card sx={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    borderRadius: 2,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                    border: `1px solid ${theme.palette.divider}`
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: 1,
+                    mb: 1.5
                   }}>
-                    <Box sx={{
-                      p: 2,
-                      backgroundColor: '#ADA9BA' ,
-                      color: 'white',
-                      borderTopLeftRadius: 8,
-                      borderTopRightRadius: 8
-                    }}>
-                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        {classItem.name}
-                      </Typography>
-                    </Box>
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center',
-                        gap: 1,
-                        mb: 1.5
-                      }}>
-                        <FaUserGraduate size={16} />
-                        <Typography variant="body2">
-                          {classItem.teacher.name} ({classItem.teacher.email})
-                        </Typography>
-                      </Box>
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center',
-                        gap: 1,
-                        mb: 1.5
-                      }}>
-                        <FaUsers size={16} />
-                        <Typography variant="body2">
-                          {classItem.students.length} students
-                        </Typography>
-                      </Box>
-                    </CardContent>
-                    <Box sx={{ p: 2 }}>
-                      <Button
-                        fullWidth
-                        variant="contained"
-                        onClick={() => handleJoinClass(classItem._id)}
-                        disabled={isJoining}
-                        style={{backgroundColor:'#393A5A'}}
-                        sx={{
-                          borderRadius: '8px',
-                          textTransform: 'none'
-                        }}
-                      >
-                        {isJoining ? (
-                          <>
-                            <CircularProgress size={20} sx={{ mr: 1 }} />
-                            Joining...
-                          </>
-                        ) : 'Join Class'}
-                      </Button>
-                    </Box>
-                  </Card>
-                </Grid>
-              ))}
+                    <FaUsers size={16} />
+                    <Typography variant="body2">
+                      {classItem.students?.length || 0} students
+                    </Typography>
+                  </Box>
+                </CardContent>
+                <Box sx={{ p: 2 }}>
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    onClick={() => handleJoinClass(classItem._id)}
+                    disabled={isJoining}
+                    style={{backgroundColor:'#393A5A'}}
+                    sx={{
+                      borderRadius: '8px',
+                      textTransform: 'none'
+                    }}
+                  >
+                    {isJoining ? (
+                      <>
+                        <CircularProgress size={20} sx={{ mr: 1 }} />
+                        Joining...
+                      </>
+                    ) : 'Join Class'}
+                  </Button>
+                </Box>
+              </Card>
             </Grid>
-          ) : (
-            <Paper sx={{ 
-              p: 3, 
-              textAlign: 'center',
-              borderRadius: 2,
-              backgroundColor: theme.palette.background.paper
-            }}>
-              <Typography variant="body1" sx={{ color: theme.palette.text.secondary }}>
-                No public classes available to join
-              </Typography>
-            </Paper>
-          )}
-        </Box>
-      )}
+          ))}
+      </Grid>
+    ) : (
+      <Paper sx={{ 
+        p: 3, 
+        textAlign: 'center',
+        borderRadius: 2,
+        backgroundColor: theme.palette.background.paper
+      }}>
+        <Typography variant="body1" sx={{ color: theme.palette.text.secondary }}>
+          No public classes available to join
+        </Typography>
+      </Paper>
+    )}
+  </Box>
+)}
     </Box>
   );
 };

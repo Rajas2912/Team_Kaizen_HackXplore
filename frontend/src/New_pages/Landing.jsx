@@ -74,8 +74,7 @@ const LandingPage = () => {
       <section 
         className="py-20" 
         style={{
-          background: 'rgb(219,219,219)',
-          background: 'linear-gradient(90deg, rgba(219,219,219,1) 0%, rgba(255,255,255,1) 52%, rgba(223,223,223,1) 100%)'
+          background: 'rgb(219,219,219)'
         }}
       >
         <Container maxWidth="lg">

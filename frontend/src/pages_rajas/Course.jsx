@@ -791,8 +791,6 @@ const Course = ({ classId }) => {
                                   mr: 1,
                                   color: 'white',
                                   fontSize: '0.6rem',
-                                  fontWeight: 'bold',
-                                  display: 'flex',
                                   justifyContent: 'center',
                                   alignItems: 'center'
                                 }}>
