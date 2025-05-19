@@ -10,7 +10,7 @@ Conventional academic systems lack automation and interactive learning. As a res
 
 ![Click on below image to see the Video]([https://ik.imagekit.io/lsjvrmtvi3/image.png?updatedAt=1747678060452](https://ik.imagekit.io/lsjvrmtvi3/image.png?updatedAt=1747678703199))
 
-[![Watch the demo](https://img.youtube.com/vi/JsFyMt7VpSc/0.jpg)](https://www.youtube.com/watch?v=JsFyMt7VpSc)
+[![Watch the demo](https://img.youtube.com/vi/tMfetxLZQWM/0.jpg)](https://www.youtube.com/watch?v=tMfetxLZQWM)
 
 
 
