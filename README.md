@@ -5,6 +5,15 @@
 
 Conventional academic systems lack automation and interactive learning. As a result, faculty workload management and student engagement become inefficient. Our **Smart Learning Management System** integrates AI-powered assessment, automated workflows, and real-time mentoring to enhance learning and collaboration.
 
+
+## 📸 Screenshots
+
+![Project Overview]([https://ik.imagekit.io/lsjvrmtvi3/image.png?updatedAt=1747678060452](https://ik.imagekit.io/lsjvrmtvi3/image.png?updatedAt=1747678703199))
+
+[![Watch the demo](https://img.youtube.com/vi/JsFyMt7VpSc/0.jpg)](https://www.youtube.com/watch?v=JsFyMt7VpSc)
+
+
+
 ## 💡 Proposed Solution
 
 ### 📚 For Teachers / Mentors
